@@ -62,9 +62,16 @@ ORIGINS = [
     "http://127.0.0.1:5174",
 ]
 import os
-prod_url = os.getenv("FRONTEND_PROD_URL")
-if prod_url:
-    ORIGINS.append(prod_url)
+prod_urls_env = os.getenv("FRONTEND_PROD_URL")
+if prod_urls_env:
+    for url in prod_urls_env.split(','):
+        ORIGINS.append(url.strip())
+# Also allow tickia.com by default
+ORIGINS.extend([
+    "https://tickia.com",
+    "https://www.tickia.com",
+    "https://tickia-frontend-tickia.7w1nku.easypanel.host"
+])
 
 app.add_middleware(
     CORSMiddleware,
