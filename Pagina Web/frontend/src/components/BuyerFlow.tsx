@@ -17,7 +17,6 @@ interface Ticket {
   event_name?: string;
   zone?: string;
   ticket_type?: string;
-  ticket_type?: string;
   is_renominated?: boolean;
   boosted_until?: string;
 }

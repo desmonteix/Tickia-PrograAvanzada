@@ -96,7 +96,7 @@ const WaitlistView: React.FC<WaitlistStatusProps> = ({ status }) => {
           
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
             <button className="btn btn-primary" style={{ padding: '1rem 2rem', fontSize: '1.1rem' }} onClick={handleShare}>
-              {navigator.share ? 'Compartir Enlace' : copied ? '¡Enlace Copiado!' : 'Copiar Enlace'}
+              {typeof navigator.share === 'function' ? 'Compartir Enlace' : copied ? '¡Enlace Copiado!' : 'Copiar Enlace'}
             </button>
           </div>
           

@@ -18,11 +18,11 @@ COPY requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project
-COPY . .
+# Copy everything into backend module
+COPY . /app/backend
 
 # Expose port
 EXPOSE 8000
 
-# Command to run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run uvicorn treating backend as a package
+CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]

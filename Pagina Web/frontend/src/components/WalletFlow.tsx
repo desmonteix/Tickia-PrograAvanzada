@@ -17,7 +17,6 @@ const WalletFlow: React.FC = () => {
   
   const [activeQR, setActiveQR] = useState<string | null>(null);
   const [qrLoading, setQrLoading] = useState(false);
-  const [qrTimer, setQrTimer] = useState<NodeJS.Timeout | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString('es-PE', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }));
 
   const fetchMyTickets = async () => {
@@ -63,9 +62,6 @@ const WalletFlow: React.FC = () => {
     }
   };
 
-  const closeQRModal = () => {
-    setActiveQR(null);
-  };
 
   if (loading) return <div>Cargando tu billetera segura...</div>;
 
@@ -78,7 +74,7 @@ const WalletFlow: React.FC = () => {
       
       {activeQR ? (
         <div className="active-qr-container animate-fade-in">
-          <button className="btn btn-ghost" onClick={() => { setActiveQR(null); clearInterval(qrTimer as NodeJS.Timeout); }} style={{marginBottom: '1rem'}}>
+          <button className="btn btn-ghost" onClick={() => setActiveQR(null)} style={{marginBottom: '1rem'}}>
             ← Volver a mis entradas
           </button>
           
