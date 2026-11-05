@@ -1,0 +1,42 @@
+{
+  "checked_at_utc": "2026-11-05T20:35:11.659897+00:00",
+  "read_only": true,
+  "results": [
+    {
+      "origin": "https://tickia-backend-tickia.7w1nku.easypanel.host",
+      "path": "/health",
+      "status": 502,
+      "content_type": "text/html"
+    },
+    {
+      "origin": "https://tickia-backend-tickia.7w1nku.easypanel.host",
+      "path": "/ready",
+      "status": 502,
+      "content_type": "text/html"
+    },
+    {
+      "origin": "https://tickia-backend-tickia.7w1nku.easypanel.host",
+      "path": "/api/payments/status",
+      "status": 502,
+      "content_type": "text/html"
+    },
+    {
+      "origin": "https://tickia-frontend-tickia.7w1nku.easypanel.host",
+      "path": "/health",
+      "status": 200,
+      "content_type": "text/html"
+    },
+    {
+      "origin": "https://tickia-frontend-tickia.7w1nku.easypanel.host",
+      "path": "/ready",
+      "status": 200,
+      "content_type": "text/html"
+    },
+    {
+      "origin": "https://tickia-frontend-tickia.7w1nku.easypanel.host",
+      "path": "/api/payments/status",
+      "status": 200,
+      "content_type": "text/html"
+    }
+  ]
+}

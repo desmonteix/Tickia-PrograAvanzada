@@ -1,0 +1,123 @@
+C:\Users\matid\OneDrive\Documentos\TickerTrader\Pagina Web\backend\venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+  from starlette.testclient import TestClient as TestClient  # noqa
+test_admin_access_and_input_validation (test_api.APITests.test_admin_access_and_input_validation) ... ok
+test_ban_invalidates_existing_session (test_api.APITests.test_ban_invalidates_existing_session) ... ok
+test_catalog_pagination_is_bounded (test_api.APITests.test_catalog_pagination_is_bounded) ... ok
+test_charge_disabled_does_not_create_transaction (test_api.APITests.test_charge_disabled_does_not_create_transaction) ... ok
+test_charge_success_has_no_buyer_surcharge_and_cannot_repeat (test_api.APITests.test_charge_success_has_no_buyer_surcharge_and_cannot_repeat) ... ok
+test_chunked_upload_is_bounded (test_api.APITests.test_chunked_upload_is_bounded) ... ok
+test_cleanup_releases_at_ten_minutes_not_twenty (test_api.APITests.test_cleanup_releases_at_ten_minutes_not_twenty) ... ok
+test_contact_info_is_rejected_without_automatic_account_ban (test_api.APITests.test_contact_info_is_rejected_without_automatic_account_ban) ... ok
+test_cross_origin_mutation_is_rejected (test_api.APITests.test_cross_origin_mutation_is_rejected) ... ok
+test_database_unique_qr_guard_survives_application_bypass (test_api.APITests.test_database_unique_qr_guard_survives_application_bypass) ... ok
+test_declined_payment_does_not_sell_ticket (test_api.APITests.test_declined_payment_does_not_sell_ticket) ... ok
+test_disabled_payments_do_not_reserve_inventory (test_api.APITests.test_disabled_payments_do_not_reserve_inventory) ... ok
+test_download_outage_preserves_single_use_token (test_api.APITests.test_download_outage_preserves_single_use_token) ... No se pudo recuperar el archivo QR
+Traceback (most recent call last):
+  File "C:\Users\matid\OneDrive\Documentos\TickerTrader\Pagina Web\backend\routers\download.py", line 44, in download_secure_qr
+    data = decrypt_bytes_fernet(download_encrypted_qr(ticket.qr_image_url_encrypted))
+                                ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\matid\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py", line 1169, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\matid\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py", line 1173, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\matid\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py", line 1228, in _execute_mock_call
+    raise effect
+RuntimeError: offline
+ok
+test_duplicate_qr_is_rejected (test_api.APITests.test_duplicate_qr_is_rejected) ... ok
+test_duplicate_registration_returns_controlled_error (test_api.APITests.test_duplicate_registration_returns_controlled_error) ... ok
+test_expired_download_token_is_rejected (test_api.APITests.test_expired_download_token_is_rejected) ... ok
+test_expired_reservation_cannot_be_charged (test_api.APITests.test_expired_reservation_cannot_be_charged) ... ok
+test_health_readiness_and_security_headers (test_api.APITests.test_health_readiness_and_security_headers) ... ok
+test_invalid_login_and_long_password_never_crash (test_api.APITests.test_invalid_login_and_long_password_never_crash) ... ok
+test_invalid_subject_expiry_and_algorithm_are_unauthorized (test_api.APITests.test_invalid_subject_expiry_and_algorithm_are_unauthorized) ... C:\Users\matid\OneDrive\Documentos\TickerTrader\Pagina Web\backend\venv\Lib\site-packages\jwt\api_jwt.py:149: InsecureKeyLengthWarning: The HMAC key is 42 bytes long, which is below the minimum recommended length of 48 bytes for SHA384. See RFC 7518 Section 3.2.
+  return self._jws.encode(
+ok
+test_login_cookie_and_logout (test_api.APITests.test_login_cookie_and_logout) ... ok
+test_missed_nomination_never_pretends_refund (test_api.APITests.test_missed_nomination_never_pretends_refund) ... Renominación vencida; reembolso pendiente de confirmación operativa
+ok
+test_nominated_payment_waits_for_new_qr (test_api.APITests.test_nominated_payment_waits_for_new_qr) ... ok
+test_nominated_ticket_requires_verified_identity (test_api.APITests.test_nominated_ticket_requires_verified_identity) ... ok
+test_qr_download_owner_single_use_and_revocation (test_api.APITests.test_qr_download_owner_single_use_and_revocation) ... ok
+test_registration_is_open_and_normalizes_email (test_api.APITests.test_registration_is_open_and_normalizes_email) ... ok
+test_reservation_ownership_and_conflicts (test_api.APITests.test_reservation_ownership_and_conflicts) ... ok
+test_seller_amount_is_estimated_until_provider_fees_are_verified (test_api.APITests.test_seller_amount_is_estimated_until_provider_fees_are_verified) ... ok
+test_storage_outage_does_not_publish_ticket (test_api.APITests.test_storage_outage_does_not_publish_ticket) ... No se pudo guardar el QR cifrado
+Traceback (most recent call last):
+  File "C:\Users\matid\OneDrive\Documentos\TickerTrader\Pagina Web\backend\routers\tickets.py", line 48, in save_qr
+    return upload_encrypted_qr(path, encrypt_bytes_fernet(data))
+  File "C:\Users\matid\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py", line 1169, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\matid\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py", line 1173, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\matid\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py", line 1228, in _execute_mock_call
+    raise effect
+RuntimeError: offline
+ok
+test_uncertain_payment_blocks_retry_and_cleanup (test_api.APITests.test_uncertain_payment_blocks_retry_and_cleanup) ... ok
+test_unicode_bcrypt_length_is_validated (test_api.APITests.test_unicode_bcrypt_length_is_validated) ... ok
+test_upload_and_catalog_hide_qr_details (test_api.APITests.test_upload_and_catalog_hide_qr_details) ... ok
+test_upload_rejects_missing_qr_and_invalid_file (test_api.APITests.test_upload_rejects_missing_qr_and_invalid_file) ... ok
+test_upload_requires_actual_future_date_and_valid_price (test_api.APITests.test_upload_requires_actual_future_date_and_valid_price) ... ok
+test_verified_webhook_is_idempotent (test_api.APITests.test_verified_webhook_is_idempotent) ... ok
+test_webhook_requires_provider_verification (test_api.APITests.test_webhook_requires_provider_verification) ... ok
+test_wrong_provider_amount_never_marks_paid (test_api.APITests.test_wrong_provider_amount_never_marks_paid) ... ok
+test_charge_request_uses_exact_amount_and_merchant_key (test_api.ProviderTests.test_charge_request_uses_exact_amount_and_merchant_key) ... ok
+test_production_rejects_test_private_key (test_api.ProviderTests.test_production_rejects_test_private_key) ... ok
+test_provider_decline_timeout_invalid_json_and_3ds_fail_closed (test_api.ProviderTests.test_provider_decline_timeout_invalid_json_and_3ds_fail_closed) ... ok
+test_unconfigured_provider_does_not_make_network_calls (test_api.ProviderTests.test_unconfigured_provider_does_not_make_network_calls) ... ok
+test_active_qr_constraint_prevents_simultaneous_insert (test_postgres.PostgreSQLConcurrencyTests.test_active_qr_constraint_prevents_simultaneous_insert) ... ok
+test_confirm_and_dispute_are_mutually_exclusive (test_postgres.PostgreSQLConcurrencyTests.test_confirm_and_dispute_are_mutually_exclusive) ... ok
+test_simultaneous_charges_make_one_provider_call (test_postgres.PostgreSQLConcurrencyTests.test_simultaneous_charges_make_one_provider_call) ... ok
+test_two_buyers_cannot_reserve_same_ticket (test_postgres.PostgreSQLConcurrencyTests.test_two_buyers_cannot_reserve_same_ticket) ... ok
+test_two_settlement_workers_send_once_and_reward_once (test_postgres.PostgreSQLConcurrencyTests.test_two_settlement_workers_send_once_and_reward_once) ... ok
+test_expired_nomination_is_visible_and_queued_without_claiming_a_refund (test_purchase_migration.NoDeliveryRefundTests.test_expired_nomination_is_visible_and_queued_without_claiming_a_refund) ... Renominación vencida; reembolso pendiente de confirmación operativa
+ok
+test_old_pending_flag_is_reconciled_instead_of_resent_or_repenalized (test_purchase_migration.NoDeliveryRefundTests.test_old_pending_flag_is_reconciled_instead_of_resent_or_repenalized) ... Renominación vencida; reembolso pendiente de confirmación operativa
+ok
+test_unavailable_refund_does_not_award_ratings_or_pretend_success (test_purchase_migration.NoDeliveryRefundTests.test_unavailable_refund_does_not_award_ratings_or_pretend_success) ... Renominación vencida; reembolso pendiente de confirmación operativa
+ok
+test_verified_no_delivery_refund_moves_money_state_and_reputation_once (test_purchase_migration.NoDeliveryRefundTests.test_verified_no_delivery_refund_moves_money_state_and_reputation_once) ... Renominación vencida; reembolso pendiente de confirmación operativa
+ok
+test_migration_adds_missing_tables_and_columns_to_legacy_schema (test_purchase_migration.PurchaseMigrationPostgresTests.test_migration_adds_missing_tables_and_columns_to_legacy_schema) ... ok
+test_pending_legacy_refund_is_visible_but_not_automatically_resent (test_purchase_migration.PurchaseMigrationPostgresTests.test_pending_legacy_refund_is_visible_but_not_automatically_resent) ... ok
+test_terminal_history_survives_two_migrations_without_reputation_or_money_replay (test_purchase_migration.PurchaseMigrationPostgresTests.test_terminal_history_survives_two_migrations_without_reputation_or_money_replay) ... ok
+test_admin_cannot_reverse_a_final_decision (test_purchases.PurchaseFlowTests.test_admin_cannot_reverse_a_final_decision) ... ok
+test_catalog_seller_rating_has_priority_over_boost (test_purchases.PurchaseFlowTests.test_catalog_seller_rating_has_priority_over_boost) ... ok
+test_closed_deadline_rejects_dispute_and_missing_end_never_auto_pays (test_purchases.PurchaseFlowTests.test_closed_deadline_rejects_dispute_and_missing_end_never_auto_pays) ... ok
+test_confirmation_available_on_delivery_and_applied_once_after_payout (test_purchases.PurchaseFlowTests.test_confirmation_available_on_delivery_and_applied_once_after_payout) ... ok
+test_evidence_failure_keeps_review_open_and_allows_retry (test_purchases.PurchaseFlowTests.test_evidence_failure_keeps_review_open_and_allows_retry) ... ok
+test_evidence_required_and_private (test_purchases.PurchaseFlowTests.test_evidence_required_and_private) ... ok
+test_extreme_event_end_is_rejected_before_publication_or_charge (test_purchases.PurchaseFlowTests.test_extreme_event_end_is_rejected_before_publication_or_charge) ... ok
+test_late_charge_error_cannot_overwrite_verified_refund (test_purchases.PurchaseFlowTests.test_late_charge_error_cannot_overwrite_verified_refund) ... ok
+test_legacy_without_end_allows_explicit_response_but_no_automatic_payout (test_purchases.PurchaseFlowTests.test_legacy_without_end_allows_explicit_response_but_no_automatic_payout) ... ok
+test_other_buyer_cannot_confirm_or_resolve (test_purchases.PurchaseFlowTests.test_other_buyer_cannot_confirm_or_resolve) ... ok
+test_rating_is_capped_at_five (test_purchases.PurchaseFlowTests.test_rating_is_capped_at_five) ... ok
+test_rating_never_goes_below_zero (test_purchases.PurchaseFlowTests.test_rating_never_goes_below_zero) ... ok
+test_reconciliation_wins_over_late_transport_error (test_purchases.PurchaseFlowTests.test_reconciliation_wins_over_late_transport_error) ... ok
+test_refund_protocol_requires_provider_confirmation (test_purchases.PurchaseFlowTests.test_refund_protocol_requires_provider_confirmation) ... ok
+test_registration_starts_at_four_and_nomination_is_not_delivery (test_purchases.PurchaseFlowTests.test_registration_starts_at_four_and_nomination_is_not_delivery) ... ok
+test_rejected_claim_pays_seller_and_deducts_buyer (test_purchases.PurchaseFlowTests.test_rejected_claim_pays_seller_and_deducts_buyer) ... ok
+test_review_deadline_is_exactly_24_hours_after_end (test_purchases.PurchaseFlowTests.test_review_deadline_is_exactly_24_hours_after_end) ... ok
+test_silence_only_rewards_seller (test_purchases.PurchaseFlowTests.test_silence_only_rewards_seller) ... ok
+test_uncertain_payout_is_not_repeated_or_rewarded (test_purchases.PurchaseFlowTests.test_uncertain_payout_is_not_repeated_or_rewarded) ... ok
+test_uncertain_refund_is_reconciled_without_sending_it_twice (test_purchases.PurchaseFlowTests.test_uncertain_refund_is_reconciled_without_sending_it_twice) ... ok
+test_valid_claim_freezes_funds_then_refunds_and_warns_seller (test_purchases.PurchaseFlowTests.test_valid_claim_freezes_funds_then_refunds_and_warns_seller) ... ok
+test_blank_image_is_rejected (test_qr.QRTests.test_blank_image_is_rejected) ... ok
+test_identical_qr_has_identical_hash (test_qr.QRTests.test_identical_qr_has_identical_hash) ... ok
+test_lookalike_domain_is_rejected (test_qr.QRTests.test_lookalike_domain_is_rejected) ... ok
+test_malformed_image_is_rejected (test_qr.QRTests.test_malformed_image_is_rejected) ... ok
+test_distinct_verified_clients_have_separate_limits (test_rate_limit.ProxyIdentityTests.test_distinct_verified_clients_have_separate_limits) ... ok
+test_invalid_ip_falls_back_to_peer (test_rate_limit.ProxyIdentityTests.test_invalid_ip_falls_back_to_peer) ... ok
+test_ipv6_is_canonicalized (test_rate_limit.ProxyIdentityTests.test_ipv6_is_canonicalized) ... ok
+test_spoofed_forwarded_headers_cannot_reset_limits (test_rate_limit.ProxyIdentityTests.test_spoofed_forwarded_headers_cannot_reset_limits) ... ok
+
+----------------------------------------------------------------------
+Ran 82 tests in 32.564s
+
+OK

@@ -5,7 +5,7 @@ Gestiona la subida y descarga de archivos cifrados al bucket privado de QRs.
 import os
 import io
 import logging
-from supabase import create_client, Client
+from supabase import create_client, Client, ClientOptions
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ def _get_supabase_client() -> Client:
     key = os.getenv("SUPABASE_KEY")
     if not url or not key:
         raise RuntimeError("SUPABASE_URL o SUPABASE_KEY no están configuradas.")
-    return create_client(url, key)
+    return create_client(url, key, options=ClientOptions(storage_client_timeout=15, postgrest_client_timeout=15))
 
 
 def upload_encrypted_qr(storage_path: str, encrypted_bytes: bytes) -> str:

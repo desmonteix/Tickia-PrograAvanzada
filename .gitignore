@@ -6,3 +6,12 @@ __pycache__/
 .DS_Store
 dist/
 build/
+.npm-cache/
+.venv/
+test-results/
+.coverage
+htmlcov/
+.playwright/
+*.db
+*.sqlite
+*.sqlite3

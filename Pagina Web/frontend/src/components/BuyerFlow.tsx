@@ -1,345 +1,357 @@
-import React, { useState, useEffect } from 'react';
-import api from '../api';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Fuse from 'fuse.js';
+import api, { errorMessage } from '../api';
+import { useResource } from '../useResource';
+import { eventDate, money } from '../types';
+import type { Ticket } from '../types';
 
+interface Checkout {
+  token?: { id: string };
+  error?: { user_message?: string };
+  culqi: () => void;
+  open: () => void;
+  close: () => void;
+}
+interface CheckoutConfig {
+  settings: { title: string; currency: string; amount: number };
+  options: {
+    lang: string;
+    modal: boolean;
+    installments: boolean;
+    paymentMethods: {
+      tarjeta: boolean;
+      yape: boolean;
+      billetera: boolean;
+      bancaMovil: boolean;
+      agente: boolean;
+      cuotealo: boolean;
+    };
+  };
+}
 declare global {
   interface Window {
-    Culqi: any;
-    culqi: () => void;
+    CulqiCheckout?: new (key: string, config: CheckoutConfig) => Checkout;
   }
 }
 
-interface Ticket {
-  id: string;
-  price: number;
-  estado: string;
-  created_at: string;
-  event_name?: string;
-  zone?: string;
-  ticket_type?: string;
-  is_renominated?: boolean;
-  boosted_until?: string;
+async function loadCheckout() {
+  if (window.CulqiCheckout) return window.CulqiCheckout;
+  await new Promise<void>((resolve, reject) => {
+    const script = document.createElement('script');
+    const timer = window.setTimeout(() => {
+      script.remove();
+      reject(new Error('El formulario de pago no está disponible. Inténtalo más tarde.'));
+    }, 5000);
+    script.src = 'https://js.culqi.com/checkout-js';
+    script.async = true;
+    script.onload = () => {
+      window.clearTimeout(timer);
+      resolve();
+    };
+    script.onerror = () => {
+      window.clearTimeout(timer);
+      script.remove();
+      reject(new Error('No pudimos cargar el formulario de pago. Inténtalo más tarde.'));
+    };
+    document.body.appendChild(script);
+  });
+  if (!window.CulqiCheckout)
+    throw new Error('El formulario de pago no está disponible. Inténtalo más tarde.');
+  return window.CulqiCheckout;
 }
 
-interface BuyerFlowProps {
+export default function BuyerFlow({
+  onRequireLogin,
+  searchQuery = '',
+}: {
   onRequireLogin?: () => void;
   searchQuery?: string;
-}
-
-const BuyerFlow: React.FC<BuyerFlowProps> = ({ onRequireLogin, searchQuery = '' }) => {
-  const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [loading, setLoading] = useState(true);
+}) {
+  const { data, loading, error: loadError, refresh } = useResource<Ticket[]>('/tickets');
+  const tickets = useMemo(() => data ?? [], [data]);
   const [error, setError] = useState('');
-  const [reservingId, setReservingId] = useState<string | null>(null);
-  
-  const [filteredTickets, setFilteredTickets] = useState<Ticket[]>([]);
+  const [notice, setNotice] = useState('');
+  const [pending, setPending] = useState<Ticket | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [uncertain, setUncertain] = useState(false);
+  const selected = useRef<Ticket | null>(null);
+  const checkout = useRef<Checkout | null>(null);
+  const reservationExpiresAt = useRef(0);
+  const charging = useRef(false);
+  const dialog = useRef<HTMLDialogElement>(null);
+  const filtered = useMemo(
+    () =>
+      !searchQuery.trim()
+        ? tickets
+        : new Fuse(tickets, { keys: ['event_name', 'zone'], threshold: 0.4 })
+            .search(searchQuery)
+            .map((result) => result.item)
+            .sort((a, b) => (b.seller_rating ?? 4) - (a.seller_rating ?? 4)),
+    [searchQuery, tickets],
+  );
 
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredTickets(tickets);
+  useEffect(
+    () => () => {
+      checkout.current?.close();
+      checkout.current = null;
+      selected.current = null;
+    },
+    [],
+  );
+
+  async function charge(instance: Checkout, ticket: Ticket) {
+    if (checkout.current !== instance || charging.current) return;
+    if (Date.now() >= reservationExpiresAt.current) {
+      instance.close();
+      checkout.current = null;
+      selected.current = null;
+      setError('La reserva venció. Elige una entrada disponible para continuar.');
+      refresh();
       return;
     }
-    const fuse = new Fuse(tickets, {
-      keys: ['event_name', 'zone'],
-      threshold: 0.4,
-    });
-    const results = fuse.search(searchQuery);
-    setFilteredTickets(results.map(r => r.item));
-  }, [searchQuery, tickets]);
-
-  const fetchTickets = async () => {
-    try {
-      const res = await api.get('/tickets');
-      setTickets(res.data);
-    } catch (err: any) {
-      console.log("No se pudo obtener tickets, usando mocks:", err.message);
-      setTickets([
-        { id: 'uuid-mock-1', price: 150.0, estado: 'ACTIVO', created_at: new Date().toISOString(), event_name: 'Concierto Mock', zone: 'VIP', ticket_type: 'nominada', is_renominated: false },
-        { id: 'uuid-mock-2', price: 200.0, estado: 'ACTIVO', created_at: new Date().toISOString(), event_name: 'Festival Mock', zone: 'General', ticket_type: 'no_nominada', is_renominated: true }
-      ]);
-    } finally {
-      setLoading(false);
+    const token = instance.token?.id;
+    if (!token) {
+      setError(
+        instance.error?.user_message ||
+          'El pago no se completó. Puedes volver a abrir el formulario.',
+      );
+      return;
     }
-  };
-
-  useEffect(() => {
-    fetchTickets();
-    
-    // Configurar Culqi global callback
-    window.culqi = async () => {
-      if (window.Culqi.token) {
-        const token = window.Culqi.token.id;
-        try {
-          const ticketId = window.sessionStorage.getItem('culqi_ticket_id');
-          if (!ticketId) throw new Error("No hay un ticket activo para procesar el pago");
-
-          await api.post('/payments/charge', {
-            ticket_id: ticketId,
-            culqi_token: token
-          });
-          
-          alert(`¡Pago Exitoso! Tu entrada ha sido comprada.`);
-          fetchTickets();
-        } catch (err: any) {
-          setError(err.response?.data?.detail || 'Error al procesar el cargo en el backend.');
-        }
+    charging.current = true;
+    setBusy(true);
+    instance.close();
+    try {
+      await api.post('/payments/charge', { ticket_id: ticket.id, culqi_token: token });
+      setNotice('Pago confirmado. Puedes consultar tu compra en Mis compras.');
+      selected.current = null;
+      checkout.current = null;
+      setPending(null);
+      refresh();
+    } catch (failure) {
+      const status = (failure as { response?: { status?: number } }).response?.status;
+      if (!status || status >= 500 || status === 409) {
+        checkout.current = null;
+        selected.current = null;
+        setUncertain(true);
+        setError(
+          'Estamos verificando el pago. No vuelvas a pagar; revisa Mis compras y solicita atención si aún no aparece.',
+        );
       } else {
-        if (window.Culqi.error && window.Culqi.error.user_message) {
-          setError(`Error de pago: ${window.Culqi.error.user_message}`);
-        } else {
-          setError('El modal de pago fue cerrado sin completar la compra.');
-        }
+        setError(errorMessage(failure));
       }
-      setReservingId(null);
-    };
-
-  }, []);
-
-  const handleBuy = async (ticket: Ticket) => {
-    setReservingId(ticket.id);
-    setError('');
-    const publicKey = 'pk_test_3ed9b6b772c84218'; 
-    
-    try {
-      // 1. Bloqueo atómico
-      await api.post(`/tickets/${ticket.id}/buy`);
-      
-      // 2. Configurar Culqi para este ticket
-      window.sessionStorage.setItem('culqi_ticket_id', ticket.id);
-      
-      // eslint-disable-next-line
-      window.Culqi.publicKey = publicKey;
-      window.Culqi.settings({
-        title: 'Tickia',
-        currency: 'PEN',
-        amount: ticket.price * 100, 
-        order: '' 
-      });
-      window.Culqi.options({
-        lang: 'auto',
-        modal: true,
-        installments: false,
-        customButton: 'Pagar Entrada'
-      });
-      
-      // 3. Abrir el modal
-      window.Culqi.open();
-      
-    } catch (err: any) {
-      if (err.response?.status === 401 && onRequireLogin) {
-        onRequireLogin();
-        return;
-      }
-      setError(err.response?.data?.detail || 'Error al intentar comprar la entrada.');
-      setReservingId(null);
-      fetchTickets();
+    } finally {
+      charging.current = false;
+      setBusy(false);
     }
-  };
+  }
 
-  if (loading) return <div>Cargando entradas seguras...</div>;
+  async function pay() {
+    if (!pending || busy || charging.current || uncertain) return;
+    if (checkout.current && Date.now() >= reservationExpiresAt.current) {
+      checkout.current.close();
+      checkout.current = null;
+      selected.current = null;
+    }
+    if (checkout.current && selected.current?.id === pending.id) {
+      dialog.current?.close();
+      checkout.current.open();
+      return;
+    }
+    setError('');
+    setBusy(true);
+    const key = import.meta.env.VITE_CULQI_PUBLIC_KEY as string | undefined;
+    try {
+      const status = await api.get<{ enabled: boolean }>('/payments/status');
+      if (!status.data.enabled || !key)
+        throw new Error('Los pagos no están disponibles en este momento. Inténtalo más tarde.');
+      const CheckoutClass = await loadCheckout();
+      const reservation = await api.post<{ amount_total_cents: number; reserved_until: string }>(
+        `/tickets/${pending.id}/buy`,
+      );
+      if (
+        !Number.isInteger(reservation.data.amount_total_cents) ||
+        reservation.data.amount_total_cents !== Math.round(pending.price * 100)
+      )
+        throw new Error('El precio cambió. Actualiza el catálogo antes de comprar.');
+      const expiresAt = Date.parse(reservation.data.reserved_until);
+      if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
+        refresh();
+        throw new Error('La reserva venció. Elige una entrada disponible para continuar.');
+      }
+      const ticket = pending;
+      const instance = new CheckoutClass(key, {
+        settings: { title: 'Tickia', currency: 'PEN', amount: reservation.data.amount_total_cents },
+        options: {
+          lang: 'es',
+          modal: true,
+          installments: false,
+          paymentMethods: {
+            tarjeta: true,
+            yape: true,
+            billetera: false,
+            bancaMovil: false,
+            agente: false,
+            cuotealo: false,
+          },
+        },
+      });
+      selected.current = ticket;
+      reservationExpiresAt.current = expiresAt;
+      checkout.current = instance;
+      instance.culqi = () => {
+        void charge(instance, ticket);
+      };
+      dialog.current?.close();
+      setBusy(false);
+      instance.open();
+    } catch (failure) {
+      setError(errorMessage(failure));
+      setBusy(false);
+      const status = (failure as { response?: { status?: number } }).response?.status;
+      if (status === 404 || status === 409) refresh();
+      if ((failure as { response?: { status?: number } }).response?.status === 401) {
+        dialog.current?.close();
+        onRequireLogin?.();
+      }
+    }
+  }
 
+  function choose(ticket: Ticket) {
+    if (selected.current && selected.current.id !== ticket.id) {
+      checkout.current?.close();
+      checkout.current = null;
+      selected.current = null;
+    }
+    setError('');
+    setPending(ticket);
+    dialog.current?.showModal();
+  }
+  if (loading) return <p role="status">Cargando entradas…</p>;
   return (
-    <div className="catalog-view animate-fade-in">
-      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem'}}>
-        <div>
-          <h2 style={{fontSize: '2rem', margin: '0'}}>Próximos Eventos</h2>
-        </div>
-      </div>
-      
-      {error && (
-        <div className="glass-panel" style={{color: 'var(--color-danger)', border: '1px solid var(--color-danger)', marginBottom: '1.5rem', padding: '1rem', background: 'rgba(239, 68, 68, 0.1)'}}>
-          <strong style={{marginRight: '8px'}}>⚠ Error:</strong> {error}
+    <div>
+      {(loadError || error) && (
+        <div className="error-message" role="alert">
+          {loadError || error}
+          {loadError && (
+            <button className="btn btn-secondary" onClick={refresh}>
+              Reintentar
+            </button>
+          )}
         </div>
       )}
-
-      <div className="ticket-grid">
-        {filteredTickets.length === 0 ? (
-          <div className="glass-panel" style={{textAlign: 'center', padding: '4rem 2rem', gridColumn: '1 / -1'}}>
-             <div style={{fontSize: '3rem', opacity: 0.5, marginBottom: '1rem'}}>🎫</div>
-             <h3>No hay entradas disponibles</h3>
-             <p style={{color: 'var(--color-text-secondary)'}}>Sé el primero en vender una entrada para tu evento favorito.</p>
-          </div>
-        ) : (
-          filteredTickets.map(ticket => (
-            <div key={ticket.id} className="ticket-card glass-panel">
-              <div className="ticket-image-container">
-                <img src="/festival_poster.jpg" alt="Event Cover" className="ticket-image" />
-                <div className="ticket-badge-overlay">
-                  <span className="badge badge-success" style={{backdropFilter: 'blur(8px)', background: 'rgba(16, 185, 129, 0.2)'}}>
-                    ✓ Verificado
-                  </span>
-                </div>
-              </div>
-              
-              <div className="ticket-info">
-                {ticket.boosted_until && new Date(ticket.boosted_until) > new Date() && (
-                  <div style={{marginBottom: '0.8rem'}}>
-                    <span className="badge badge-warning" style={{background: 'rgba(255, 90, 37, 0.15)', color: 'var(--color-primary)', border: '1px solid var(--color-primary)'}}>🔥 Destacado</span>
-                  </div>
-                )}
-                <h3 className="ticket-title">{ticket.event_name || 'Festival Ultra 2026'}</h3>
-                <p className="ticket-zone">{ticket.zone || 'Zona VIP'}</p>
-                
-                <div className="ticket-details">
-                  <div className="detail-item">
-                    <span className="detail-label">TIPO</span>
-                    <span className="detail-value">{ticket.ticket_type === 'nominada' ? 'Nominada' : 'No Nominada'}</span>
-                  </div>
-                  {ticket.ticket_type === 'nominada' && (
-                    <div className="detail-item">
-                      <span className="detail-label">RENOMINADA</span>
-                      <span className="detail-value">{ticket.is_renominated ? 'Sí' : 'No'}</span>
-                    </div>
-                  )}
-                  <div className="detail-item">
-                    <span className="detail-label">ID SEGURO</span>
-                    <span className="detail-value" style={{fontFamily: 'monospace'}}>{ticket.id.split('-')[0]}</span>
-                  </div>
-                </div>
-
-                <div className="ticket-footer">
-                  <div className="ticket-price">
-                    <span className="currency">S/</span>
-                    <span className="amount">{ticket.price.toFixed(2)}</span>
-                  </div>
-                  <button 
-                    className="btn btn-primary"
-                    onClick={() => handleBuy(ticket)}
-                    disabled={reservingId === ticket.id}
-                  >
-                    {reservingId === ticket.id ? 'Reservando...' : 'Comprar'}
-                  </button>
-                </div>
-              </div>
+      {notice && (
+        <p className="notice" role="status">
+          {notice}
+        </p>
+      )}
+      {!loadError && (
+        <div className="ticket-grid">
+          {filtered.length === 0 ? (
+            <div className="empty-state">
+              <h3>
+                {searchQuery.trim()
+                  ? 'No encontramos entradas para esa búsqueda'
+                  : 'Todavía no hay entradas disponibles'}
+              </h3>
+              <p>
+                {searchQuery.trim()
+                  ? 'Prueba con otro evento o zona.'
+                  : 'Cuando alguien publique su entrada, aparecerá aquí.'}
+              </p>
             </div>
-          ))
+          ) : (
+            filtered.map((ticket) => (
+              <article key={ticket.id} className="ticket-card">
+                <div className="ticket-art" aria-hidden="true">
+                  <span>ENTRADAS ENTRE PERSONAS</span>
+                  <img src="/brand/tickia-symbol.png" alt="" />
+                </div>
+                <div className="ticket-info">
+                  <p className="eyebrow">{eventDate(ticket.event_date)}</p>
+                  <h3>{ticket.event_name}</h3>
+                  <p>{ticket.zone}</p>
+                  {typeof ticket.seller_rating === 'number' && (
+                    <p className="seller-rating">
+                      Rating del vendedor: {ticket.seller_rating.toFixed(2)} / 5
+                    </p>
+                  )}
+                  <p className="ticket-type">
+                    {ticket.ticket_type === 'nominada'
+                      ? `Nominada · ${ticket.is_renominated ? 'renominada' : 'requiere renominación'}`
+                      : 'No nominada'}
+                  </p>
+                  <div className="ticket-footer">
+                    <strong className="price-tag">{money(ticket.price)}</strong>
+                    <button
+                      className="btn btn-primary"
+                      disabled={busy || uncertain}
+                      onClick={() => choose(ticket)}
+                      aria-label={`Comprar entrada para ${ticket.event_name}`}
+                    >
+                      Comprar
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))
+          )}
+        </div>
+      )}
+      <dialog
+        ref={dialog}
+        className="checkout-dialog"
+        aria-label="Revisa tu compra"
+        onCancel={(event) => {
+          if (busy) event.preventDefault();
+          else {
+            selected.current = null;
+          }
+        }}
+      >
+        {pending && (
+          <>
+            <h2>Revisa tu compra</h2>
+            <h3>{pending.event_name}</h3>
+            <p>
+              {pending.zone} · {eventDate(pending.event_date)}
+            </p>
+            <p>
+              Precio total: <strong>{money(pending.price)}</strong>
+            </p>
+            <p>
+              Tickia cobra una comisión del 10 % a quien vende. El comprador no paga sobrecostos.
+            </p>
+            <p className="muted">
+              Tickia no es la tiquetera oficial. La lectura del QR no garantiza el ingreso al
+              evento. Revisa las condiciones de transferencia de la tiquetera antes de pagar.
+            </p>
+            {error && (
+              <p role="alert" className="error-message">
+                {error}
+              </p>
+            )}
+            <div className="actions">
+              <button
+                className="btn btn-primary"
+                disabled={busy || uncertain}
+                onClick={() => void pay()}
+              >
+                {busy ? 'Procesando…' : 'Continuar al pago'}
+              </button>
+              <button
+                className="btn btn-secondary"
+                disabled={busy}
+                onClick={() => {
+                  dialog.current?.close();
+                  setBusy(false);
+                }}
+              >
+                Volver
+              </button>
+            </div>
+          </>
         )}
-      </div>
-
-      <style>{`
-        .ticket-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-          gap: 2rem;
-        }
-        
-        .ticket-card {
-          border-radius: var(--border-radius-lg);
-          overflow: hidden;
-          transition: transform var(--transition-normal), box-shadow var(--transition-normal);
-          display: flex;
-          flex-direction: column;
-        }
-        
-        .ticket-card:hover {
-          transform: translateY(-5px);
-          box-shadow: var(--shadow-lg);
-          border-color: var(--color-primary-glow);
-        }
-        
-        .ticket-image-container {
-          position: relative;
-          width: 100%;
-          height: 200px;
-          overflow: hidden;
-        }
-        
-        .ticket-image {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          transition: transform var(--transition-slow);
-        }
-        
-        .ticket-card:hover .ticket-image {
-          transform: scale(1.05);
-        }
-        
-        .ticket-badge-overlay {
-          position: absolute;
-          top: 1rem;
-          left: 1rem;
-          z-index: 2;
-        }
-        
-        .ticket-info {
-          padding: 1.5rem;
-          display: flex;
-          flex-direction: column;
-          flex: 1;
-        }
-        
-        .ticket-title {
-          font-size: 1.25rem;
-          margin: 0 0 0.25rem 0;
-          line-height: 1.3;
-          color: var(--color-text-title);
-          font-weight: 800;
-        }
-        
-        .ticket-zone {
-          color: var(--color-primary);
-          font-weight: 600;
-          font-size: 0.95rem;
-          margin: 0 0 1.25rem 0;
-        }
-        
-        .ticket-details {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 1rem;
-          margin-bottom: 1.5rem;
-          padding-bottom: 1.5rem;
-          border-bottom: 1px dashed var(--color-border);
-        }
-        
-        .detail-item {
-          display: flex;
-          flex-direction: column;
-        }
-        
-        .detail-label {
-          font-size: 0.75rem;
-          color: #000000 !important;
-          font-weight: 800;
-          letter-spacing: 0.05em;
-          margin-bottom: 0.2rem;
-        }
-        
-        .detail-value {
-          font-size: 0.9rem;
-          color: #000000 !important;
-          font-weight: 700;
-        }
-        
-        .ticket-footer {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-top: auto;
-        }
-        
-        .ticket-price {
-          display: flex;
-          align-items: baseline;
-          gap: 0.25rem;
-        }
-        
-        .ticket-price .currency {
-          font-size: 1.2rem;
-          color: var(--color-text-title);
-          font-weight: 700;
-        }
-        
-        .ticket-price .amount {
-          font-size: 2rem;
-          font-weight: 800;
-          color: var(--color-text-title);
-          letter-spacing: -0.05em;
-        }
-      `}</style>
+      </dialog>
     </div>
   );
-};
-
-export default BuyerFlow;
+}

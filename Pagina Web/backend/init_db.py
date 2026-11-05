@@ -12,7 +12,8 @@ def init_db():
         Base.metadata.create_all(bind=engine)
         logger.info("¡Tablas creadas exitosamente!")
     except Exception as e:
-        logger.error(f"Error creando las tablas: {e}")
+        logger.error("No se pudieron inicializar las tablas")
+        raise
 
 if __name__ == "__main__":
     init_db()

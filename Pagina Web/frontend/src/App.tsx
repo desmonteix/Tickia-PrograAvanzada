@@ -1,288 +1,259 @@
-import { useState, useEffect } from 'react';
-import api from './api';
-import './index.css';
+import { useEffect, useRef, useState } from 'react';
+import api, { errorMessage } from './api';
+import type { User } from './types';
 import SellerFlow from './components/SellerFlow';
 import BuyerFlow from './components/BuyerFlow';
 import AuthFlow from './components/AuthFlow';
 import WalletFlow from './components/WalletFlow';
 import AdminDashboard from './components/AdminDashboard';
-import WaitlistView from './components/WaitlistView';
 
-function App() {
-  const [currentView, setCurrentView] = useState('catalog'); // 'catalog', 'seller', 'login', 'wallet', 'admin'
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [waitlistStatus, setWaitlistStatus] = useState<any>(null);
-  
-  // Theme state (default dark)
+type View = 'catalog' | 'seller' | 'login' | 'wallet' | 'admin';
+const getView = (): View => {
+  const view = window.location.hash.slice(1);
+  return ['seller', 'login', 'wallet', 'admin'].includes(view) ? (view as View) : 'catalog';
+};
+
+export default function App() {
+  const [view, setView] = useState<View>(getView);
+  const [user, setUser] = useState<User | null>(null);
+  const [checkingSession, setCheckingSession] = useState(true);
+  const [notice, setNotice] = useState('');
+  const [search, setSearch] = useState('');
   const [isDark, setIsDark] = useState(true);
-
+  const nextView = useRef<View>('catalog');
+  const heading = useRef<HTMLElement>(null);
+  function navigate(destination: View) {
+    window.location.hash = destination;
+  }
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    document.documentElement.dataset.theme = isDark ? 'dark' : 'light';
   }, [isDark]);
-
   useEffect(() => {
-    // Checkear url por params de tracking
-    const urlParams = new URLSearchParams(window.location.search);
-    const refTicket = urlParams.get('ref_ticket');
-    if (refTicket) {
-      api.post(`/tickets/${refTicket}/track-visit`).catch(() => {});
-      // Limpiar URL
-      window.history.replaceState({}, '', window.location.pathname);
-    }
-    
-    // Checkear sesión con el backend usando cookies
-    const checkAuth = async () => {
-      try {
-        const response = await api.get('/auth/me');
-        setIsAuthenticated(true);
-        if (response.data?.is_admin) {
-          setIsAdmin(true);
-        }
-        
-        try {
-          const wlResponse = await api.get('/auth/waitlist/status');
-          setWaitlistStatus(wlResponse.data);
-          if (!wlResponse.data.has_access && !response.data?.is_admin) {
-            setCurrentView('waitlist');
-          }
-        } catch(e) {}
-        
-      } catch (err) {
-        setIsAuthenticated(false);
-        setIsAdmin(false);
+    const controller = new AbortController();
+    api
+      .get<User>('/auth/me', { signal: controller.signal })
+      .then((response) => setUser(response.data))
+      .catch((error) => {
+        if (!controller.signal.aborted && error?.response?.status !== 401)
+          setNotice(
+            errorMessage(error, 'No pudimos comprobar tu sesión. Intenta ingresar de nuevo.'),
+          );
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setCheckingSession(false);
+      });
+    const onHash = () => {
+      if (
+        ['catalog', 'seller', 'login', 'wallet', 'admin'].includes(window.location.hash.slice(1))
+      ) {
+        setView(getView());
+        heading.current?.focus();
       }
     };
-    checkAuth();
+    const onExpired = () => {
+      setUser(null);
+      setNotice('Tu sesión terminó. Ingresa de nuevo para continuar.');
+      navigate('login');
+    };
+    window.addEventListener('hashchange', onHash);
+    window.addEventListener('tickia:session-expired', onExpired);
+    const url = new URL(window.location.href);
+    const referral = url.searchParams.get('ref_ticket');
+    if (referral && /^[0-9a-f-]{36}$/i.test(referral)) {
+      void api.post(`/tickets/${referral}/track-visit`).catch(() => undefined);
+      url.searchParams.delete('ref_ticket');
+      window.history.replaceState({}, '', url);
+    }
+    return () => {
+      controller.abort();
+      window.removeEventListener('hashchange', onHash);
+      window.removeEventListener('tickia:session-expired', onExpired);
+    };
   }, []);
-
-  const handleLogout = async () => {
+  async function logout() {
     try {
       await api.post('/auth/logout');
-    } catch (err) {
-      console.error("Error logging out", err);
+      setUser(null);
+      setNotice('Cerraste tu sesión.');
+      navigate('catalog');
+    } catch (error) {
+      setNotice(errorMessage(error, 'No se pudo cerrar la sesión. Inténtalo otra vez.'));
     }
-    setIsAuthenticated(false);
-    setIsAdmin(false);
-    setCurrentView('catalog');
-  };
-
+  }
+  function requireLogin(destination: View) {
+    nextView.current = destination;
+    navigate('login');
+  }
+  const protectedView = ['seller', 'wallet', 'admin'].includes(view);
+  const visibleView = protectedView && !user ? 'login' : view;
   return (
     <div className="app-container">
-      <nav className="navbar glass-panel">
-        <div className="logo-container" onClick={() => {
-          if (isAuthenticated && !waitlistStatus?.has_access && !isAdmin) {
-            setCurrentView('waitlist');
-          } else {
-            setCurrentView('catalog');
-          }
-        }} style={{cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'transform 0.2s', flexShrink: 0}} onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
-          <svg width="36" height="36" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M 4 20 L 14 20" stroke="var(--color-primary)" strokeWidth="3.5" strokeLinecap="round"/>
-            <path d="M 7 14 L 15 14" stroke="var(--color-primary)" strokeWidth="3.5" strokeLinecap="round"/>
-            <path d="M 10 26 L 16 26" stroke="var(--color-primary)" strokeWidth="3.5" strokeLinecap="round"/>
-            <path d="M 2 17 L 9 17" stroke="var(--color-primary)" strokeWidth="3.5" strokeLinecap="round"/>
-            <path d="M 5 23 L 11 23" stroke="var(--color-primary)" strokeWidth="3.5" strokeLinecap="round"/>
-            <g transform="rotate(-8, 24, 20)">
-              <path d="M 14 10 C 14 8.5 15.5 7.5 17 7.5 L 32 7.5 C 34 7.5 35 9 35 11 L 35 16 A 3 3 0 0 0 35 24 L 35 29 C 35 31 34 32.5 32 32.5 L 17 32.5 C 15.5 32.5 14 31.5 14 30 L 14 10 Z" fill="var(--color-primary)"/>
-              <path d="M 20 20 L 23 23 L 29 15" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-            </g>
-          </svg>
-          <span style={{color: 'var(--color-text-title)', fontWeight: '800', fontSize: '1.8rem', letterSpacing: '-0.03em'}}>Tickia</span>
-        </div>
-
-        {currentView === 'catalog' && (!isAuthenticated || waitlistStatus?.has_access || isAdmin) && (
-          <div style={{flex: 1, maxWidth: '600px', margin: '0 2rem'}}>
-            <input 
-              type="text"
-              placeholder="Buscar eventos o zonas (ej. Bad Bunny)"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%', 
-                padding: '1rem 1.8rem', 
-                fontSize: '1.15rem',
-                fontWeight: '500',
-                borderRadius: '50px',
-                border: '2px solid rgba(0,0,0,0.1)',
-                background: '#FFFFFF',
-                color: '#0A0A0A',
-                outline: 'none',
-                boxShadow: '0 4px 15px rgba(0,0,0,0.08)',
-                transition: 'all 0.2s ease'
-              }}
-              onFocus={(e) => {
-                e.target.style.boxShadow = '0 6px 20px rgba(255, 90, 37, 0.15)';
-                e.target.style.borderColor = 'var(--color-primary)';
-              }}
-              onBlur={(e) => {
-                e.target.style.boxShadow = '0 4px 15px rgba(0,0,0,0.08)';
-                e.target.style.borderColor = 'rgba(0,0,0,0.1)';
-              }}
+      <a className="skip-link" href="#main-content">
+        Saltar al contenido
+      </a>
+      <header className="site-header">
+        <nav className="navbar container" aria-label="Navegación principal">
+          <button
+            className="brand-link"
+            aria-label="Tickia, inicio"
+            onClick={() => navigate('catalog')}
+          >
+            <img
+              src={isDark ? '/brand/tickia-dark.png' : '/brand/tickia-light.png'}
+              alt="tickia"
+              width="158"
+              height="36"
             />
+          </button>
+          <div className="nav-links">
+            <button
+              className="btn btn-ghost"
+              aria-current={view === 'catalog' ? 'page' : undefined}
+              onClick={() => navigate('catalog')}
+            >
+              Explorar
+            </button>
+            <button
+              className="btn btn-ghost"
+              aria-current={view === 'seller' ? 'page' : undefined}
+              onClick={() => (user ? navigate('seller') : requireLogin('seller'))}
+            >
+              Vender
+            </button>
+            {user && (
+              <button className="btn btn-ghost" onClick={() => navigate('wallet')}>
+                Mis compras
+              </button>
+            )}
+            {user?.is_admin && (
+              <button className="btn btn-ghost" onClick={() => navigate('admin')}>
+                Administración
+              </button>
+            )}
+            <button
+              className="btn btn-ghost theme-toggle"
+              aria-label={isDark ? 'Activar tema claro' : 'Activar tema oscuro'}
+              onClick={() => setIsDark((value) => !value)}
+            >
+              {isDark ? '◐' : '◑'}
+            </button>
+            {user ? (
+              <button className="btn btn-secondary" onClick={() => void logout()}>
+                Salir
+              </button>
+            ) : (
+              <button className="btn btn-primary" onClick={() => requireLogin('catalog')}>
+                Ingresar
+              </button>
+            )}
+          </div>
+        </nav>
+      </header>
+      <main id="main-content" ref={heading} tabIndex={-1} className="main-content container">
+        {notice && (
+          <div className="notice" role="status">
+            {notice}
+            <button
+              className="btn btn-ghost"
+              aria-label="Cerrar aviso"
+              onClick={() => setNotice('')}
+            >
+              ×
+            </button>
           </div>
         )}
-
-        <div className="nav-links" style={{flexShrink: 0}}>
-          {(!isAuthenticated || (waitlistStatus?.has_access || isAdmin)) && (
-            <>
-              <button 
-                className={`btn ${currentView === 'catalog' ? 'btn-secondary' : 'btn-ghost'}`} 
-                onClick={() => setCurrentView('catalog')}
-              >
-                Explorar
-              </button>
-              
-              {isAuthenticated && (
-                <button 
-                  className={`btn ${currentView === 'wallet' ? 'btn-secondary' : 'btn-ghost'}`} 
-                  onClick={() => setCurrentView('wallet')} 
-                >
-                  Mis Entradas
-                </button>
-              )}
-
-              {isAdmin && (
-                <button 
-                  className={`btn ${currentView === 'admin' ? 'btn-secondary' : 'btn-ghost'}`} 
-                  onClick={() => setCurrentView('admin')} 
-                  style={{color: 'var(--color-danger)'}}
-                >
-                  Admin Panel
-                </button>
-              )}
-
-              <button 
-                className={`btn ${currentView === 'seller' ? 'btn-secondary' : 'btn-ghost'}`} 
-                onClick={() => {
-                  if (!isAuthenticated) return setCurrentView('login');
-                  setCurrentView('seller');
+        {checkingSession && protectedView ? (
+          <p role="status">Comprobando tu sesión…</p>
+        ) : (
+          <>
+            {visibleView === 'catalog' && (
+              <>
+                <section className="hero-section" aria-labelledby="hero-title">
+                  <p className="eyebrow">Entradas entre personas</p>
+                  <h1 id="hero-title">
+                    Tu entrada,
+                    <br />
+                    <span>su próximo plan.</span>
+                  </h1>
+                  <p>Tickia conecta a quien ya no puede ir con quien sí quiere ir.</p>
+                  <div className="hero-actions">
+                    <a className="btn btn-primary" href="#events">
+                      Buscar mi evento <span aria-hidden="true">↗</span>
+                    </a>
+                    <button
+                      className="btn btn-secondary"
+                      onClick={() => (user ? navigate('seller') : requireLogin('seller'))}
+                    >
+                      Vender mi entrada
+                    </button>
+                  </div>
+                  <div className="brand-ticket" aria-hidden="true">
+                    <img src="/brand/tickia-symbol-lime.png" alt="" />
+                    <span>
+                      Si tú no vas,
+                      <br />
+                      que vaya alguien.
+                    </span>
+                    <small>UNA ENTRADA · DOS PERSONAS · UN PLAN</small>
+                  </div>
+                </section>
+                <section id="events" aria-labelledby="events-title">
+                  <div className="section-heading">
+                    <div>
+                      <p className="eyebrow">Encuentra tu próximo plan</p>
+                      <h2 id="events-title">Entradas disponibles</h2>
+                    </div>
+                    <div className="search-field">
+                      <label className="sr-only" htmlFor="event-search">
+                        Buscar eventos o zonas
+                      </label>
+                      <input
+                        id="event-search"
+                        type="search"
+                        className="input-field"
+                        placeholder="Busca un evento o una zona"
+                        value={search}
+                        onChange={(event) => setSearch(event.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="catalog-results">
+                    <BuyerFlow
+                      searchQuery={search}
+                      onRequireLogin={() => requireLogin('catalog')}
+                    />
+                  </div>
+                </section>
+              </>
+            )}
+            {visibleView === 'seller' && <SellerFlow />}
+            {visibleView === 'wallet' && <WalletFlow />}
+            {visibleView === 'admin' &&
+              (user?.is_admin ? (
+                <AdminDashboard />
+              ) : (
+                <p role="alert">No tienes acceso a administración.</p>
+              ))}
+            {visibleView === 'login' && (
+              <AuthFlow
+                onLoginSuccess={async () => {
+                  const response = await api.get<User>('/auth/me');
+                  setUser(response.data);
+                  setNotice('Ya puedes comprar y vender entradas.');
+                  navigate(protectedView ? view : nextView.current);
                 }}
-              >
-                Vender
-              </button>
-
-              <div style={{width: '1px', height: '24px', background: 'var(--color-border)', margin: '0 8px'}}></div>
-            </>
-          )}
-
-          <button 
-            className="btn btn-ghost" 
-            onClick={() => setIsDark(!isDark)}
-            title="Cambiar Tema"
-            style={{padding: '8px', borderRadius: '50%'}}
-          >
-            {isDark ? '☀️' : '🌙'}
-          </button>
-          
-          {isAuthenticated ? (
-            <button className="btn btn-ghost" onClick={handleLogout}>Salir</button>
-          ) : (
-            <button className="btn btn-primary" onClick={() => setCurrentView('login')}>Ingresar</button>
-          )}
-        </div>
-      </nav>
-
-      <main className="main-content container animate-fade-in" style={{marginTop: '100px'}}>
-        {currentView === 'catalog' && (
-           <>
-             <div className="hero-section" style={{textAlign: 'center', padding: '4rem 0 3rem 0'}}>
-               <h1 style={{fontSize: '3.5rem', margin: '0'}}>
-                 El marketplace <span className="text-gradient-primary">infalible</span> para tus entradas.
-               </h1>
-             </div>
-             <BuyerFlow searchQuery={searchQuery} onRequireLogin={() => setCurrentView('login')} />
-           </>
-        )}
-        {currentView === 'waitlist' && waitlistStatus && <WaitlistView status={waitlistStatus} />}
-        {currentView === 'seller' && <SellerFlow />}
-        {currentView === 'wallet' && <WalletFlow />}
-        {currentView === 'admin' && <AdminDashboard />}
-        {currentView === 'login' && (
-          <AuthFlow onLoginSuccess={async () => {
-            setIsAuthenticated(true);
-            try {
-              const res = await api.get('/auth/me');
-              const isAdmin = res.data?.is_admin;
-              setIsAdmin(isAdmin);
-              const wlResponse = await api.get('/auth/waitlist/status');
-              setWaitlistStatus(wlResponse.data);
-              if (!wlResponse.data.has_access && !isAdmin) {
-                setCurrentView('waitlist');
-              } else {
-                setCurrentView('catalog');
-              }
-            } catch(e) {
-              setCurrentView('catalog');
-            }
-          }} />
+              />
+            )}
+          </>
         )}
       </main>
-
-      <style>{`
-        .app-container {
-          min-height: 100vh;
-          display: flex;
-          flex-direction: column;
-        }
-        .navbar {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          z-index: 100;
-          margin: 1rem 2rem;
-          padding: 1rem 1.5rem;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-        .nav-links {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-        .main-content {
-          padding: 2rem;
-          max-width: 1200px;
-          margin: 0 auto;
-          flex: 1;
-          width: 100%;
-          box-sizing: border-box;
-        }
-        .mock-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-          gap: 1.5rem;
-          margin-top: 2rem;
-        }
-        .ticket-card, .form-card {
-          background: white;
-          padding: 1.5rem;
-          border-radius: var(--border-radius-lg);
-          border: 1px solid var(--color-border);
-          box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-          transition: transform 0.2s ease;
-        }
-        .ticket-card:hover {
-          transform: translateY(-5px);
-          border-color: var(--color-primary);
-        }
-        .price-tag {
-          font-size: 1.5rem;
-          font-weight: bold;
-          color: var(--color-text-title);
-          margin: 1rem 0;
-        }
-        input.input-field, input[type="number"], input[type="file"] {
-            border: 1px solid var(--color-border);
-            border-radius: var(--border-radius-sm);
-            padding: 0.5rem;
-        }
-      `}</style>
+      <footer className="site-footer container">
+        <p>tickia · Tu entrada, su próximo plan.</p>
+        <p>Entradas entre personas. Tickia no es una tiquetera oficial.</p>
+        <a href="https://www.instagram.com/tickia.lat/" target="_blank" rel="noopener noreferrer">
+          @tickia.lat ↗
+        </a>
+      </footer>
     </div>
   );
 }
-
-export default App;

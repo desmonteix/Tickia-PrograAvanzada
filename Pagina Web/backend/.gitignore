@@ -5,6 +5,7 @@ __pycache__/
 # Environments
 .env
 .env.*
+!.env.example
 .venv
 env/
 venv/
@@ -17,3 +18,5 @@ venv.bak/
 
 # Logs
 *.log
+
+test-results/
