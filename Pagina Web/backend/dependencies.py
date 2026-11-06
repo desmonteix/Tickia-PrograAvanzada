@@ -5,6 +5,7 @@ from .database import get_db
 from .auth_utils import decode_access_token
 from . import models
 import uuid
+from datetime import datetime, timezone
 
 # We keep OAuth2PasswordBearer for swagger UI compatibility, but custom logic for cookies
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login", auto_error=False)
@@ -31,7 +32,7 @@ def get_current_user(request: Request, token: str = Depends(oauth2_scheme), db: 
         
     try:
         user_id = uuid.UUID(user_id_str)
-    except ValueError:
+    except (ValueError, TypeError, AttributeError):
         raise credentials_exception
 
     user = db.query(models.User).filter(models.User.id == user_id).first()
@@ -39,5 +40,11 @@ def get_current_user(request: Request, token: str = Depends(oauth2_scheme), db: 
         raise credentials_exception
     if user.is_suspended:
         raise HTTPException(status_code=403, detail="User account is suspended")
+    if user.banned_until:
+        banned_until = user.banned_until
+        if banned_until.tzinfo is None:
+            banned_until = banned_until.replace(tzinfo=timezone.utc)
+        if banned_until > datetime.now(timezone.utc):
+            raise HTTPException(status_code=403, detail="Tu cuenta está suspendida temporalmente.")
         
     return user

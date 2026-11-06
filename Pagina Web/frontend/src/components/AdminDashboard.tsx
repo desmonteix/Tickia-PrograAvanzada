@@ -1,143 +1,132 @@
-import React, { useState, useEffect } from 'react';
-import api from '../api';
-
+import { useState } from 'react';
+import api, { errorMessage } from '../api';
+import { useResource } from '../useResource';
+import { money } from '../types';
+import AdminClaims from './AdminClaims';
 interface Metrics {
   total_users: number;
   total_tickets: number;
   total_transactions: number;
   total_revenue: number;
 }
-
-interface User {
+interface AdminUser {
   id: string;
   email: string;
   trust_score: number;
+  rating?: number;
+  warning_count?: number;
   is_suspended: boolean;
   banned_until: string | null;
   is_admin: boolean;
 }
-
-const AdminDashboard: React.FC = () => {
-  const [metrics, setMetrics] = useState<Metrics | null>(null);
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function AdminDashboard() {
+  const metrics = useResource<Metrics>('/admin/metrics');
+  const users = useResource<AdminUser[]>('/admin/users');
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const [busy, setBusy] = useState('');
+  async function ban(user: AdminUser) {
+    if (!window.confirm(`¿Suspender a ${user.email} durante 7 días?`)) return;
+    setBusy(user.id);
+    setError('');
     try {
-      setLoading(true);
-      const [metricsRes, usersRes] = await Promise.all([
-        api.get('/admin/metrics'),
-        api.get('/admin/users')
-      ]);
-      setMetrics(metricsRes.data);
-      setUsers(usersRes.data);
-      setError('');
-    } catch (err: any) {
-      console.error(err);
-      setError(err.response?.data?.detail || 'Error loading admin data');
+      await api.post(`/admin/users/${user.id}/ban`, null, { params: { days: 7 } });
+      users.refresh();
+    } catch (failure) {
+      setError(errorMessage(failure));
     } finally {
-      setLoading(false);
+      setBusy('');
     }
-  };
-
-  const handleBanUser = async (userId: string, days: number) => {
-    if (!window.confirm(`¿Seguro que quieres banear a este usuario por ${days} días?`)) return;
-    try {
-      await api.post(`/admin/users/${userId}/ban?days=${days}`);
-      alert(`Usuario baneado exitosamente por ${days} días.`);
-      fetchData();
-    } catch (err: any) {
-      alert(err.response?.data?.detail || 'Error al banear usuario');
-    }
-  };
-
-  if (loading) {
-    return <div style={{textAlign: 'center', padding: '4rem'}}>Cargando panel de administración...</div>;
   }
-
-  if (error) {
-    return <div style={{textAlign: 'center', padding: '4rem', color: 'var(--color-danger)'}}>{error}</div>;
-  }
-
+  const failure = error || metrics.error || users.error;
   return (
-    <div className="admin-dashboard animate-fade-in" style={{padding: '2rem'}}>
-      <h1 style={{marginBottom: '2rem'}}>Panel de Administración</h1>
-      
-      <div className="metrics-grid" style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '3rem'}}>
-        <div className="glass-panel" style={{padding: '1.5rem', borderRadius: 'var(--border-radius-lg)', textAlign: 'center'}}>
-          <h3 style={{color: 'var(--color-text-secondary)', margin: '0 0 0.5rem 0'}}>Usuarios Totales</h3>
-          <p style={{fontSize: '2rem', fontWeight: 'bold', margin: '0'}}>{metrics?.total_users}</p>
-        </div>
-        <div className="glass-panel" style={{padding: '1.5rem', borderRadius: 'var(--border-radius-lg)', textAlign: 'center'}}>
-          <h3 style={{color: 'var(--color-text-secondary)', margin: '0 0 0.5rem 0'}}>Entradas Publicadas</h3>
-          <p style={{fontSize: '2rem', fontWeight: 'bold', margin: '0'}}>{metrics?.total_tickets}</p>
-        </div>
-        <div className="glass-panel" style={{padding: '1.5rem', borderRadius: 'var(--border-radius-lg)', textAlign: 'center'}}>
-          <h3 style={{color: 'var(--color-text-secondary)', margin: '0 0 0.5rem 0'}}>Transacciones</h3>
-          <p style={{fontSize: '2rem', fontWeight: 'bold', margin: '0'}}>{metrics?.total_transactions}</p>
-        </div>
-        <div className="glass-panel" style={{padding: '1.5rem', borderRadius: 'var(--border-radius-lg)', textAlign: 'center'}}>
-          <h3 style={{color: 'var(--color-text-secondary)', margin: '0 0 0.5rem 0'}}>Ingresos Plataforma</h3>
-          <p style={{fontSize: '2rem', fontWeight: 'bold', margin: '0', color: 'var(--color-success)'}}>S/ {metrics?.total_revenue.toFixed(2)}</p>
-        </div>
-      </div>
-
-      <h2>Gestión de Usuarios</h2>
-      <div className="glass-panel" style={{borderRadius: 'var(--border-radius-lg)', overflow: 'hidden'}}>
-        <table style={{width: '100%', borderCollapse: 'collapse', textAlign: 'left'}}>
-          <thead>
-            <tr style={{background: 'rgba(0,0,0,0.1)'}}>
-              <th style={{padding: '1rem'}}>Email</th>
-              <th style={{padding: '1rem'}}>Trust Score</th>
-              <th style={{padding: '1rem'}}>Estado</th>
-              <th style={{padding: '1rem'}}>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map(user => (
-              <tr key={user.id} style={{borderTop: '1px solid var(--color-border)'}}>
-                <td style={{padding: '1rem'}}>
-                  {user.email}
-                  {user.is_admin && <span style={{marginLeft: '8px', fontSize: '0.8rem', background: 'var(--color-primary)', color: 'white', padding: '2px 6px', borderRadius: '4px'}}>ADMIN</span>}
-                </td>
-                <td style={{padding: '1rem'}}>
-                  <span style={{color: user.trust_score < 50 ? 'var(--color-danger)' : 'var(--color-success)'}}>
-                    {user.trust_score}
-                  </span>
-                </td>
-                <td style={{padding: '1rem'}}>
-                  {user.banned_until && new Date(user.banned_until) > new Date() ? (
-                    <span style={{color: 'var(--color-danger)'}}>Baneado hasta {new Date(user.banned_until).toLocaleDateString()}</span>
-                  ) : user.is_suspended ? (
-                    <span style={{color: 'var(--color-danger)'}}>Suspendido</span>
-                  ) : (
-                    <span style={{color: 'var(--color-success)'}}>Activo</span>
-                  )}
-                </td>
-                <td style={{padding: '1rem'}}>
-                  {!user.is_admin && (
-                    <button 
-                      className="btn" 
-                      style={{background: 'transparent', border: '1px solid var(--color-danger)', color: 'var(--color-danger)', padding: '0.4rem 0.8rem'}}
-                      onClick={() => handleBanUser(user.id, 7)}
-                      disabled={!!(user.banned_until && new Date(user.banned_until) > new Date())}
-                    >
-                      Ban 7 Días
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <section>
+      <h1>Administración</h1>
+      {failure && (
+        <p role="alert" className="error-message">
+          {failure}
+          <button
+            className="btn btn-secondary"
+            onClick={() => {
+              metrics.refresh();
+              users.refresh();
+            }}
+          >
+            Reintentar
+          </button>
+        </p>
+      )}
+      {metrics.loading || users.loading ? (
+        <p role="status">Cargando administración…</p>
+      ) : (
+        <>
+          {metrics.data && (
+            <dl className="metrics-grid">
+              {[
+                ['Usuarios', metrics.data.total_users],
+                ['Entradas', metrics.data.total_tickets],
+                ['Transacciones', metrics.data.total_transactions],
+                ['Ingresos', money(metrics.data.total_revenue)],
+              ].map(([label, value]) => (
+                <div className="form-card" key={label}>
+                  <dt>{label}</dt>
+                  <dd>{value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          <AdminClaims />
+          <h2>Gestión de usuarios</h2>
+          <div
+            className="table-scroll"
+            role="region"
+            aria-label="Usuarios registrados"
+            tabIndex={0}
+          >
+            <table>
+              <caption className="sr-only">Estado y acciones de los usuarios</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Correo</th>
+                  <th scope="col">Rating / Advertencias</th>
+                  <th scope="col">Estado</th>
+                  <th scope="col">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.data?.map((user) => (
+                  <tr key={user.id}>
+                    <td>
+                      {user.email}
+                      {user.is_admin && ' · Admin'}
+                    </td>
+                    <td>
+                      {typeof user.rating === 'number' ? `${user.rating.toFixed(2)} / 5` : '—'} ·{' '}
+                      {user.warning_count ?? 0} advertencias
+                    </td>
+                    <td>
+                      {user.is_suspended ||
+                      (user.banned_until && new Date(user.banned_until) > new Date())
+                        ? 'Suspendido'
+                        : 'Activo'}
+                    </td>
+                    <td>
+                      {!user.is_admin && (
+                        <button
+                          className="btn btn-secondary"
+                          disabled={!!busy}
+                          onClick={() => void ban(user)}
+                        >
+                          {busy === user.id ? 'Procesando…' : 'Suspender 7 días'}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+    </section>
   );
-};
-
-export default AdminDashboard;
+}

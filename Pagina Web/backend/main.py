@@ -1,106 +1,136 @@
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from contextlib import asynccontextmanager
-from .routers import auth, tickets, payments
-from .rate_limit import limiter
-from slowapi.errors import RateLimitExceeded
-from slowapi import _rate_limit_exceeded_handler
 import asyncio
 import logging
+import os
+from contextlib import asynccontextmanager, suppress
+
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from sqlalchemy import text, inspect
+from slowapi.errors import RateLimitExceeded
+from slowapi import _rate_limit_exceeded_handler
+
+from .database import SessionLocal, engine
+from .routers import auth, tickets, payments, download, admin, purchases
+from .rate_limit import limiter
+from .body_limit import BodyLimitMiddleware
 
 logger = logging.getLogger(__name__)
+is_production = os.getenv("ENVIRONMENT") == "production"
+ORIGINS = [value.strip().rstrip("/") for value in os.getenv(
+    "FRONTEND_PROD_URL", "https://tickia.com,https://www.tickia.com"
+).split(",") if value.strip()]
+if not is_production:
+    ORIGINS += ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174", "http://127.0.0.1:5174"]
 
-# ─── Background Job: liberar reservas expiradas ────────────────────────────────
-async def reservation_cleanup_loop():
-    """Corre cada 60 segundos y libera entradas reservadas que no se pagaron."""
-    from .database import SessionLocal
+
+def run_maintenance():
     from .jobs import release_expired_reservations, check_renomination_deadlines
+    with SessionLocal() as db:
+        release_expired_reservations(db)
+        check_renomination_deadlines(db)
+        from .post_purchase import close_expired_reviews, process_settlements, reconcile_refunds
+        close_expired_reviews(db)
+        process_settlements(db)
+        reconcile_refunds(db)
+
+
+async def reservation_cleanup_loop():
     while True:
         await asyncio.sleep(60)
-        db = SessionLocal()
         try:
-            release_expired_reservations(db)
-            check_renomination_deadlines(db)
-        except Exception as e:
-            logger.error(f"[CLEANUP-JOB] Error en jobs de background: {e}")
-        finally:
-            db.close()
+            await asyncio.to_thread(run_maintenance)
+        except Exception:
+            logger.exception("Falló el mantenimiento de reservas")
+
+
+def validate_production():
+    if not is_production:
+        return
+    from .rate_limit import valid_proxy_secret
+    if not valid_proxy_secret(os.getenv('PROXY_SHARED_SECRET')):
+        raise RuntimeError('PROXY_SHARED_SECRET requiere 32-128 caracteres aleatorios URL-safe')
+    from .qr_utils import _get_fernet
+    _get_fernet()
+    if os.getenv("COOKIE_SAMESITE", "lax") not in ("lax", "strict", "none"):
+        raise RuntimeError("COOKIE_SAMESITE inválido")
+    if not ORIGINS or any(not origin.startswith("https://") for origin in ORIGINS):
+        raise RuntimeError("FRONTEND_PROD_URL requiere orígenes HTTPS explícitos")
+    inspector = inspect(engine)
+    if not {'purchase_reviews', 'dispute_evidence'} <= set(inspector.get_table_names()) or not {'rating', 'warning_count'} <= {column['name'] for column in inspector.get_columns('users')} or 'event_end_date' not in {column['name'] for column in inspector.get_columns('tickets')}:
+        raise RuntimeError('Aplica la migración purchase_reviews.sql antes de iniciar producción.')
+    tx_columns = {column["name"] for column in inspector.get_columns("transactions")}
+    if not {"payment_token_hash", "provider_fee", "seller_net_amount"} <= tx_columns:
+        raise RuntimeError("Aplica la migración production_readiness.sql antes del lanzamiento")
+    for table, index_name in (("tickets", "uq_ticket_active_qr"), ("transactions", "uq_ticket_settlement")):
+        if index_name not in {index["name"] for index in inspector.get_indexes(table)}:
+            raise RuntimeError("Falta un índice de integridad. Aplica production_readiness.sql")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: lanzar job en background
+    validate_production()
     task = asyncio.create_task(reservation_cleanup_loop())
-    logger.info("[STARTUP] Job de limpieza de reservas iniciado (cada 60s).")
-    yield
-    # Shutdown: cancelar el job limpiamente
-    task.cancel()
-    logger.info("[SHUTDOWN] Job de limpieza de reservas detenido.")
+    try:
+        yield
+    finally:
+        task.cancel()
+        with suppress(asyncio.CancelledError):
+            await task
 
-import os
-is_production = os.getenv("ENVIRONMENT") == "production"
 
-# ─── Aplicación ────────────────────────────────────────────────────────────────
 app = FastAPI(
-    title="TickerTrader API", 
-    version="1.0.0", 
-    lifespan=lifespan,
-    # SECURITY: Deshabilitar consolas de debug (Swagger/Redoc) en producción
+    title="Tickia API", version="1.1.0", lifespan=lifespan,
     docs_url=None if is_production else "/docs",
     redoc_url=None if is_production else "/redoc",
-    openapi_url=None if is_production else "/openapi.json"
+    openapi_url=None if is_production else "/openapi.json",
 )
-# Rate limiting global
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
-
-# Lista blanca de orígenes permitidos (CORS) - NUNCA '*' en endpoints autenticados
-ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:5174",
-    "http://127.0.0.1:5174",
-]
-import os
-prod_urls_env = os.getenv("FRONTEND_PROD_URL")
-if prod_urls_env:
-    for url in prod_urls_env.split(','):
-        ORIGINS.append(url.strip())
-# Also allow tickia.com by default
-ORIGINS.extend([
-    "https://tickia.com",
-    "https://www.tickia.com",
-    "https://tickia-frontend-tickia.7w1nku.easypanel.host"
-])
-
+app.add_middleware(BodyLimitMiddleware)
 app.add_middleware(
-    CORSMiddleware,
-    allow_origins=ORIGINS,
-    allow_credentials=True,
+    CORSMiddleware, allow_origins=ORIGINS, allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
+    allow_headers=["Content-Type", "Authorization"],
 )
+for router in (auth.router, tickets.router, payments.router, download.router, admin.router, purchases.router):
+    app.include_router(router)
 
-from .routers import auth, tickets, payments, download, admin
 
-app.include_router(auth.router)
-app.include_router(tickets.router)
-app.include_router(payments.router)
-app.include_router(download.router)
-app.include_router(admin.router)
-
-# ─── Middleware de Headers de Seguridad HTTP ───────────────────────────────────
 @app.middleware("http")
 async def security_headers_middleware(request: Request, call_next):
+    try:
+        content_length = int(request.headers.get("content-length", "0"))
+    except ValueError:
+        return JSONResponse({"detail": "Content-Length inválido."}, status_code=400)
+    if content_length > 6 * 1024 * 1024:
+        return JSONResponse({"detail": "La solicitud es demasiado grande."}, status_code=413)
+    origin = request.headers.get("origin")
+    if request.method not in ("GET", "HEAD", "OPTIONS") and origin and origin.rstrip("/") not in ORIGINS:
+        return JSONResponse({"detail": "Origen de solicitud no permitido."}, status_code=403)
     response = await call_next(request)
-    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-    response.headers["Content-Security-Policy"] = "default-src 'self'"
+    if is_production:
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
-    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Referrer-Policy"] = "no-referrer"
     response.headers["Permissions-Policy"] = "geolocation=(), camera=(), microphone=()"
+    if request.url.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-store"
     return response
 
+
 @app.get("/health")
-async def health_check():
+def health_check():
     return {"status": "ok"}
+
+
+@app.get("/ready")
+def ready_check():
+    try:
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+    except Exception:
+        raise HTTPException(503, "Base de datos no disponible.")
+    return {"status": "ready", "payments_enabled": payments.payment_status()["enabled"]}

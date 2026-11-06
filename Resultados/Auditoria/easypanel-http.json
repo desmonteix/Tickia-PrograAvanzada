@@ -1,0 +1,56 @@
+{
+  "url": "https://tickia-frontend-tickia.7w1nku.easypanel.host",
+  "checked_at_utc": "2026-11-05T17:21:10.210337+00:00",
+  "read_only": true,
+  "results": [
+    {
+      "path": "/",
+      "status": 200,
+      "content_type": "text/html",
+      "headers": {},
+      "html": true
+    },
+    {
+      "path": "/health",
+      "status": 200,
+      "content_type": "text/html",
+      "headers": {},
+      "html": true
+    },
+    {
+      "path": "/ready",
+      "status": 200,
+      "content_type": "text/html",
+      "headers": {},
+      "html": true
+    },
+    {
+      "path": "/api/payments/status",
+      "status": 200,
+      "content_type": "text/html",
+      "headers": {},
+      "html": true
+    },
+    {
+      "path": "/api/auth/me",
+      "status": 200,
+      "content_type": "text/html",
+      "headers": {},
+      "html": true
+    },
+    {
+      "path": "/api/purchases",
+      "status": 200,
+      "content_type": "text/html",
+      "headers": {},
+      "html": true
+    },
+    {
+      "path": "/api/purchases/admin/cases",
+      "status": 200,
+      "content_type": "text/html",
+      "headers": {},
+      "html": true
+    }
+  ]
+}

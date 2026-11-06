@@ -1,0 +1,25 @@
+{
+  "url": "https://tickia-frontend-tickia.7w1nku.easypanel.host",
+  "published_script": "/assets/index-D14QCo6-.js",
+  "bundle_sha256": "9398559f7260e802a9af63a76bdcb7ce8dd7b7ce61973286fc61055e197edebe",
+  "markers": {
+    "waitlist": true,
+    "Mis entradas": true,
+    "Mis compras": false,
+    "Todo bien con mi entrada": false,
+    "Reportar un problema": false,
+    "infalible": true,
+    "uuid-mock-1": true,
+    "uuid-mock-2": true,
+    "Concierto Mock": true,
+    "Festival Mock": true
+  },
+  "application_origins": [
+    "http://localhost",
+    "https://tickia-backend-tickia.7w1nku.easypanel.host/api"
+  ],
+  "local_dist_assets": [
+    "index-4F9tbORE.css",
+    "index-C1HFwT-R.js"
+  ]
+}

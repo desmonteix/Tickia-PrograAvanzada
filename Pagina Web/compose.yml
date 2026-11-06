@@ -1,0 +1,31 @@
+services:
+  backend:
+    build: ./backend
+    env_file: ./backend/.env
+    environment:
+      ENVIRONMENT: production
+      PAYMENT_ENABLED: 'false'
+      SETTLEMENT_ENABLED: 'false'
+      PROXY_SHARED_SECRET: ${PROXY_SHARED_SECRET:?Set a shared random proxy secret}
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'python', '-c', "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    expose: ['8000']
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: /api
+        VITE_CULQI_PUBLIC_KEY: ${VITE_CULQI_PUBLIC_KEY:-}
+    environment:
+      API_UPSTREAM: http://backend:8000
+      PROXY_SHARED_SECRET: ${PROXY_SHARED_SECRET:?Set a shared random proxy secret}
+      TRUSTED_INGRESS_CIDR: ${TRUSTED_INGRESS_CIDR:-127.0.0.1/32}
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports: ['127.0.0.1:8080:80']

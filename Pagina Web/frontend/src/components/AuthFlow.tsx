@@ -1,117 +1,111 @@
-import React, { useState } from 'react';
-import api from '../api';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
+import api, { errorMessage } from '../api';
 
-interface AuthFlowProps {
-  onLoginSuccess: () => void;
-}
-
-const AuthFlow: React.FC<AuthFlowProps> = ({ onLoginSuccess }) => {
+export default function AuthFlow({ onLoginSuccess }: { onLoginSuccess: () => Promise<void> }) {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [dni, setDni] = useState('');
-  
+  const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    if (loading) return;
     setError('');
     setLoading(true);
-
     try {
-      if (isLogin) {
-        // Enviar form data per OAuth2 specs
-        const formData = new URLSearchParams();
-        formData.append('username', email);
-        formData.append('password', password);
-        
-        await api.post('/auth/login', formData, {
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-        });
-        
-        onLoginSuccess();
-      } else {
+      if (!isLogin)
         await api.post('/auth/register', {
-          email,
+          email: email.trim(),
           password,
-          full_name: fullName,
-          dni
+          phone_number: phone.trim(),
         });
-        
-        // Auto-login post registration
-        const formData = new URLSearchParams();
-        formData.append('username', email);
-        formData.append('password', password);
-        await api.post('/auth/login', formData, {
-           headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-        });
-        
-        onLoginSuccess();
-      }
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Error en autenticación');
+      await api.post('/auth/login', new URLSearchParams({ username: email.trim(), password }), {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      });
+      await onLoginSuccess();
+    } catch (failure) {
+      setError(errorMessage(failure, 'No pudimos iniciar tu sesión. Revisa tus datos.'));
     } finally {
       setLoading(false);
     }
-  };
-
+  }
   return (
-    <div className="auth-container animate-fade-in" style={{display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh'}}>
-      <div className="glass-panel" style={{maxWidth: '450px', width: '100%', padding: '2.5rem', position: 'relative', overflow: 'hidden'}}>
-        
-        <div style={{position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: 'var(--color-primary)', borderRadius: '50%', filter: 'blur(80px)', opacity: 0.5, zIndex: 0}}></div>
-        <div style={{position: 'absolute', bottom: '-50px', left: '-50px', width: '150px', height: '150px', background: 'var(--color-success)', borderRadius: '50%', filter: 'blur(80px)', opacity: 0.3, zIndex: 0}}></div>
-
-        <div style={{position: 'relative', zIndex: 1}}>
-          <h2 style={{fontSize: '2rem', marginBottom: '0.5rem', textAlign: 'center'}}>
-            {isLogin ? 'Bienvenido a Tickia' : 'Crea tu cuenta'}
-          </h2>
-          <p style={{color: 'var(--color-text-secondary)', textAlign: 'center', marginBottom: '2rem'}}>
-            {isLogin ? 'Ingresa para gestionar tus entradas.' : 'Únete al marketplace más seguro de entradas.'}
-          </p>
-
-          {error && <div className="badge badge-warning" style={{width: '100%', boxSizing: 'border-box', marginBottom: '1.5rem', padding: '12px', justifyContent: 'center', fontSize: '0.85rem'}}>{error}</div>}
-
-          <form onSubmit={handleSubmit}>
-            {!isLogin && (
-              <>
-                <div className="input-group">
-                  <label className="input-label">Nombre Completo</label>
-                  <input className="input-field" type="text" required value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Ej. Juan Pérez" />
-                </div>
-                <div className="input-group">
-                  <label className="input-label">DNI / Documento</label>
-                  <input className="input-field" type="text" required value={dni} onChange={e => setDni(e.target.value)} placeholder="8 dígitos" />
-                </div>
-              </>
-            )}
-
-            <div className="input-group">
-              <label className="input-label">Correo Electrónico</label>
-              <input className="input-field" type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="correo@ejemplo.com" />
-            </div>
-
-            <div className="input-group">
-              <label className="input-label">Contraseña</label>
-              <input className="input-field" type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" />
-            </div>
-
-            <button type="submit" className="btn btn-primary" style={{width: '100%', marginTop: '1rem', padding: '16px'}} disabled={loading}>
-              {loading ? 'Procesando...' : (isLogin ? 'Iniciar Sesión' : 'Registrarse')}
-            </button>
-          </form>
-
-          <div style={{marginTop: '2rem', textAlign: 'center'}}>
-            <button className="btn btn-ghost" onClick={() => setIsLogin(!isLogin)} style={{fontSize: '0.9rem'}}>
-              {isLogin ? '¿No tienes cuenta? Regístrate' : '¿Ya tienes cuenta? Inicia Sesión'}
-            </button>
-          </div>
+    <section className="form-card narrow" aria-labelledby="auth-title">
+      <p className="eyebrow">Tu próximo plan empieza aquí</p>
+      <h1 id="auth-title">{isLogin ? 'Bienvenido a Tickia' : 'Crea tu cuenta'}</h1>
+      <p>
+        {isLogin
+          ? 'Ingresa para comprar, vender y seguir tus entradas.'
+          : 'Compra y vende entradas con otras personas.'}
+      </p>
+      {error && (
+        <p className="error-message" role="alert">
+          {error}
+        </p>
+      )}
+      <form onSubmit={(event) => void submit(event)}>
+        <div className="input-group">
+          <label htmlFor="auth-email">Correo electrónico</label>
+          <input
+            id="auth-email"
+            className="input-field"
+            type="email"
+            autoComplete="email"
+            maxLength={254}
+            required
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+          />
         </div>
-      </div>
-    </div>
+        {!isLogin && (
+          <div className="input-group">
+            <label htmlFor="auth-phone">Teléfono</label>
+            <input
+              id="auth-phone"
+              className="input-field"
+              type="tel"
+              autoComplete="tel"
+              minLength={6}
+              maxLength={20}
+              pattern="[+0-9 ()-]{6,20}"
+              required
+              value={phone}
+              onChange={(event) => setPhone(event.target.value)}
+            />
+          </div>
+        )}
+        <div className="input-group">
+          <label htmlFor="auth-password">Contraseña</label>
+          <input
+            id="auth-password"
+            className="input-field"
+            type="password"
+            autoComplete={isLogin ? 'current-password' : 'new-password'}
+            minLength={isLogin ? 1 : 8}
+            maxLength={72}
+            required
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            aria-describedby={!isLogin ? 'password-hint' : undefined}
+          />
+          {!isLogin && <small id="password-hint">Usa al menos 8 caracteres.</small>}
+        </div>
+        <button type="submit" className="btn btn-primary full-width" disabled={loading}>
+          {loading ? 'Procesando…' : isLogin ? 'Iniciar sesión' : 'Registrarse'}
+        </button>
+      </form>
+      <button
+        className="btn btn-ghost full-width"
+        disabled={loading}
+        onClick={() => {
+          setIsLogin((value) => !value);
+          setError('');
+        }}
+      >
+        {isLogin ? '¿No tienes cuenta? Regístrate' : '¿Ya tienes cuenta? Inicia sesión'}
+      </button>
+    </section>
   );
-};
-
-export default AuthFlow;
+}
