@@ -1,4 +1,4 @@
-﻿# Despliegue de Tickia
+# Despliegue de Tickia
 
 La web queda preparada para validación en staging. **No habilitar cobros ni anunciar el lanzamiento comercial hasta cerrar los bloqueos del informe de auditoría.** No se ha desplegado este cambio ni se ha alterado la base real.
 
@@ -51,6 +51,34 @@ La reputación se modifica después de confirmar el resultado financiero, una so
 El adaptador actual **no ejecuta abonos bancarios al vendedor**. La investigación está en `Resultados/Auditoria/OPCIONES_PAGOS_PERU.md`. Deben completarse contratación, identificación del vendedor, cuenta verificada, conciliación de cargos, integración y certificación. El comprador paga el precio publicado y todos los cargos se imputan al vendedor. No abrir ventas reales con este circuito incompleto.
 
 ## Opción Docker / Easypanel
+
+### Recuperación del arranque en Easypanel
+
+Si el backend informa `PROXY_SHARED_SECRET requiere 32-128 caracteres`, su entorno tiene la clave ausente o con formato inválido. Generar **una sola clave nueva para este propósito** en una terminal privada con `python -c "import secrets; print(secrets.token_urlsafe(48))"`. Copiar exactamente el mismo resultado en `PROXY_SHARED_SECRET` del backend y del frontend. No pegarlo en chats, repositorios ni variables `VITE_*`. No cambiar `SECRET_KEY` ni `QR_ENCRYPTION_KEY` para resolver este error.
+
+En servicios App separados, configurar estas variables de ejecución:
+
+| Servicio | Variable | Valor |
+| --- | --- | --- |
+| Backend | `PROXY_SHARED_SECRET` | La clave compartida generada |
+| Backend | `FRONTEND_PROD_URL` | `https://tickia-frontend-tickia.7w1nku.easypanel.host` mientras ese sea el dominio usado |
+| Backend | `COOKIE_SAMESITE` | `lax` |
+| Backend | `PAYMENT_ENABLED` / `SETTLEMENT_ENABLED` | `false` / `false` |
+| Frontend | `PROXY_SHARED_SECRET` | Exactamente la misma clave del backend |
+| Frontend | `API_UPSTREAM` | `http://NOMBRE_INTERNO_REAL:8000`, sustituyendo el nombre por el asignado al backend; sin `/api` ni barra final |
+| Frontend | `TRUSTED_INGRESS_CIDR` | IP/red concreta del proxy HTTPS, obtenida del despliegue; no inventarla ni usar toda internet |
+
+Conservar las demás variables privadas del backend ya configuradas. El dominio del frontend debe apuntar al puerto interno **80**; el backend escucha por **HTTP en 8000**. El contexto de build frontend es `Pagina Web/frontend`; el argumento `VITE_API_URL` es `/api`.
+
+El alias `backend` funciona en el Compose incluido, pero no identifica automáticamente un servicio App de Easypanel. Confirmar su nombre interno y que ambos servicios compartan una red que permita resolverlo. Desde la Shell del frontend, `wget -q -O - http://NOMBRE_INTERNO_REAL:8000/health` comprueba DNS, conectividad y salud sin mostrar secretos. Un fallo de esta comprobación requiere revisar nombre/red/estado del backend; no usar un DNS público para resolver servicios internos.
+
+Después de guardar, seleccionar **Deploy** primero para el backend y después para el frontend; guardar variables por sí solo puede no actualizar el contenedor. Comprobar en el dominio frontend `/health`, `/ready`, `/api/tickets` y `/api/auth/me`: se espera 200, 200, 200 y 401 para una sesión anónima. Un error posterior de migración o clave de cifrado se debe resolver con su requisito específico, sin desactivar las validaciones.
+
+La imagen frontend ahora exige un origen explícito y valida el secreto antes de generar nginx. Resuelve el backend mediante el DNS interno Docker durante las solicitudes: la portada puede arrancar mientras la API está ausente, pero `/ready` y `/api/` seguirán fallando hasta que el backend responda. Esto evita reinicios por DNS sin presentar la API como disponible.
+
+Pruebas: `python -m unittest discover -s tests -p test_container_config.py -v` desde `Pagina Web`; con las imágenes `tickia-web` y `tickia-api` construidas, `python tools/test_container_startup.py` verifica el arranque real, DNS inicialmente ausente, recuperación, conservación de ruta/query/cookie y autenticación del proxy. El pipeline ejecuta ambas pruebas y también se activa con cambios en `master`.
+
+Referencias: [variables y despliegues de Easypanel](https://easypanel.io/docs/services/app), [resolución de upstreams variables de nginx](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass) y [DNS interno de Docker](https://docs.docker.com/engine/network/#dns-services).
 
 `Pagina Web/compose.yml` define frontend con nginx y backend. El puerto 8080 se enlaza solo a localhost y debe ponerse detrás del proxy HTTPS del servidor. El frontend usa `/api`; nginx reenvía al backend conservando las cookies en el mismo origen. `API_UPSTREAM` configura el destino al arrancar el contenedor.
 

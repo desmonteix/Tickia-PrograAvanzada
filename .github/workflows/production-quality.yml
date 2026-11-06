@@ -2,7 +2,7 @@ name: Production quality
 
 on:
   push:
-    branches: [main]
+    branches: [master, main]
   pull_request:
 
 permissions:
@@ -56,6 +56,7 @@ jobs:
           cache-dependency-path: Pagina Web/backend/requirements.txt
       - run: python -m pip install -r backend/requirements.txt -r tests/requirements.txt
       - run: python -m pip check
+      - run: python -m unittest discover -s tests -p test_container_config.py -v
       - run: python -m unittest discover -s backend/tests -v
         env:
           TEST_POSTGRES_URL: postgresql+psycopg://tickia:isolated-ci-password@localhost:5432/tickia_test
@@ -103,4 +104,4 @@ jobs:
       - run: docker build -t tickia-api './Pagina Web/backend'
       - run: docker run --rm --entrypoint python tickia-api -c 'import cv2, bcrypt, sqlalchemy, cryptography'
       - run: docker build -t tickia-web './Pagina Web/frontend'
-      - run: docker run --rm -e API_UPSTREAM=http://127.0.0.1:8000 tickia-web sh -c '/docker-entrypoint.d/20-envsubst-on-templates.sh && nginx -t'
+      - run: python3 './Pagina Web/tools/test_container_startup.py'
