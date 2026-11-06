@@ -34,7 +34,8 @@ class ContainerConfigurationTests(unittest.TestCase):
 
     def test_upstream_cannot_contain_path_credentials_or_nginx_syntax(self):
         for upstream in ("backend:8000", "http://backend:8000/", "http://backend:8000/api",
-                         "http://user:password@backend", "http://backend?x=1", 'http://backend";#'):
+                         "http://user:password@backend", "http://backend?x=1", 'http://backend";#',
+                         "http://backend:0", "http://backend:99999", "http://backend\n:8000"):
             with self.subTest(upstream=upstream):
                 result = self.validate(API_UPSTREAM=upstream)
                 self.assertNotEqual(result.returncode, 0)

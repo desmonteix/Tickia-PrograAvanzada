@@ -31,7 +31,7 @@ def eventually(check, description):
 
 def main():
     suffix = uuid.uuid4().hex[:12]
-    network, frontend, backend = (f"tickia-boot-{suffix}-{kind}" for kind in ("net", "web", "api"))
+    network, frontend, backend, parking = (f"tickia-boot-{suffix}-{kind}" for kind in ("net", "web", "api", "parking"))
     secret = secrets.token_urlsafe(48)
     env = {**os.environ, "PROXY_SHARED_SECRET": secret}
     docker("network", "create", network)
@@ -90,12 +90,18 @@ HTTPServer(("0.0.0.0", 8000), Handler).serve_forever()
         assert status == 200 and json.loads(body) == {"path": path, "proxy_authenticated": True}
         assert "HttpOnly" in headers["Set-Cookie"]
         assert request("/health")[0] == 200
+        old_ip = json.loads(docker("inspect", backend).stdout)[0]["NetworkSettings"]["Networks"][network]["IPAddress"]
         docker("rm", "-f", backend)
+        # Occupy the old address so Docker cannot silently reuse it for the API.
+        docker("run", "-d", "--name", parking, "--network", network, "--ip", old_ip,
+               "--entrypoint", "sleep", "tickia-web", "120")
         start_backend()
+        new_ip = json.loads(docker("inspect", backend).stdout)[0]["NetworkSettings"]["Networks"][network]["IPAddress"]
+        assert new_ip != old_ip
         eventually(lambda: request("/ready")[0] == 200, "proxy did not recover after backend replacement")
         print("Docker startup: missing secret rejected; absent DNS tolerated; API paths, query, cookie and authenticated forwarding preserved; backend replacement recovered.")
     finally:
-        docker("rm", "-f", frontend, backend, check=False)
+        docker("rm", "-f", frontend, backend, parking, check=False)
         docker("network", "rm", network, check=False)
 
 

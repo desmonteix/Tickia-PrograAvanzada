@@ -16,6 +16,16 @@ if ! printf '%s\n' "$API_UPSTREAM" | grep -Eq '^https?://[A-Za-z0-9_]([A-Za-z0-9
     exit 1
 fi
 
+authority=${API_UPSTREAM#*://}
+case "$authority" in
+    *:*)
+        port=${authority##*:}
+        if [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
+            echo 'API_UPSTREAM requiere un puerto entre 1 y 65535.' >&2
+            exit 1
+        fi ;;
+esac
+
 PROXY_SHARED_SECRET=${PROXY_SHARED_SECRET:-}
 secret_length=${#PROXY_SHARED_SECRET}
 case "${PROXY_SHARED_SECRET:-}" in

@@ -72,6 +72,8 @@ Conservar las demás variables privadas del backend ya configuradas. El dominio 
 
 El alias `backend` funciona en el Compose incluido, pero no identifica automáticamente un servicio App de Easypanel. Confirmar su nombre interno y que ambos servicios compartan una red que permita resolverlo. Desde la Shell del frontend, `wget -q -O - http://NOMBRE_INTERNO_REAL:8000/health` comprueba DNS, conectividad y salud sin mostrar secretos. Un fallo de esta comprobación requiere revisar nombre/red/estado del backend; no usar un DNS público para resolver servicios internos.
 
+Para recuperar temporalmente la comunicación mientras se identifica la red interna, puede configurarse `API_UPSTREAM=https://tickia-backend-tickia.7w1nku.easypanel.host`, sin ruta ni barra final, si ese dominio sirve la API actual. nginx conserva SNI y verifica su certificado HTTPS. Esta alternativa pasa por el dominio público del backend; la arquitectura final debe usar la red interna.
+
 Después de guardar, seleccionar **Deploy** primero para el backend y después para el frontend; guardar variables por sí solo puede no actualizar el contenedor. Comprobar en el dominio frontend `/health`, `/ready`, `/api/tickets` y `/api/auth/me`: se espera 200, 200, 200 y 401 para una sesión anónima. Un error posterior de migración o clave de cifrado se debe resolver con su requisito específico, sin desactivar las validaciones.
 
 La imagen frontend ahora exige un origen explícito y valida el secreto antes de generar nginx. Resuelve el backend mediante el DNS interno Docker durante las solicitudes: la portada puede arrancar mientras la API está ausente, pero `/ready` y `/api/` seguirán fallando hasta que el backend responda. Esto evita reinicios por DNS sin presentar la API como disponible.
