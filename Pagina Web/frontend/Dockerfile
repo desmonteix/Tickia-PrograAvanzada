@@ -24,9 +24,12 @@ RUN npm run build
 FROM nginx:alpine AS production-stage
 
 # Render the backend origin at container startup using nginx's envsubst entrypoint.
-ENV API_UPSTREAM=http://backend:8000
+ENV API_UPSTREAM=""
 ENV TRUSTED_INGRESS_CIDR=127.0.0.1/32
 ENV PROXY_SHARED_SECRET=""
+ENV NGINX_ENVSUBST_FILTER="^(API_UPSTREAM|TRUSTED_INGRESS_CIDR|PROXY_SHARED_SECRET)$"
+COPY docker-entrypoint.d/19-validate-config.sh /docker-entrypoint.d/19-validate-config.sh
+RUN chmod +x /docker-entrypoint.d/19-validate-config.sh
 COPY nginx.conf /etc/nginx/templates/default.conf.template
 
 # Copy built assets from build-stage

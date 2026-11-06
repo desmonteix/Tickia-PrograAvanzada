@@ -49,7 +49,11 @@ def validate_production():
         return
     from .rate_limit import valid_proxy_secret
     if not valid_proxy_secret(os.getenv('PROXY_SHARED_SECRET')):
-        raise RuntimeError('PROXY_SHARED_SECRET requiere 32-128 caracteres aleatorios URL-safe')
+        raise RuntimeError(
+            'PROXY_SHARED_SECRET requiere 32-128 caracteres aleatorios URL-safe '
+            '(A-Z, a-z, 0-9, _ y -). Configura la misma clave privada en '
+            'backend y frontend/nginx desde las variables de entorno de Easypanel.'
+        )
     from .qr_utils import _get_fernet
     _get_fernet()
     if os.getenv("COOKIE_SAMESITE", "lax") not in ("lax", "strict", "none"):
