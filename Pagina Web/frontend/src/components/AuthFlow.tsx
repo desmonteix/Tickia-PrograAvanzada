@@ -8,6 +8,7 @@ export default function AuthFlow({ onLoginSuccess }: { onLoginSuccess: () => Pro
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(false);
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -15,12 +16,16 @@ export default function AuthFlow({ onLoginSuccess }: { onLoginSuccess: () => Pro
     setError('');
     setLoading(true);
     try {
-      if (!isLogin)
+      if (!isLogin) {
         await api.post('/auth/register', {
           email: email.trim(),
           password,
           phone_number: phone.trim(),
         });
+        // Registration is committed even if login or the session check fails.
+        setIsLogin(true);
+        setNotice('Tu cuenta ya está creada. Usa tu correo y contraseña para ingresar.');
+      }
       await api.post('/auth/login', new URLSearchParams({ username: email.trim(), password }), {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       });
@@ -45,6 +50,7 @@ export default function AuthFlow({ onLoginSuccess }: { onLoginSuccess: () => Pro
           {error}
         </p>
       )}
+      {notice && <p role="status">{notice}</p>}
       <form onSubmit={(event) => void submit(event)}>
         <div className="input-group">
           <label htmlFor="auth-email">Correo electrónico</label>
@@ -102,6 +108,7 @@ export default function AuthFlow({ onLoginSuccess }: { onLoginSuccess: () => Pro
         onClick={() => {
           setIsLogin((value) => !value);
           setError('');
+          setNotice('');
         }}
       >
         {isLogin ? '¿No tienes cuenta? Regístrate' : '¿Ya tienes cuenta? Inicia sesión'}

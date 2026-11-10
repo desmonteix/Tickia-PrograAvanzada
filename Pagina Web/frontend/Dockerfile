@@ -12,8 +12,8 @@ RUN npm ci
 COPY . .
 
 # Build the project
-# Pass VITE_API_URL argument if needed during build time
-ARG VITE_API_URL
+# Production browser calls stay on the same-origin /api proxy.
+ARG VITE_API_URL=/api
 ENV VITE_API_URL=$VITE_API_URL
 ARG VITE_CULQI_PUBLIC_KEY
 ENV VITE_CULQI_PUBLIC_KEY=$VITE_CULQI_PUBLIC_KEY
