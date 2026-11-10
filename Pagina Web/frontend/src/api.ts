@@ -1,7 +1,8 @@
-﻿import axios from 'axios';
+import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  // Production sessions use the same-origin proxy, even with a stale build URL.
+  baseURL: import.meta.env.PROD ? '/api' : import.meta.env.VITE_API_URL || '/api',
   timeout: 20000,
   withCredentials: true,
 });
