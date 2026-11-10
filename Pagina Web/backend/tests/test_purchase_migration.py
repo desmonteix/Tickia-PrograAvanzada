@@ -165,12 +165,15 @@ class PurchaseMigrationPostgresTests(unittest.TestCase):
         postgres_fixtures.PostgreSQLConcurrencyTests.tearDown(self)
 
     def migrate(self):
-        script = (Path(__file__).parents[1] / 'migrations' / 'purchase_reviews.sql').read_text(encoding='utf-8')
+        migration_dir = Path(__file__).parents[1] / 'migrations'
+        script = (migration_dir / 'purchase_reviews.sql').read_text(encoding='utf-8')
+        go_script = (migration_dir / 'dlocal_go.sql').read_text(encoding='utf-8')
         # Existing fixture validates this internally generated schema before cleanup.
         with self.raw_engine.connect().execution_options(isolation_level='AUTOCOMMIT') as connection:
             connection.exec_driver_sql('SET search_path TO "' + self.schema + '"')
             try:
                 connection.exec_driver_sql(script)
+                connection.exec_driver_sql(go_script)
             finally:
                 # The script owns BEGIN/COMMIT; a failed statement must not hide
                 # its real error behind RESET running in an aborted transaction.
@@ -203,6 +206,7 @@ class PurchaseMigrationPostgresTests(unittest.TestCase):
         with self.raw_engine.begin() as connection:
             connection.exec_driver_sql('SET LOCAL search_path TO "' + self.schema + '"')
             connection.exec_driver_sql('DROP TABLE dispute_evidence')
+            connection.exec_driver_sql('DROP TABLE financial_operations')
             connection.exec_driver_sql('DROP TABLE purchase_reviews')
             connection.exec_driver_sql('ALTER TABLE users DROP COLUMN rating, DROP COLUMN warning_count')
             connection.exec_driver_sql('ALTER TABLE tickets DROP COLUMN event_end_date')

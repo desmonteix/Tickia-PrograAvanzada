@@ -12,7 +12,9 @@ class PaymentUnavailable(Exception):
 
 
 class PaymentDeclined(Exception):
-    pass
+    def __init__(self, message='La pasarela rechazó la operación.', http_status=None):
+        super().__init__(message)
+        self.http_status = http_status
 
 
 class PaymentUncertain(Exception):
@@ -20,6 +22,7 @@ class PaymentUncertain(Exception):
 
 
 class CulqiProvider:
+    name = 'culqi'
     def enabled(self):
         key = os.getenv("CULQI_PRIVATE_KEY", "")
         expected = "sk_live_" if os.getenv("ENVIRONMENT") == "production" else "sk_test_"
@@ -98,4 +101,7 @@ class CulqiProvider:
 
 
 def get_payment_provider():
+    if os.getenv('PAYMENT_PROVIDER', 'culqi') == 'dlocal_go':
+        from .dlocal_go import DLocalGoProvider
+        return DLocalGoProvider()
     return CulqiProvider()

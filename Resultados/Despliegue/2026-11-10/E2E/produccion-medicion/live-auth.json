@@ -1,0 +1,307 @@
+{
+  "started_at_utc": "2026-11-10T19:00:48.191021+00:00",
+  "origin": "https://tickia.lat",
+  "test_account_email": "tickia-e2e-12dbbf053b433926@example.com",
+  "steps": [
+    {
+      "name": "open_production_site_with_valid_tls",
+      "result": "PASS",
+      "duration_seconds": 10.978
+    },
+    {
+      "name": "register_and_automatically_sign_in",
+      "result": "PASS",
+      "duration_seconds": 4.694
+    },
+    {
+      "name": "session_survives_reload",
+      "result": "PASS",
+      "duration_seconds": 2.939
+    },
+    {
+      "name": "logout_and_verify_anonymous_after_reload",
+      "result": "PASS",
+      "duration_seconds": 2.743
+    },
+    {
+      "name": "sign_in_with_existing_account",
+      "result": "PASS",
+      "duration_seconds": 2.472
+    },
+    {
+      "name": "existing_account_session_survives_reload",
+      "result": "PASS",
+      "duration_seconds": 2.9
+    },
+    {
+      "name": "final_logout",
+      "result": "PASS",
+      "duration_seconds": 2.677
+    }
+  ],
+  "auth_responses": [
+    {
+      "host": "tickia.lat",
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 401,
+      "seconds_since_start": 11.159
+    },
+    {
+      "host": "tickia.lat",
+      "path": "/api/auth/register",
+      "method": "POST",
+      "status": 201,
+      "seconds_since_start": 13.364
+    },
+    {
+      "host": "tickia.lat",
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200,
+      "seconds_since_start": 14.768
+    },
+    {
+      "host": "tickia.lat",
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "seconds_since_start": 15.637
+    },
+    {
+      "host": "tickia.lat",
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "seconds_since_start": 18.495
+    },
+    {
+      "host": "tickia.lat",
+      "path": "/api/auth/logout",
+      "method": "POST",
+      "status": 200,
+      "seconds_since_start": 18.899
+    },
+    {
+      "host": "tickia.lat",
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 401,
+      "seconds_since_start": 21.334
+    },
+    {
+      "host": "tickia.lat",
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200,
+      "seconds_since_start": 22.873
+    },
+    {
+      "host": "tickia.lat",
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "seconds_since_start": 23.632
+    },
+    {
+      "host": "tickia.lat",
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "seconds_since_start": 26.627
+    },
+    {
+      "host": "tickia.lat",
+      "path": "/api/auth/logout",
+      "method": "POST",
+      "status": 200,
+      "seconds_since_start": 27.01
+    },
+    {
+      "host": "tickia.lat",
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 401,
+      "seconds_since_start": 29.381
+    }
+  ],
+  "auth_requests": [
+    {
+      "event": "started",
+      "host": "tickia.lat",
+      "path": "/api/auth/me",
+      "method": "GET",
+      "seconds_since_start": 10.93
+    },
+    {
+      "event": "finished",
+      "host": "tickia.lat",
+      "path": "/api/auth/me",
+      "method": "GET",
+      "seconds_since_start": 11.16
+    },
+    {
+      "event": "started",
+      "host": "tickia.lat",
+      "path": "/api/auth/register",
+      "method": "POST",
+      "seconds_since_start": 11.253
+    },
+    {
+      "event": "finished",
+      "host": "tickia.lat",
+      "path": "/api/auth/register",
+      "method": "POST",
+      "seconds_since_start": 13.365
+    },
+    {
+      "event": "started",
+      "host": "tickia.lat",
+      "path": "/api/auth/login",
+      "method": "POST",
+      "seconds_since_start": 13.366
+    },
+    {
+      "event": "finished",
+      "host": "tickia.lat",
+      "path": "/api/auth/login",
+      "method": "POST",
+      "seconds_since_start": 14.768
+    },
+    {
+      "event": "started",
+      "host": "tickia.lat",
+      "path": "/api/auth/me",
+      "method": "GET",
+      "seconds_since_start": 14.769
+    },
+    {
+      "event": "finished",
+      "host": "tickia.lat",
+      "path": "/api/auth/me",
+      "method": "GET",
+      "seconds_since_start": 15.645
+    },
+    {
+      "event": "started",
+      "host": "tickia.lat",
+      "path": "/api/auth/me",
+      "method": "GET",
+      "seconds_since_start": 17.747
+    },
+    {
+      "event": "finished",
+      "host": "tickia.lat",
+      "path": "/api/auth/me",
+      "method": "GET",
+      "seconds_since_start": 18.495
+    },
+    {
+      "event": "started",
+      "host": "tickia.lat",
+      "path": "/api/auth/logout",
+      "method": "POST",
+      "seconds_since_start": 18.679
+    },
+    {
+      "event": "finished",
+      "host": "tickia.lat",
+      "path": "/api/auth/logout",
+      "method": "POST",
+      "seconds_since_start": 18.899
+    },
+    {
+      "event": "started",
+      "host": "tickia.lat",
+      "path": "/api/auth/me",
+      "method": "GET",
+      "seconds_since_start": 21.052
+    },
+    {
+      "event": "finished",
+      "host": "tickia.lat",
+      "path": "/api/auth/me",
+      "method": "GET",
+      "seconds_since_start": 21.335
+    },
+    {
+      "event": "started",
+      "host": "tickia.lat",
+      "path": "/api/auth/login",
+      "method": "POST",
+      "seconds_since_start": 21.474
+    },
+    {
+      "event": "finished",
+      "host": "tickia.lat",
+      "path": "/api/auth/login",
+      "method": "POST",
+      "seconds_since_start": 22.873
+    },
+    {
+      "event": "started",
+      "host": "tickia.lat",
+      "path": "/api/auth/me",
+      "method": "GET",
+      "seconds_since_start": 22.874
+    },
+    {
+      "event": "finished",
+      "host": "tickia.lat",
+      "path": "/api/auth/me",
+      "method": "GET",
+      "seconds_since_start": 23.64
+    },
+    {
+      "event": "started",
+      "host": "tickia.lat",
+      "path": "/api/auth/me",
+      "method": "GET",
+      "seconds_since_start": 25.888
+    },
+    {
+      "event": "finished",
+      "host": "tickia.lat",
+      "path": "/api/auth/me",
+      "method": "GET",
+      "seconds_since_start": 26.627
+    },
+    {
+      "event": "started",
+      "host": "tickia.lat",
+      "path": "/api/auth/logout",
+      "method": "POST",
+      "seconds_since_start": 26.789
+    },
+    {
+      "event": "finished",
+      "host": "tickia.lat",
+      "path": "/api/auth/logout",
+      "method": "POST",
+      "seconds_since_start": 27.01
+    },
+    {
+      "event": "started",
+      "host": "tickia.lat",
+      "path": "/api/auth/me",
+      "method": "GET",
+      "seconds_since_start": 29.16
+    },
+    {
+      "event": "finished",
+      "host": "tickia.lat",
+      "path": "/api/auth/me",
+      "method": "GET",
+      "seconds_since_start": 29.382
+    }
+  ],
+  "script_paths": [
+    "/assets/index-DVXUNOs6.js"
+  ],
+  "page_error_types": [],
+  "console_error_count": 4,
+  "credentials_logged": false,
+  "live_payments_attempted": false,
+  "result": "PASS",
+  "finished_at_utc": "2026-11-10T19:01:20.109097+00:00"
+}

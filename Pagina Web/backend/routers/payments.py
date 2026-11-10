@@ -1,6 +1,7 @@
 import hashlib
 import json
 import logging
+import os
 import re
 import uuid
 from datetime import datetime, timezone, timedelta
@@ -84,12 +85,24 @@ def settle_verified_charge(db, tx, ticket, charge):
 
 @router.get("/status")
 def payment_status():
-    return {"enabled": get_payment_provider().enabled()}
+    provider = get_payment_provider()
+    name = os.getenv('PAYMENT_PROVIDER', 'culqi')
+    payouts = False
+    if name == 'dlocal_go':
+        from ..go_fees import fee_terms
+        try:
+            fee_terms()
+            payouts = provider.payouts_enabled()
+        except (PaymentUnavailable, AttributeError):
+            pass
+    return {"enabled": provider.enabled(), "provider": name, 'payouts_enabled': payouts}
 
 
 @router.post("/charge")
 @limiter.limit("5/minute")
 def process_charge(request: Request, charge_req: ChargeRequest, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if os.getenv('PAYMENT_PROVIDER', 'culqi') != 'culqi':
+        raise HTTPException(409, 'Utiliza el checkout del proveedor configurado.')
     provider = get_payment_provider()
     if not provider.enabled():
         raise HTTPException(503, "Los pagos aún no están habilitados.")
@@ -181,6 +194,11 @@ async def culqi_webhook(request: Request, db: Session = Depends(get_db)):
     except (ValueError, TypeError):
         raise HTTPException(400, "Notificación inválida.")
     provider = get_payment_provider()
+    if getattr(provider, 'name', 'culqi') != 'culqi':
+        # Retain canonical verification of historical Culqi orders after a
+        # provider switch; never send a Culqi identifier to Go's endpoints.
+        from ..payment_provider import CulqiProvider
+        provider = CulqiProvider()
     if not provider.enabled():
         raise HTTPException(503, "Los pagos aún no están habilitados.")
     try:

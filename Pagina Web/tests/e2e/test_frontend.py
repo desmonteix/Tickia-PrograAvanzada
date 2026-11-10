@@ -40,10 +40,12 @@ class FrontendTests(unittest.TestCase):
             warmup.route('**/api/auth/me', lambda route: route.fulfill(status=401, json={}))
             warmup.route('**/api/payments/status', lambda route: route.fulfill(json={'enabled':False}))
             warmup.route('https://js.culqi.com/**', lambda route: route.fulfill(body='',content_type='application/javascript'))
-            warmup.goto(BASE)
+            warmup.goto(BASE, wait_until='domcontentloaded')
             expect(warmup.get_by_role('heading', name='Entradas disponibles',exact=True)).to_be_visible(timeout=30000)
             warmup.close()
         except BaseException:
+            if getattr(cls, 'pw', None):
+                cls.pw.stop()
             cls.server.terminate()
             cls.server.wait(timeout=10)
             raise
@@ -59,6 +61,7 @@ class FrontendTests(unittest.TestCase):
         self.context = self.browser.new_context(viewport={"width": 1280, "height": 900})
         self.page = self.context.new_page()
         self.page.set_default_timeout(5000)
+        self.page.set_default_navigation_timeout(30000)
         self.errors = []
         self.page.on("pageerror", lambda error: self.errors.append(str(error)))
         self.page.route("**/api/**", lambda route: route.fulfill(status=401, json={"detail": "Sesión requerida"}))

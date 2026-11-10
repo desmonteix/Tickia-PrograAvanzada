@@ -4,6 +4,9 @@ import api, { errorMessage } from '../api';
 import { useResource } from '../useResource';
 import { money } from '../types';
 import type { Ticket } from '../types';
+import type { PayoutProfile } from '../payments';
+import { settlementLabel } from '../payments';
+import PayoutProfilePanel from './PayoutProfilePanel';
 
 function validFile(file: File): string {
   if (!['image/png', 'image/jpeg'].includes(file.type)) return 'Selecciona una imagen PNG o JPG.';
@@ -15,6 +18,11 @@ interface Sale extends Ticket {
   renomination_deadline?: string;
   estimated_seller_amount?: number;
   seller_net_amount?: number | null;
+  settlement_state?: string | null;
+  settlement_error?: string | null;
+  settlement_reference?: string | null;
+  provider_fee?: number | null;
+  total?: number;
 }
 function Sales() {
   const { data, loading, error, refresh } = useResource<Sale[]>('/tickets/my-sales');
@@ -91,6 +99,40 @@ function Sales() {
                   {ticket.zone} · {money(ticket.price)}
                 </p>
                 <p className="badge">{ticket.estado.replaceAll('_', ' ')}</p>
+                {ticket.settlement_state && (
+                  <>
+                    <p>
+                      {ticket.settlement_state === 'SUCCEEDED' && !ticket.settlement_reference
+                        ? 'Liquidación registrada; sin referencia bancaria disponible en esta vista.'
+                        : settlementLabel(ticket.settlement_state)}
+                    </p>
+                    {ticket.estado === 'REEMBOLSADA' ? (
+                      <p>
+                        Reembolso registrado para esta entrada; no corresponde un abono al vendedor.
+                      </p>
+                    ) : ticket.seller_net_amount != null ? (
+                      <p>
+                        Neto calculado: <strong>{money(Number(ticket.seller_net_amount))}</strong>.
+                        El estado mostrado indica si corresponde y se ejecutó el abono.
+                      </p>
+                    ) : (
+                      <p>
+                        Estimado después de la comisión Tickia:{' '}
+                        {money(ticket.estimated_seller_amount ?? ticket.price * 0.9)}. Falta
+                        conciliar los cargos del proveedor.
+                      </p>
+                    )}
+                    {ticket.provider_fee != null && (
+                      <p>Cargos del proveedor: {money(Number(ticket.provider_fee))}.</p>
+                    )}
+                    {ticket.settlement_error && (
+                      <p className="error-message">{ticket.settlement_error}</p>
+                    )}
+                    {ticket.settlement_reference && (
+                      <p>Referencia financiera: {ticket.settlement_reference}</p>
+                    )}
+                  </>
+                )}
                 {ticket.estado === 'PENDIENTE_RENOMINACION' && (
                   <div className="input-group">
                     <p>
@@ -127,6 +169,12 @@ function Sales() {
 }
 
 export default function SellerFlow() {
+  const payoutProfile = useResource<PayoutProfile>('/payments/payout-profile');
+  const canPublish =
+    !payoutProfile.loading &&
+    !payoutProfile.error &&
+    !!payoutProfile.data &&
+    (!payoutProfile.data.required || payoutProfile.data.can_sell);
   const [tab, setTab] = useState<'upload' | 'sales'>('upload');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -135,7 +183,7 @@ export default function SellerFlow() {
   const formRef = useRef<HTMLFormElement>(null);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (busy) return;
+    if (busy || !canPublish) return;
     const form = new FormData(event.currentTarget);
     const file = form.get('file');
     if (!(file instanceof File) || !file.size) {
@@ -183,6 +231,12 @@ export default function SellerFlow() {
           Mis ventas
         </button>
       </div>
+      <PayoutProfilePanel
+        profile={payoutProfile.data}
+        loading={payoutProfile.loading}
+        error={payoutProfile.error}
+        refresh={payoutProfile.refresh}
+      />
       {tab === 'sales' ? (
         <Sales />
       ) : (
@@ -203,121 +257,129 @@ export default function SellerFlow() {
             </p>
           )}
           <form ref={formRef} onSubmit={(event) => void submit(event)}>
-            <div className="input-group">
-              <label htmlFor="event-name">Nombre del evento</label>
-              <input
-                id="event-name"
-                className="input-field"
-                name="event_name"
-                required
-                minLength={3}
-                maxLength={200}
-              />
-            </div>
-            <div className="input-group">
-              <label htmlFor="event-end-date">Finalización del evento (Perú)</label>
-              <input
-                id="event-end-date"
-                className="input-field"
-                type="datetime-local"
-                name="event_end_date"
-                required
-              />
-              <small>El plazo de reclamo cierra 24 horas después de esta fecha y hora.</small>
-            </div>
-            <div className="form-row">
+            <fieldset className="payment-fields" disabled={busy || !canPublish}>
+              <legend>Datos de la entrada</legend>
               <div className="input-group">
-                <label htmlFor="event-date">Fecha y hora del evento (Perú)</label>
+                <label htmlFor="event-name">Nombre del evento</label>
                 <input
-                  id="event-date"
+                  id="event-name"
+                  className="input-field"
+                  name="event_name"
+                  required
+                  minLength={3}
+                  maxLength={200}
+                />
+              </div>
+              <div className="input-group">
+                <label htmlFor="event-end-date">Finalización del evento (Perú)</label>
+                <input
+                  id="event-end-date"
                   className="input-field"
                   type="datetime-local"
-                  name="event_date"
+                  name="event_end_date"
                   required
                 />
+                <small>El plazo de reclamo cierra 24 horas después de esta fecha y hora.</small>
               </div>
-              <div className="input-group">
-                <label htmlFor="event-zone">Zona</label>
-                <input
-                  id="event-zone"
-                  className="input-field"
-                  name="zone"
-                  required
-                  maxLength={100}
-                />
+              <div className="form-row">
+                <div className="input-group">
+                  <label htmlFor="event-date">Fecha y hora del evento (Perú)</label>
+                  <input
+                    id="event-date"
+                    className="input-field"
+                    type="datetime-local"
+                    name="event_date"
+                    required
+                  />
+                </div>
+                <div className="input-group">
+                  <label htmlFor="event-zone">Zona</label>
+                  <input
+                    id="event-zone"
+                    className="input-field"
+                    name="zone"
+                    required
+                    maxLength={100}
+                  />
+                </div>
               </div>
-            </div>
-            <div className="form-row">
+              <div className="form-row">
+                <div className="input-group">
+                  <label htmlFor="event-company">Tiquetera</label>
+                  <select
+                    id="event-company"
+                    className="input-field"
+                    name="ticketing_company"
+                    required
+                  >
+                    <option value="">Selecciona la tiquetera</option>
+                    <option value="teleticket">Teleticket</option>
+                    <option value="joinnus">Joinnus</option>
+                  </select>
+                </div>
+                <div className="input-group">
+                  <label htmlFor="event-price">Precio de venta (S/)</label>
+                  <input
+                    id="event-price"
+                    className="input-field"
+                    type="number"
+                    name="price"
+                    required
+                    min="3"
+                    max="5000"
+                    step="0.01"
+                  />
+                </div>
+              </div>
+              <p className="notice">
+                Tickia cobra una comisión del 10 % con IGV incluido a quien vende. Los cargos de la
+                pasarela también son del vendedor. El comprador paga el precio publicado sin
+                sobrecostos.
+              </p>
               <div className="input-group">
-                <label htmlFor="event-company">Tiquetera</label>
+                <label htmlFor="event-type">Tipo de entrada</label>
                 <select
-                  id="event-company"
+                  id="event-type"
                   className="input-field"
-                  name="ticketing_company"
-                  required
+                  value={nominated ? 'nominada' : 'no_nominada'}
+                  onChange={(event) => setNominated(event.target.value === 'nominada')}
                 >
-                  <option value="">Selecciona la tiquetera</option>
-                  <option value="teleticket">Teleticket</option>
-                  <option value="joinnus">Joinnus</option>
+                  <option value="no_nominada">No nominada</option>
+                  <option value="nominada">Nominada</option>
                 </select>
               </div>
+              {nominated && (
+                <div className="input-group">
+                  <label className="checkbox-label">
+                    <input type="checkbox" name="is_renominated" /> La entrada ya está renominada en
+                    la tiquetera
+                  </label>
+                  <p className="muted">
+                    Si requiere cambio de titular, deberá completarse mediante el proceso oficial de
+                    la tiquetera.
+                  </p>
+                </div>
+              )}
               <div className="input-group">
-                <label htmlFor="event-price">Precio de venta (S/)</label>
+                <label htmlFor="event-file">Imagen original de la entrada</label>
                 <input
-                  id="event-price"
+                  id="event-file"
                   className="input-field"
-                  type="number"
-                  name="price"
+                  name="file"
+                  type="file"
+                  accept="image/png,image/jpeg"
                   required
-                  min="3"
-                  max="5000"
-                  step="0.01"
                 />
+                <small>PNG o JPG, máximo 5 MB. El QR debe verse completo.</small>
               </div>
-            </div>
-            <p className="notice">
-              Tickia cobra una comisión del 10 % a quien vende. Los cargos de la pasarela también
-              son del vendedor. El comprador paga el precio publicado sin sobrecostos.
-            </p>
-            <div className="input-group">
-              <label htmlFor="event-type">Tipo de entrada</label>
-              <select
-                id="event-type"
-                className="input-field"
-                value={nominated ? 'nominada' : 'no_nominada'}
-                onChange={(event) => setNominated(event.target.value === 'nominada')}
+              <button
+                className="btn btn-primary full-width"
+                type="submit"
+                disabled={busy || !canPublish}
               >
-                <option value="no_nominada">No nominada</option>
-                <option value="nominada">Nominada</option>
-              </select>
-            </div>
-            {nominated && (
-              <div className="input-group">
-                <label className="checkbox-label">
-                  <input type="checkbox" name="is_renominated" /> La entrada ya está renominada en
-                  la tiquetera
-                </label>
-                <p className="muted">
-                  Si requiere cambio de titular, deberá completarse mediante el proceso oficial de
-                  la tiquetera.
-                </p>
-              </div>
-            )}
-            <div className="input-group">
-              <label htmlFor="event-file">Imagen original de la entrada</label>
-              <input
-                id="event-file"
-                className="input-field"
-                name="file"
-                type="file"
-                accept="image/png,image/jpeg"
-                required
-              />
-              <small>PNG o JPG, máximo 5 MB. El QR debe verse completo.</small>
-            </div>
-            <button className="btn btn-primary full-width" type="submit" disabled={busy}>
-              {busy ? 'Publicando…' : 'Publicar mi entrada'}
-            </button>
+                {busy ? 'Publicando…' : 'Publicar mi entrada'}
+              </button>
+            </fieldset>
           </form>
         </div>
       )}

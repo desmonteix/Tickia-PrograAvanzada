@@ -6,10 +6,12 @@ import BuyerFlow from './components/BuyerFlow';
 import AuthFlow from './components/AuthFlow';
 import WalletFlow from './components/WalletFlow';
 import AdminDashboard from './components/AdminDashboard';
+import { paymentTransaction } from './payments';
 
 type View = 'catalog' | 'seller' | 'login' | 'wallet' | 'admin';
 const getView = (): View => {
   const view = window.location.hash.slice(1);
+  if (!view && paymentTransaction(window.location.search)) return 'wallet';
   return ['seller', 'login', 'wallet', 'admin'].includes(view) ? (view as View) : 'catalog';
 };
 
@@ -20,7 +22,7 @@ export default function App() {
   const [notice, setNotice] = useState('');
   const [search, setSearch] = useState('');
   const [isDark, setIsDark] = useState(true);
-  const nextView = useRef<View>('catalog');
+  const nextView = useRef<View>(getView());
   const heading = useRef<HTMLElement>(null);
   function navigate(destination: View) {
     window.location.hash = destination;
@@ -51,6 +53,8 @@ export default function App() {
       }
     };
     const onExpired = () => {
+      const current = getView();
+      if (current !== 'login') nextView.current = current;
       setUser(null);
       setNotice('Tu sesión terminó. Ingresa de nuevo para continuar.');
       navigate('login');
@@ -240,7 +244,13 @@ export default function App() {
                   const response = await api.get<User>('/auth/me');
                   setUser(response.data);
                   setNotice('Ya puedes comprar y vender entradas.');
-                  navigate(protectedView ? view : nextView.current);
+                  navigate(
+                    paymentTransaction(window.location.search)
+                      ? 'wallet'
+                      : protectedView
+                        ? view
+                        : nextView.current,
+                  );
                 }}
               />
             )}

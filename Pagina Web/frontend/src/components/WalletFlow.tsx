@@ -4,6 +4,7 @@ import { useResource } from '../useResource';
 import { eventDate } from '../types';
 import type { Ticket, Purchase, User } from '../types';
 import PurchaseActions from './PurchaseActions';
+import PaymentReturn from './PaymentReturn';
 
 export default function WalletFlow() {
   const { data, loading, error, refresh } = useResource<Purchase[]>('/purchases');
@@ -48,6 +49,7 @@ export default function WalletFlow() {
     <section aria-labelledby="wallet-title">
       <p className="eyebrow">Tus próximos planes</p>
       <h1 id="wallet-title">Mis compras</h1>
+      <PaymentReturn onUpdate={refresh} />
       {typeof profile.data?.rating === 'number' && (
         <p>
           Tu rating: {profile.data.rating.toFixed(2)} / 5

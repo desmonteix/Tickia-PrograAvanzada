@@ -3,6 +3,7 @@ import api, { errorMessage } from '../api';
 import { useResource } from '../useResource';
 import { money } from '../types';
 import AdminClaims from './AdminClaims';
+import GoOperations from './GoOperations';
 interface Metrics {
   total_users: number;
   total_tickets: number;
@@ -75,6 +76,7 @@ export default function AdminDashboard() {
             </dl>
           )}
           <AdminClaims />
+          <GoOperations />
           <h2>Gestión de usuarios</h2>
           <div
             className="table-scroll"
