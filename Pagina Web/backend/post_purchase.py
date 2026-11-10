@@ -6,7 +6,7 @@ from decimal import Decimal
 from fastapi import HTTPException
 
 from . import models
-from .payment_provider import get_payment_provider, PaymentUnavailable, PaymentUncertain, PaymentDeclined
+from .payment_provider import get_payment_provider, CulqiProvider, PaymentUnavailable, PaymentUncertain, PaymentDeclined
 from .state_machine import validate_ticket_transition
 
 
@@ -108,12 +108,17 @@ def process_settlements(db, provider=None):
     if os.getenv('SETTLEMENT_ENABLED', 'false').lower() != 'true':
         return
     provider = provider or get_payment_provider()
+    if getattr(provider, 'name', None) == 'dlocal_go':
+        provider = CulqiProvider()  # Historical Culqi purchases stay on Culqi.
     ids = [row.id for row in db.query(models.PurchaseReview).filter(
         models.PurchaseReview.review_state == 'RESOLVED',
         models.PurchaseReview.settlement_state.in_(['QUEUED', 'BLOCKED']),
     ).all()]
     for review_id in ids:
         row, tx, ticket = lock_review(db, review_id)
+        if tx.payment_provider == 'dlocal_go':
+            db.rollback()
+            continue
         if row.settlement_state not in ('QUEUED', 'BLOCKED'):
             db.rollback()
             continue
@@ -183,6 +188,8 @@ def reconcile_refunds(db, provider=None):
     if os.getenv('SETTLEMENT_ENABLED', 'false').lower() != 'true':
         return
     provider = provider or get_payment_provider()
+    if getattr(provider, 'name', None) == 'dlocal_go':
+        provider = CulqiProvider()
     reconcile = getattr(provider, 'refund_is_complete', None)
     if reconcile is None:
         return
@@ -193,6 +200,9 @@ def reconcile_refunds(db, provider=None):
     for review_id in ids:
         row = db.get(models.PurchaseReview, review_id)
         tx = db.get(models.Transaction, row.transaction_id)
+        if tx.payment_provider == 'dlocal_go':
+            db.rollback()
+            continue
         charge_id, amount_cents = tx.culqi_charge_id, int(tx.amount_total * 100)
         db.rollback()  # Do not hold locks while consulting the provider.
         try:

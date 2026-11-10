@@ -1,0 +1,24 @@
+{
+  "checked_at_utc": "2026-11-10T19:01:20Z",
+  "repository": "desmonteix/Tickia",
+  "pull_request": "https://github.com/desmonteix/Tickia/pull/3",
+  "branch": "fix/auth-same-origin-session",
+  "commit": "32fdae121a6a883daa506e49a888da0d912c490c",
+  "workflow_run_id": 42866551714,
+  "merged": true,
+  "merge_sha": "6a077775ea9cc90b6807304089bbadde80f3dc7c",
+  "deployed": true,
+  "deployed_evidence": "Production renders the created-account notice, sends auth to tickia.lat/api, and passes browser registration/login/reload/logout.",
+  "checks": {
+    "frontend": "success",
+    "backend": "success",
+    "containers": "success",
+    "chromium": "success",
+    "firefox": "success"
+  },
+  "firefox_job_id": 130007035761,
+  "retry_blocker": null,
+  "production_e2e_result": "PASS",
+  "production_evidence": "E2E/produccion-medicion/live-auth.json",
+  "next_steps": []
+}

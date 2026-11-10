@@ -11,7 +11,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
 
 from .database import SessionLocal, engine
-from .routers import auth, tickets, payments, download, admin, purchases
+from .routers import auth, tickets, payments, download, admin, purchases, dlocal
 from .rate_limit import limiter
 from .body_limit import BodyLimitMiddleware
 
@@ -33,6 +33,12 @@ def run_maintenance():
         close_expired_reviews(db)
         process_settlements(db)
         reconcile_refunds(db)
+        from .go_payments import reconcile_go_payments
+        from .go_settlements import process_go_settlements
+        from .dlocal_go import DLocalGoProvider
+        go = DLocalGoProvider()
+        reconcile_go_payments(db, go)
+        process_go_settlements(db, go)
 
 
 async def reservation_cleanup_loop():
@@ -66,6 +72,12 @@ def validate_production():
     tx_columns = {column["name"] for column in inspector.get_columns("transactions")}
     if not {"payment_token_hash", "provider_fee", "seller_net_amount"} <= tx_columns:
         raise RuntimeError("Aplica la migración production_readiness.sql antes del lanzamiento")
+    if (not {'payout_profiles', 'financial_operations'} <= set(inspector.get_table_names())
+            or not {'payment_provider', 'provider_payment_id', 'available_after', 'approved_at', 'fee_terms_hash', 'payout_terms', 'payin_fee', 'payout_fee', 'checkout_url'} <= tx_columns
+            or 'settlement_check_at' not in {c['name'] for c in inspector.get_columns('purchase_reviews')}):
+        raise RuntimeError('Aplica la migración dlocal_go.sql antes de iniciar esta versión.')
+    if os.getenv('PAYMENT_PROVIDER', 'culqi') not in ('culqi', 'dlocal_go'):
+        raise RuntimeError('PAYMENT_PROVIDER debe ser culqi o dlocal_go.')
     for table, index_name in (("tickets", "uq_ticket_active_qr"), ("transactions", "uq_ticket_settlement")):
         if index_name not in {index["name"] for index in inspector.get_indexes(table)}:
             raise RuntimeError("Falta un índice de integridad. Aplica production_readiness.sql")
@@ -97,7 +109,7 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization"],
 )
-for router in (auth.router, tickets.router, payments.router, download.router, admin.router, purchases.router):
+for router in (auth.router, tickets.router, payments.router, download.router, admin.router, purchases.router, dlocal.router):
     app.include_router(router)
 
 

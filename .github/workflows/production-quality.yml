@@ -93,6 +93,8 @@ jobs:
           VITE_API_URL: https://legacy-backend.invalid/api
       - run: python frontend/tests/test_auth_browser.py
         if: matrix.browser == 'chromium'
+      - run: python frontend/tests/test_go_browser.py
+        if: matrix.browser == 'chromium'
       - run: python -m unittest discover -s tests/e2e -v
         env:
           TICKIA_BROWSER: ${{ matrix.browser }}

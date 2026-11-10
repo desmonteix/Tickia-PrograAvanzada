@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 from decimal import Decimal
 import secrets
@@ -84,6 +85,19 @@ def upload_ticket(
 ):
     if not 3 <= price <= 5000 or Decimal(str(price)).as_tuple().exponent < -2:
         raise HTTPException(422, "El precio debe estar entre S/ 3 y S/ 5,000, con hasta dos decimales.")
+    if os.getenv('PAYMENT_PROVIDER', 'culqi') == 'dlocal_go':
+        from ..go_fees import fee_terms, payin_estimate, payout_amount
+        from ..go_profiles import profile_ready
+        from ..payment_provider import PaymentUnavailable
+        try:
+            terms = fee_terms()
+            if not profile_ready(db.get(models.PayoutProfile, current_user.id), terms):
+                raise HTTPException(409, 'Completa la verificación bancaria y acepta los cargos antes de vender.')
+            total, _, seller = amounts(price)
+            if payout_amount(seller - payin_estimate(total, terms), terms)[0] < Decimal(terms['minimum']):
+                raise HTTPException(422, 'El precio no cubre los cargos y el mínimo de depósito de dLocal Go.')
+        except PaymentUnavailable as exc:
+            raise HTTPException(503, str(exc)) from None
     if not 3 <= len(event_name.strip()) <= 200 or not 1 <= len(zone.strip()) <= 100:
         raise HTTPException(422, "Verifica el nombre del evento y la zona.")
     contact_text = event_name + " " + zone
@@ -168,7 +182,7 @@ def buy_ticket(request: Request, ticket_id: uuid.UUID, current_user: models.User
         return {
             "status": "RESERVADA", "ticket_id": str(ticket.id), "price": float(ticket.price),
             "amount_total": float(ticket.price), "amount_total_cents": int(ticket.price * 100),
-            "reserved_until": utc(ticket.reserved_until).isoformat(), "payment_provider": "culqi",
+            "reserved_until": utc(ticket.reserved_until).isoformat(), "payment_provider": os.getenv('PAYMENT_PROVIDER', 'culqi'),
         }
     except HTTPException:
         db.rollback()
@@ -265,9 +279,14 @@ def get_my_sales(current_user: models.User = Depends(get_current_user), db: Sess
         models.Transaction.ticket_id.in_([ticket.id for ticket in tickets]),
         models.Transaction.status.in_(("PROCESSING", "UNKNOWN", "SUCCEEDED", "REFUND_PENDING", "REFUNDED")),
     ).all()} if tickets else {}
+    reviews = {row.ticket_id: row for row in db.query(models.PurchaseReview).filter(
+        models.PurchaseReview.ticket_id.in_([t.id for t in tickets])).all()} if tickets else {}
     return [{
         "id": str(ticket.id), "event_name": ticket.event_name, "zone": ticket.zone,
         "price": float(ticket.price), "estado": ticket.estado.value,
+        'settlement_state': reviews[ticket.id].settlement_state if ticket.id in reviews else None,
+        'settlement_error': reviews[ticket.id].settlement_error if ticket.id in reviews else None,
+        'settlement_reference': reviews[ticket.id].settlement_reference if ticket.id in reviews else None,
         "estimated_seller_amount": float(amounts(ticket.price)[2]),
         "seller_net_amount": (float(transaction_by_ticket[ticket.id].seller_net_amount)
             if ticket.id in transaction_by_ticket and transaction_by_ticket[ticket.id].seller_net_amount is not None else None),

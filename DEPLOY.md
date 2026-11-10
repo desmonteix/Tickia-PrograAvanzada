@@ -1,8 +1,10 @@
 # Despliegue de Tickia
 
-La web queda preparada para validación en staging. **No habilitar cobros ni anunciar el lanzamiento comercial hasta cerrar los bloqueos del informe de auditoría.** No se ha desplegado este cambio ni se ha alterado la base real.
+La integración financiera requiere validación en staging. **No habilitar cobros ni anunciar el lanzamiento comercial hasta certificar el circuito con la cuenta y las tarifas aprobadas del proveedor.** Las pruebas con un proveedor simulado no acreditan transferencias bancarias reales.
 
 ## Requisitos y estructura
+
+Para payin/payout de dLocal Go, seguir la [guía de credenciales y migración](Resultados/Implementacion/2026-11-09/CONFIGURACION_DLOCAL_GO.md). Requiere `backend/migrations/dlocal_go.sql` y la habilitación de ambos servicios por Go. Sus claves pertenecen únicamente al backend.
 
 - Python 3.13 y Node 22.16 o superior.
 - Código backend: `Pagina Web/backend`; frontend: `Pagina Web/frontend`.
@@ -33,7 +35,7 @@ La clave secreta Culqi pertenece exclusivamente al backend. `VITE_CULQI_PUBLIC_K
 
 1. Crear respaldo verificado y copia de staging de PostgreSQL.
 2. Para una base nueva, desde `Pagina Web`: `python -m backend.init_db`.
-3. Para una base existente, revisar y ejecutar primero `backend/migrations/production_readiness.sql` y después `backend/migrations/purchase_reviews.sql` en staging antes de producción. No es suficiente `create_all`: no migra tablas existentes.
+3. Para una base existente, revisar y ejecutar `backend/migrations/production_readiness.sql`, `backend/migrations/purchase_reviews.sql` y `backend/migrations/dlocal_go.sql`, en ese orden, en staging antes de producción. La versión con Go requiere el nuevo esquema incluso con los pagos apagados. No es suficiente `create_all`: no migra tablas existentes.
 4. Si hay duplicados, la migración debe fallar: resolverlos manualmente, sin borrar operaciones.
 5. Revisar con los vendedores los anuncios antiguos. El código anterior inventaba fechas y hashes QR; no hay evidencia de que esas entradas sean utilizables.
 6. El servidor verifica columnas e índices de integridad al arrancar; una migración pendiente debe impedir su inicio.
@@ -48,7 +50,7 @@ La orden financiera se persiste antes de invocar al proveedor. Los estados `PROC
 
 La reputación se modifica después de confirmar el resultado financiero, una sola vez. Rating inicial 4, rango 0–5 y cambios de 0,25 según la especificación. El catálogo prioriza rating del vendedor, también durante la búsqueda.
 
-El adaptador actual **no ejecuta abonos bancarios al vendedor**. La investigación está en `Resultados/Auditoria/OPCIONES_PAGOS_PERU.md`. Deben completarse contratación, identificación del vendedor, cuenta verificada, conciliación de cargos, integración y certificación. El comprador paga el precio publicado y todos los cargos se imputan al vendedor. No abrir ventas reales con este circuito incompleto.
+El adaptador Culqi conserva los abonos bancarios bloqueados. La integración **dLocal Go** incorpora beneficiarios, cuenta verificada, payin, conciliación, payout y devolución; requiere contratación y certificación antes de habilitar dinero real. Seguir la [guía de configuración Go](Resultados/Implementacion/2026-11-09/CONFIGURACION_DLOCAL_GO.md). El comprador paga el precio publicado y todos los cargos se imputan al vendedor.
 
 ## Opción Docker / Easypanel
 

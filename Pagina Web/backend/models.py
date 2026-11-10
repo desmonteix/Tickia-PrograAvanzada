@@ -119,6 +119,15 @@ class Transaction(Base):
     # Escrow y pagos
     payment_token_hash = Column(String, nullable=True, unique=True)
     culqi_charge_id = Column(String, nullable=True)
+    payment_provider = Column(String, nullable=False, default='culqi', server_default='culqi')
+    provider_payment_id = Column(String, nullable=True)
+    checkout_url = Column(Text, nullable=True)
+    approved_at = Column(DateTime(timezone=True), nullable=True)
+    available_after = Column(DateTime(timezone=True), nullable=True)
+    payin_fee = Column(Numeric(12, 2), nullable=True)
+    payout_fee = Column(Numeric(12, 2), nullable=True)
+    fee_terms_hash = Column(String, nullable=True)
+    payout_terms = Column(Text, nullable=True)
     amount_total = Column(Numeric(12, 2), nullable=False)
     commission_platform = Column(Numeric(12, 2), nullable=False)
     amount_seller = Column(Numeric(12, 2), nullable=False)  # Estimate before provider fees.
@@ -142,6 +151,7 @@ class Transaction(Base):
     # SECURITY: Restricción única en BD — impide procesar el mismo cargo de Culqi dos veces
     __table_args__ = (
         UniqueConstraint('culqi_charge_id', name='uq_transaction_culqi_charge_id'),
+        UniqueConstraint('payment_provider', 'provider_payment_id', name='uq_transaction_provider_payment'),
         Index('uq_ticket_settlement', 'ticket_id', unique=True,
               postgresql_where=text("status IN ('PROCESSING','UNKNOWN','SUCCEEDED','REFUND_PENDING','REFUNDED')"),
               sqlite_where=text("status IN ('PROCESSING','UNKNOWN','SUCCEEDED','REFUND_PENDING','REFUNDED')")),
@@ -165,11 +175,49 @@ class PurchaseReview(Base):
     settlement_state = Column(String, nullable=False, default='NONE')
     settlement_reference = Column(String, nullable=True, unique=True)
     settlement_error = Column(String, nullable=True)
+    settlement_check_at = Column(DateTime(timezone=True), nullable=True)
     reputation_applied = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     __table_args__ = (
         CheckConstraint("review_state IN ('HELD','DISPUTED','RESOLVED')", name='chk_review_state'),
         CheckConstraint("settlement_state IN ('NONE','QUEUED','BLOCKED','PROCESSING','UNKNOWN','SUCCEEDED')", name='chk_review_settlement'),
+    )
+
+
+class PayoutProfile(Base):
+    __tablename__ = 'payout_profiles'
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), primary_key=True)
+    beneficiary_id = Column(String, unique=True, nullable=True)
+    bank_account_id = Column(Integer, unique=True, nullable=True)
+    status = Column(String, nullable=False, default='CREATING')
+    account_last4 = Column(String(4), nullable=False)
+    identity_hash = Column(String(64), nullable=False, unique=True)
+    account_hash = Column(String(64), nullable=False)
+    request_encrypted = Column(Text, nullable=True)
+    fee_terms_hash = Column(String(64), nullable=False)
+    error = Column(String, nullable=True)
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+
+
+class FinancialOperation(Base):
+    __tablename__ = 'financial_operations'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    review_id = Column(UUID(as_uuid=True), ForeignKey('purchase_reviews.id'), nullable=False, index=True)
+    kind = Column(String, nullable=False)
+    amount = Column(Numeric(12, 2), nullable=False)
+    bank_account_id = Column(Integer, nullable=True)
+    provider_id = Column(String, nullable=True, unique=True)
+    status = Column(String, nullable=False, default='READY')
+    payload = Column(Text, nullable=True)
+    error = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    next_check_at = Column(DateTime(timezone=True), nullable=True)
+    __table_args__ = (
+        Index('uq_financial_active_review', 'review_id', unique=True,
+              postgresql_where=text("status != 'REJECTED'"), sqlite_where=text("status != 'REJECTED'")),
+        CheckConstraint("kind IN ('PAYOUT','REFUND')", name='chk_financial_kind'),
+        CheckConstraint('amount > 0', name='chk_financial_amount'),
+        CheckConstraint("status IN ('READY','SENDING','PENDING','UNKNOWN','SUCCEEDED','REJECTED')", name='chk_financial_status'),
     )
 
 

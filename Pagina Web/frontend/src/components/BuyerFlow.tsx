@@ -4,6 +4,8 @@ import api, { errorMessage } from '../api';
 import { useResource } from '../useResource';
 import { eventDate, money } from '../types';
 import type { Ticket } from '../types';
+import { paymentTransaction, safeCheckoutUrl } from '../payments';
+import type { PaymentCapabilities } from '../payments';
 
 interface Checkout {
   token?: { id: string };
@@ -160,11 +162,13 @@ export default function BuyerFlow({
     setError('');
     setBusy(true);
     const key = import.meta.env.VITE_CULQI_PUBLIC_KEY as string | undefined;
+    let creatingGoCheckout = false;
     try {
-      const status = await api.get<{ enabled: boolean }>('/payments/status');
-      if (!status.data.enabled || !key)
+      const status = await api.get<PaymentCapabilities>('/payments/status');
+      const go = status.data.provider === 'dlocal_go';
+      if (!status.data.enabled || (go && !status.data.payouts_enabled) || (!go && !key))
         throw new Error('Los pagos no están disponibles en este momento. Inténtalo más tarde.');
-      const CheckoutClass = await loadCheckout();
+      const CheckoutClass = go ? null : await loadCheckout();
       const reservation = await api.post<{ amount_total_cents: number; reserved_until: string }>(
         `/tickets/${pending.id}/buy`,
       );
@@ -178,7 +182,42 @@ export default function BuyerFlow({
         refresh();
         throw new Error('La reserva venció. Elige una entrada disponible para continuar.');
       }
+      if (go) {
+        creatingGoCheckout = true;
+        const response = await api.post<{
+          transaction_id: string;
+          redirect_url: string;
+          status: string;
+          amount_total: number;
+        }>('/payments/checkout', { ticket_id: pending.id });
+        if (
+          ['SUCCEEDED', 'FAILED', 'REFUNDED', 'REFUND_PENDING', 'UNKNOWN'].includes(response.data.status) ||
+          (response.data.status === 'PROCESSING' && !response.data.redirect_url)
+        ) {
+          const id = paymentTransaction(
+            `?payment_transaction=${encodeURIComponent(response.data.transaction_id)}`,
+          );
+          if (!id) throw new Error('No pudimos identificar la operación para consultar su estado.');
+          const destination = new URL('/', window.location.origin);
+          destination.searchParams.set('payment_transaction', id);
+          destination.hash = 'wallet';
+          window.location.assign(destination.href);
+          return;
+        }
+        const redirect = safeCheckoutUrl(response.data.redirect_url);
+        if (
+          !redirect ||
+          Math.round(Number(response.data.amount_total) * 100) !==
+            reservation.data.amount_total_cents
+        )
+          throw new Error(
+            'No pudimos verificar el enlace o el importe del checkout. Consulta el estado de la compra antes de continuar.',
+          );
+        window.location.assign(redirect);
+        return;
+      }
       const ticket = pending;
+      if (!CheckoutClass || !key) throw new Error('El formulario de pago no está disponible.');
       const instance = new CheckoutClass(key, {
         settings: { title: 'Tickia', currency: 'PEN', amount: reservation.data.amount_total_cents },
         options: {
@@ -208,6 +247,12 @@ export default function BuyerFlow({
       setError(errorMessage(failure));
       setBusy(false);
       const status = (failure as { response?: { status?: number } }).response?.status;
+      if (creatingGoCheckout && (!status || status >= 500 || status === 409)) {
+        setUncertain(true);
+        setError(
+          'No pudimos confirmar la apertura del pago. No vuelvas a pagar esta compra; consulta Mis compras o solicita atención.',
+        );
+      }
       if (status === 404 || status === 409) refresh();
       if ((failure as { response?: { status?: number } }).response?.status === 401) {
         dialog.current?.close();
