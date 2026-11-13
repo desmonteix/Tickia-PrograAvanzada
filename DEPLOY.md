@@ -168,4 +168,3 @@ ganados persisten. Mantener `PAYMENT_ENABLED` y `SETTLEMENT_ENABLED` desactivado
 hasta la validación operativa del proveedor y de la liquidez para los subsidios.
 No eliminar datos de promociones para revertir un despliegue: pausar compras y
 conservar las instantáneas financieras. Ver `Pagina Web/docs/promotions-spec.md`.
-

@@ -257,7 +257,10 @@ class PromotionPostgresTests(unittest.TestCase):
             db.commit()
         sql = (Path(__file__).parents[1] / 'migrations/launch_promotions.sql').read_text(encoding='utf-8')
         controls = (Path(__file__).parents[1] / 'migrations/campaign_controls.sql').read_text(encoding='utf-8')
-        with self.raw_engine.connect().execution_options(isolation_level='AUTOCOMMIT') as con:
+        # SQL files contain literal % (including PostgreSQL format('%I')).
+        # Execute as a script, not as an empty DBAPI parameter substitution.
+        # https://docs.sqlalchemy.org/en/20/core/connections.html#sqlalchemy.engine.Connection.execution_options.params.no_parameters
+        with self.raw_engine.connect().execution_options(isolation_level='AUTOCOMMIT', no_parameters=True) as con:
             con.exec_driver_sql('SET search_path TO "' + self.schema + '"')
             try:
                 con.exec_driver_sql('DROP TABLE referrals, referral_rewards')
@@ -268,10 +271,13 @@ class PromotionPostgresTests(unittest.TestCase):
                 con.exec_driver_sql(sql)
                 con.exec_driver_sql(sql)
                 con.exec_driver_sql(controls)
+                con.exec_driver_sql("UPDATE promotion_campaigns SET enabled=false WHERE id='aa000000-0000-4000-8000-000000000001'")
                 con.exec_driver_sql(controls)
+                self.assertFalse(con.exec_driver_sql("SELECT enabled FROM promotion_campaigns WHERE id='aa000000-0000-4000-8000-000000000001'").scalar())
+                con.exec_driver_sql("UPDATE promotion_campaigns SET enabled=true WHERE id='aa000000-0000-4000-8000-000000000001'")
                 rls = dict(con.exec_driver_sql("SELECT relname, relrowsecurity FROM pg_class "
-                    "WHERE relnamespace=current_schema()::regnamespace AND relname IN ('referrals','referral_rewards')").all())
-                self.assertEqual(rls, {'referrals': True, 'referral_rewards': True})
+                    "WHERE relnamespace=current_schema()::regnamespace AND relname IN ('referrals','referral_rewards','promotion_campaigns','site_settings')").all())
+                self.assertEqual(rls, {'referrals': True, 'referral_rewards': True, 'promotion_campaigns': True, 'site_settings': True})
                 grants = con.exec_driver_sql("SELECT count(*) FROM information_schema.table_privileges WHERE "
                     "table_schema=current_schema() AND grantee='PUBLIC' AND table_name IN ('referrals','referral_rewards')").scalar()
                 self.assertEqual(grants, 0)
