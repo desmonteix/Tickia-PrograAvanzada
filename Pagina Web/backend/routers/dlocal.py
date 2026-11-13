@@ -19,7 +19,7 @@ from ..dlocal_go import DLocalGoProvider
 from ..go_fees import fee_terms, payin_estimate, payout_amount
 from ..go_profiles import identity_hash, account_hash, apply_beneficiary, refresh_profile, profile_ready, profile_view
 from ..go_payments import reconcile_payment, recover_payment
-from ..money import amounts
+from ..promotions import checkout_values, bind_reward, fail_transaction
 from ..payment_provider import PaymentUnavailable, PaymentDeclined, PaymentUncertain
 from ..post_purchase import utc, review_deadline
 from ..qr_utils import encrypt_bytes_fernet
@@ -235,16 +235,21 @@ def accept_fees(request: Request, body: AcceptFees, user=Depends(get_current_use
 class CheckoutRequest(BaseModel):
     model_config = ConfigDict(extra='forbid')
     ticket_id: uuid.UUID
+    reservation_id: uuid.UUID | None = None
 
 
 def checkout_view(tx):
     return {'transaction_id': str(tx.id), 'status': tx.status, 'redirect_url': tx.checkout_url,
-            'amount_total': float(tx.amount_total)}
+            'amount_total': float(tx.amount_total), 'buyer_discount': float(tx.buyer_discount),
+            'listed_amount': float(tx.listed_amount if tx.listed_amount is not None else tx.amount_total),
+            'commission_rate': float(tx.commission_rate) if tx.commission_rate is not None else None}
 
 
 @router.post('/checkout')
 @limiter.limit('5/minute')
 def checkout(request: Request, body: CheckoutRequest, user=Depends(get_current_user), db: Session = Depends(get_db)):
+    from ..campaigns import require_operation
+    require_operation(db, 'purchases')
     provider = get_go_provider()
     if not selected() or not provider.enabled() or not provider.payouts_enabled():
         raise HTTPException(503, 'Los cobros y depósitos de dLocal Go todavía no están habilitados.')
@@ -277,14 +282,16 @@ def checkout(request: Request, body: CheckoutRequest, user=Depends(get_current_u
                 or not ticket.reserved_until or utc(ticket.reserved_until) <= datetime.now(timezone.utc)
                 or utc(ticket.event_date) <= datetime.now(timezone.utc) or not profile_ready(profile, terms)):
             raise HTTPException(409, 'La reserva o la verificación del vendedor cambió.')
-        total, commission, seller = amounts(ticket.price)
+        pricing = checkout_values(db, ticket, user.id, body.reservation_id)
+        total, seller = pricing['amount_total'], pricing['amount_seller']
         net, _ = payout_amount(seller - payin_estimate(total, terms), terms)
         if net < Decimal(terms['minimum']):
             raise HTTPException(422, 'El precio no cubre los cargos y el mínimo de depósito del proveedor.')
         tx = models.Transaction(ticket_id=ticket.id, buyer_id=user.id, payment_provider='dlocal_go',
-            amount_total=total, commission_platform=commission, amount_seller=seller,
+            **pricing,
             fee_terms_hash=terms['hash'], payout_terms=json.dumps(terms), status='PROCESSING')
         db.add(tx)
+        bind_reward(db, tx)
         db.commit()
         transaction_id = tx.id
     except IntegrityError:
@@ -302,9 +309,11 @@ def checkout(request: Request, body: CheckoutRequest, user=Depends(get_current_u
         db.commit()
     except (PaymentUnavailable, PaymentDeclined):
         db.rollback()
-        db.query(models.Transaction).filter_by(id=transaction_id, status='PROCESSING').update({'status': 'FAILED'})
+        released = fail_transaction(db, transaction_id)
         db.commit()
-        raise HTTPException(402, 'El proveedor rechazó la creación del pago. No se confirmó ningún cobro; revisa los datos o solicita atención.') from None
+        return JSONResponse(status_code=402, content={
+            'detail': 'El proveedor rechazó la creación del pago. No se confirmó ningún cobro; revisa los datos o solicita atención.',
+            'reservation_released': released})
     except (PaymentUncertain, IntegrityError):
         db.rollback()
         db.query(models.Transaction).filter_by(id=transaction_id, status='PROCESSING').update({'status': 'UNKNOWN'})

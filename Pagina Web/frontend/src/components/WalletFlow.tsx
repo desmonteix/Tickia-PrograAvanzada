@@ -1,13 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import api, { errorMessage } from '../api';
 import { useResource } from '../useResource';
-import { eventDate } from '../types';
+import { eventDate, money } from '../types';
 import type { Ticket, Purchase, User } from '../types';
 import PurchaseActions from './PurchaseActions';
 import PaymentReturn from './PaymentReturn';
 
-export default function WalletFlow() {
+export default function WalletFlow({ onPaymentUpdated }: { onPaymentUpdated?: () => void }) {
   const { data, loading, error, refresh } = useResource<Purchase[]>('/purchases');
+  const paymentUpdated = useCallback(() => {
+    refresh();
+    onPaymentUpdated?.();
+  }, [refresh, onPaymentUpdated]);
   const profile = useResource<User>('/auth/me');
   const [active, setActive] = useState<{ ticket: Ticket; url: string } | null>(null);
   const [downloadError, setDownloadError] = useState('');
@@ -49,7 +53,7 @@ export default function WalletFlow() {
     <section aria-labelledby="wallet-title">
       <p className="eyebrow">Tus próximos planes</p>
       <h1 id="wallet-title">Mis compras</h1>
-      <PaymentReturn onUpdate={refresh} />
+      <PaymentReturn onUpdate={paymentUpdated} />
       {typeof profile.data?.rating === 'number' && (
         <p>
           Tu rating: {profile.data.rating.toFixed(2)} / 5
@@ -106,6 +110,14 @@ export default function WalletFlow() {
                     {ticket.zone} · {eventDate(ticket.event_date)}
                   </p>
                   <p className="badge">{ticket.estado.replaceAll('_', ' ')}</p>
+                  {ticket.amount_paid != null && (
+                    <p>
+                      Importe pagado: {money(ticket.amount_paid)}.
+                      {!!ticket.buyer_discount && (
+                        <> Descuento financiado por Tickia: {money(ticket.buyer_discount)}.</>
+                      )}
+                    </p>
+                  )}
                   <button
                     className="btn btn-primary full-width"
                     disabled={!!busyId || !['VENDIDA', 'LIBERADA'].includes(ticket.estado)}

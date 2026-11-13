@@ -10,6 +10,8 @@ from ..database import get_db
 from ..dependencies import get_current_user
 from ..auth_utils import get_password_hash, verify_password, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 from ..rate_limit import limiter
+from ..promotions import record_referral
+from ..campaigns import require_operation
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -17,6 +19,7 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 @router.post("/register", response_model=schemas.UserResponse, status_code=201)
 @limiter.limit("5/minute")
 def register(request: Request, user_in: schemas.UserCreate, db: Session = Depends(get_db)):
+    require_operation(db, 'registrations')
     failure = HTTPException(400, "No se pudo completar el registro. Verifica tus datos.")
     if db.query(models.User).filter(func.lower(models.User.email) == user_in.email).first():
         raise failure
@@ -27,9 +30,13 @@ def register(request: Request, user_in: schemas.UserCreate, db: Session = Depend
     try:
         db.add(user)
         db.flush()
+        record_referral(db, user, user_in.referral_code)
         db.add(models.AuditLog(user_id=user.id, action="USER_REGISTER", entity_type="user", entity_id=str(user.id)))
         db.commit()
         db.refresh(user)
+    except HTTPException:
+        db.rollback()
+        raise
     except IntegrityError:
         db.rollback()
         raise failure

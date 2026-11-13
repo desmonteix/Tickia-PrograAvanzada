@@ -25,6 +25,16 @@ def release_expired_reservations(db: Session):
         ticket.estado = models.TicketState.DISPONIBLE
         ticket.buyer_id = None
         ticket.reserved_until = None
+        ticket.reservation_id = None
+        ticket.reservation_total = None
+        ticket.reservation_discount = None
+        ticket.reservation_discount_rate = None
+        ticket.reservation_commission_rate = None
+        ticket.reservation_seller_reward_id = None
+        from .promotions import expire_hold
+        rewards = db.query(models.ReferralReward).filter_by(reserved_ticket_id=ticket.id).order_by(models.ReferralReward.user_id).with_for_update().all()
+        for reward in rewards:
+            expire_hold(reward)
         db.add(models.AuditLog(
             user_id=old_buyer, action="RESERVATION_EXPIRED_AUTO_RELEASED", entity_type="ticket",
             entity_id=str(ticket.id), previous_state="RESERVADA", new_state="DISPONIBLE",

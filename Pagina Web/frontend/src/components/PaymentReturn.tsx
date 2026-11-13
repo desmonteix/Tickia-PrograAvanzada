@@ -31,7 +31,7 @@ export default function PaymentReturn({ onUpdate }: { onUpdate: () => void }) {
       },
       (value) => {
         setTransaction(value);
-        if (value.status === 'SUCCEEDED') onUpdate();
+        if (value.status === 'SUCCEEDED' || value.status === 'FAILED') onUpdate();
       },
       controller.signal,
     )

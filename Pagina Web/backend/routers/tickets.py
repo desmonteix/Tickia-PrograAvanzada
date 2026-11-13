@@ -22,6 +22,8 @@ from ..rate_limit import limiter
 from ..money import amounts
 from ..payment_provider import get_payment_provider
 from ..post_purchase import review_deadline
+from ..promotions import commission_rate_for, reserve_quote, qualify_seller_referral
+from ..campaigns import require_operation
 
 router = APIRouter(prefix="/api/tickets", tags=["tickets"])
 logger = logging.getLogger(__name__)
@@ -83,6 +85,9 @@ def upload_ticket(
     ticketing_company: Literal["teleticket", "joinnus"] = Form(...),
     current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db),
 ):
+    published_at = datetime.now(timezone.utc)
+    require_operation(db, 'publications')
+    commission_rate = commission_rate_for(published_at, db)
     if not 3 <= price <= 5000 or Decimal(str(price)).as_tuple().exponent < -2:
         raise HTTPException(422, "El precio debe estar entre S/ 3 y S/ 5,000, con hasta dos decimales.")
     if os.getenv('PAYMENT_PROVIDER', 'culqi') == 'dlocal_go':
@@ -93,7 +98,7 @@ def upload_ticket(
             terms = fee_terms()
             if not profile_ready(db.get(models.PayoutProfile, current_user.id), terms):
                 raise HTTPException(409, 'Completa la verificación bancaria y acepta los cargos antes de vender.')
-            total, _, seller = amounts(price)
+            total, _, seller = amounts(price, commission_rate)
             if payout_amount(seller - payin_estimate(total, terms), terms)[0] < Decimal(terms['minimum']):
                 raise HTTPException(422, 'El precio no cubre los cargos y el mínimo de depósito de dLocal Go.')
         except PaymentUnavailable as exc:
@@ -127,13 +132,14 @@ def upload_ticket(
         seller_id=current_user.id, event_name=event_name.strip(), event_date=event_date, event_end_date=event_end_date,
         zone=zone.strip(), ticketing_company=ticketing_company,
         ticket_type="nominada" if is_nominated else "no_nominada",
-        is_renominated=is_renominated, price=price,
+        is_renominated=is_renominated, price=price, created_at=published_at, commission_rate=commission_rate,
         estado=models.TicketState.DISPONIBLE, qr_hash_sha256=qr_hash,
         hash_estado=models.HashState.ACTIVO, qr_image_url_encrypted=path,
     )
     try:
         db.add(ticket)
         db.flush()
+        qualify_seller_referral(db, ticket)
         db.add(models.AuditLog(
             user_id=current_user.id, action="TICKET_PUBLISHED", entity_type="ticket",
             entity_id=str(ticket.id), new_state="DISPONIBLE",
@@ -154,6 +160,7 @@ def upload_ticket(
 @router.post("/{ticket_id}/buy")
 @limiter.limit("5/minute")
 def buy_ticket(request: Request, ticket_id: uuid.UUID, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    require_operation(db, 'purchases')
     if not get_payment_provider().enabled():
         raise HTTPException(503, "Los pagos aún no están habilitados. No se creó una reserva.")
     try:
@@ -174,6 +181,7 @@ def buy_ticket(request: Request, ticket_id: uuid.UUID, current_user: models.User
         ticket.estado = models.TicketState.RESERVADA
         ticket.buyer_id = current_user.id
         ticket.reserved_until = datetime.now(timezone.utc) + timedelta(minutes=10)
+        quote = reserve_quote(db, ticket, current_user.id)
         db.add(models.AuditLog(
             user_id=current_user.id, action="TICKET_RESERVED", entity_type="ticket",
             entity_id=str(ticket.id), previous_state="DISPONIBLE", new_state="RESERVADA",
@@ -181,7 +189,7 @@ def buy_ticket(request: Request, ticket_id: uuid.UUID, current_user: models.User
         db.commit()
         return {
             "status": "RESERVADA", "ticket_id": str(ticket.id), "price": float(ticket.price),
-            "amount_total": float(ticket.price), "amount_total_cents": int(ticket.price * 100),
+            **quote,
             "reserved_until": utc(ticket.reserved_until).isoformat(), "payment_provider": os.getenv('PAYMENT_PROVIDER', 'culqi'),
         }
     except HTTPException:
@@ -287,7 +295,12 @@ def get_my_sales(current_user: models.User = Depends(get_current_user), db: Sess
         'settlement_state': reviews[ticket.id].settlement_state if ticket.id in reviews else None,
         'settlement_error': reviews[ticket.id].settlement_error if ticket.id in reviews else None,
         'settlement_reference': reviews[ticket.id].settlement_reference if ticket.id in reviews else None,
-        "estimated_seller_amount": float(amounts(ticket.price)[2]),
+        "commission_rate": float(transaction_by_ticket[ticket.id].commission_rate
+            if ticket.id in transaction_by_ticket and transaction_by_ticket[ticket.id].commission_rate is not None
+            else ticket.commission_rate),
+        "listing_commission_rate": float(ticket.commission_rate),
+        "estimated_seller_amount": float(transaction_by_ticket[ticket.id].amount_seller
+            if ticket.id in transaction_by_ticket else amounts(ticket.price, ticket.commission_rate)[2]),
         "seller_net_amount": (float(transaction_by_ticket[ticket.id].seller_net_amount)
             if ticket.id in transaction_by_ticket and transaction_by_ticket[ticket.id].seller_net_amount is not None else None),
         "provider_fee": (float(transaction_by_ticket[ticket.id].provider_fee)

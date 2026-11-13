@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import api, { errorMessage } from './api';
 import type { User } from './types';
 import SellerFlow from './components/SellerFlow';
@@ -7,6 +7,11 @@ import AuthFlow from './components/AuthFlow';
 import WalletFlow from './components/WalletFlow';
 import AdminDashboard from './components/AdminDashboard';
 import { paymentTransaction } from './payments';
+import { rememberReferral } from './promotions';
+import { operationAllowed, percent } from './promotions';
+import type { Campaign, Referrals } from './promotions';
+import { useResource } from './useResource';
+import ReferralPanel from './components/ReferralPanel';
 
 type View = 'catalog' | 'seller' | 'login' | 'wallet' | 'admin';
 const getView = (): View => {
@@ -22,8 +27,32 @@ export default function App() {
   const [notice, setNotice] = useState('');
   const [search, setSearch] = useState('');
   const [isDark, setIsDark] = useState(true);
-  const nextView = useRef<View>(getView());
+  const campaign = useResource<Campaign>('/promotions');
+  const [referrals, setReferrals] = useState<Referrals | null>(null);
+  const [referralError, setReferralError] = useState('');
+  const [referralRevision, setReferralRevision] = useState(0);
+  const refreshReferrals = useCallback(() => setReferralRevision((value) => value + 1), []);
+  const nextView = useRef<View>(getView() === 'login' ? 'catalog' : getView());
   const heading = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!user) return;
+    const controller = new AbortController();
+    api
+      .get<Referrals>('/referrals', { signal: controller.signal })
+      .then((response) => {
+        if (!controller.signal.aborted) {
+          setReferrals(response.data);
+          setReferralError('');
+        }
+      })
+      .catch((failure) => {
+        if (!controller.signal.aborted) {
+          setReferrals(null);
+          setReferralError(errorMessage(failure, 'No pudimos consultar tu beneficio.'));
+        }
+      });
+    return () => controller.abort();
+  }, [user, referralRevision]);
   function navigate(destination: View) {
     window.location.hash = destination;
   }
@@ -56,12 +85,17 @@ export default function App() {
       const current = getView();
       if (current !== 'login') nextView.current = current;
       setUser(null);
+      setReferrals(null);
       setNotice('Tu sesión terminó. Ingresa de nuevo para continuar.');
       navigate('login');
     };
     window.addEventListener('hashchange', onHash);
     window.addEventListener('tickia:session-expired', onExpired);
     const url = new URL(window.location.href);
+    rememberReferral(url.search, {
+      getItem: (key) => window.sessionStorage.getItem(key),
+      setItem: (key, value) => window.sessionStorage.setItem(key, value),
+    });
     const referral = url.searchParams.get('ref_ticket');
     if (referral && /^[0-9a-f-]{36}$/i.test(referral)) {
       void api.post(`/tickets/${referral}/track-visit`).catch(() => undefined);
@@ -78,6 +112,7 @@ export default function App() {
     try {
       await api.post('/auth/logout');
       setUser(null);
+      setReferrals(null);
       setNotice('Cerraste tu sesión.');
       navigate('catalog');
     } catch (error) {
@@ -166,7 +201,16 @@ export default function App() {
             </button>
           </div>
         )}
-        {checkingSession && protectedView ? (
+        {campaign.data?.settings?.announcement && (
+          <p className="notice">{campaign.data.settings.announcement}</p>
+        )}
+        {campaign.data?.settings?.maintenance_mode && (
+          <p className="notice" role="status">
+            Las nuevas operaciones están pausadas por mantenimiento. Puedes ingresar, consultar
+            compras y presentar reclamos existentes.
+          </p>
+        )}
+        {checkingSession && (protectedView || view === 'login') ? (
           <p role="status">Comprobando tu sesión…</p>
         ) : (
           <>
@@ -201,6 +245,20 @@ export default function App() {
                     <small>UNA ENTRADA · DOS PERSONAS · UN PLAN</small>
                   </div>
                 </section>
+                {campaign.data?.active && (
+                  <p className="notice">
+                    Comisión actual: {percent(campaign.data.current_commission_rate)} % para las
+                    entradas que publiques durante la campaña. La tasa se conserva al vender
+                    después.
+                  </p>
+                )}
+                {user && (
+                  <ReferralPanel
+                    data={referrals}
+                    error={referralError}
+                    refresh={refreshReferrals}
+                  />
+                )}
                 <section id="events" aria-labelledby="events-title">
                   <div className="section-heading">
                     <div>
@@ -225,21 +283,53 @@ export default function App() {
                     <BuyerFlow
                       searchQuery={search}
                       onRequireLogin={() => requireLogin('catalog')}
+                      referrals={user ? referrals : null}
+                      onPaymentUpdated={refreshReferrals}
+                      settings={campaign.data?.settings}
                     />
                   </div>
                 </section>
               </>
             )}
-            {visibleView === 'seller' && <SellerFlow />}
-            {visibleView === 'wallet' && <WalletFlow />}
+            {visibleView === 'seller' && (
+              <>
+                <SellerFlow campaign={campaign.data} />
+                {user && (
+                  <ReferralPanel
+                    data={referrals}
+                    error={referralError}
+                    refresh={refreshReferrals}
+                  />
+                )}
+              </>
+            )}
+            {visibleView === 'wallet' && (
+              <>
+                <WalletFlow onPaymentUpdated={refreshReferrals} />
+                {user && (
+                  <ReferralPanel
+                    data={referrals}
+                    error={referralError}
+                    refresh={refreshReferrals}
+                  />
+                )}
+              </>
+            )}
             {visibleView === 'admin' &&
               (user?.is_admin ? (
-                <AdminDashboard />
+                <AdminDashboard
+                  onConfigurationChanged={() => {
+                    campaign.refresh();
+                    refreshReferrals();
+                  }}
+                />
               ) : (
                 <p role="alert">No tienes acceso a administración.</p>
               ))}
             {visibleView === 'login' && (
               <AuthFlow
+                signedIn={!!user}
+                registrationsEnabled={operationAllowed(campaign.data?.settings, 'registrations')}
                 onLoginSuccess={async () => {
                   const response = await api.get<User>('/auth/me');
                   setUser(response.data);

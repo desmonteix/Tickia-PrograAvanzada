@@ -4,11 +4,14 @@ import { useResource } from '../useResource';
 import { money } from '../types';
 import AdminClaims from './AdminClaims';
 import GoOperations from './GoOperations';
+import AdminControlPanel from './AdminControlPanel';
 interface Metrics {
   total_users: number;
   total_tickets: number;
   total_transactions: number;
   total_revenue: number;
+  total_buyer_discounts?: number;
+  platform_after_discounts?: number;
 }
 interface AdminUser {
   id: string;
@@ -20,7 +23,11 @@ interface AdminUser {
   banned_until: string | null;
   is_admin: boolean;
 }
-export default function AdminDashboard() {
+export default function AdminDashboard({
+  onConfigurationChanged = () => undefined,
+}: {
+  onConfigurationChanged?: () => void;
+}) {
   const metrics = useResource<Metrics>('/admin/metrics');
   const users = useResource<AdminUser[]>('/admin/users');
   const [error, setError] = useState('');
@@ -66,7 +73,19 @@ export default function AdminDashboard() {
                 ['Usuarios', metrics.data.total_users],
                 ['Entradas', metrics.data.total_tickets],
                 ['Transacciones', metrics.data.total_transactions],
-                ['Ingresos', money(metrics.data.total_revenue)],
+                ['Comisiones', money(metrics.data.total_revenue)],
+                [
+                  'Descuentos financiados',
+                  metrics.data.total_buyer_discounts == null
+                    ? 'Pendiente de información'
+                    : money(metrics.data.total_buyer_discounts),
+                ],
+                [
+                  'Comisiones menos descuentos',
+                  metrics.data.platform_after_discounts == null
+                    ? 'Pendiente de información'
+                    : money(metrics.data.platform_after_discounts),
+                ],
               ].map(([label, value]) => (
                 <div className="form-card" key={label}>
                   <dt>{label}</dt>
@@ -77,6 +96,7 @@ export default function AdminDashboard() {
           )}
           <AdminClaims />
           <GoOperations />
+          <AdminControlPanel onChanged={onConfigurationChanged} />
           <h2>Gestión de usuarios</h2>
           <div
             className="table-scroll"

@@ -1,0 +1,44 @@
+.admin-controls {
+  margin-block: 2rem;
+}
+.admin-controls > section {
+  margin-top: 1.5rem;
+}
+.admin-controls .admin-config-form,
+.admin-controls .form-card {
+  margin-block: 1.25rem;
+}
+.admin-config-form label {
+  display: grid;
+  gap: 0.5rem;
+  margin-block: 0.75rem;
+}
+.admin-config-form label.checkbox-label {
+  display: flex;
+}
+.admin-config-form .form-row {
+  align-items: start;
+}
+.admin-config-form textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+.admin-reason {
+  overflow-wrap: anywhere;
+  min-width: 12rem;
+}
+.evidence-preview {
+  max-width: min(90vw, 56rem);
+  max-height: 90vh;
+  overflow: auto;
+  background: var(--color-bg-surface);
+  color: var(--color-text-body);
+  border: 1px solid var(--color-border);
+}
+.evidence-preview img {
+  display: block;
+  max-width: 100%;
+  max-height: 65vh;
+  object-fit: contain;
+  margin-block: 1rem;
+}

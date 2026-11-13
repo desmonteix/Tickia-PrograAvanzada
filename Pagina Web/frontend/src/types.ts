@@ -1,4 +1,4 @@
-﻿export interface User {
+export interface User {
   id: string;
   email: string;
   is_admin: boolean;
@@ -8,6 +8,7 @@
 export interface Ticket {
   id: string;
   price: number;
+  commission_rate?: number;
   estado: string;
   event_name: string;
   event_date: string;
@@ -23,6 +24,9 @@ export interface Ticket {
   download_token_used?: boolean;
 }
 export interface Purchase extends Ticket {
+  amount_paid?: number;
+  listed_amount?: number;
+  buyer_discount?: number;
   purchase_id: string;
   delivered_at: string | null;
   closes_at: string | null;
