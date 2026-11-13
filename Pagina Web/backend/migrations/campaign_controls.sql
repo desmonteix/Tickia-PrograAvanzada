@@ -28,11 +28,14 @@ CREATE TABLE IF NOT EXISTS site_settings (
     announcement VARCHAR(500) NOT NULL DEFAULT '',
     CONSTRAINT chk_settings_singleton CHECK (id = 1)
 );
-INSERT INTO site_settings(id) VALUES(1) ON CONFLICT DO NOTHING;
-INSERT INTO promotion_campaigns(id,name,starts_at,ends_at,listing_commission_rate,
+-- Explicit values also support tables previously created by the ORM, whose
+-- client-side defaults are not PostgreSQL DEFAULT expressions.
+INSERT INTO site_settings(id,registrations_enabled,publications_enabled,purchases_enabled,maintenance_mode,announcement)
+VALUES(1,TRUE,TRUE,TRUE,FALSE,'') ON CONFLICT DO NOTHING;
+INSERT INTO promotion_campaigns(id,name,starts_at,ends_at,enabled,archived,listing_commission_rate,
     registration_discount_rate,seller_buyer_discount_rate,seller_commission_rate)
 VALUES('aa000000-0000-4000-8000-000000000001','Lanzamiento Tickia 2026',
-    '2026-11-13T00:00:00-05:00','2026-12-13T00:00:00-05:00',0.05,0.05,0.10,0)
+    '2026-11-13T00:00:00-05:00','2026-12-13T00:00:00-05:00',TRUE,FALSE,0.05,0.05,0.10,0)
 ON CONFLICT DO NOTHING; -- Never re-enable or overwrite a campaign edited by an admin.
 
 ALTER TABLE tickets ADD COLUMN IF NOT EXISTS reservation_discount_rate NUMERIC(5,4);
