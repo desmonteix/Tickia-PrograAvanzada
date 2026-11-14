@@ -119,7 +119,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(BodyLimitMiddleware)
 app.add_middleware(
     CORSMiddleware, allow_origins=ORIGINS, allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization"],
 )
 for router in (auth.router, tickets.router, payments.router, download.router, admin.router, purchases.router, dlocal.router, promotions.router):

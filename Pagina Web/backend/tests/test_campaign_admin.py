@@ -50,6 +50,19 @@ class CampaignAdminTests(unittest.TestCase):
         self.assertEqual(self.reward()['reward_status'], 'AVAILABLE')
         self.assertEqual(self.ticket()['commission_rate'], .10)
 
+    def test_admin_patch_preflight_allows_the_configured_frontend_origin(self):
+        response = self.client.options('/api/admin/settings', headers={
+            'Origin': 'http://127.0.0.1:5173',
+            'Access-Control-Request-Method': 'PATCH',
+            'Access-Control-Request-Headers': 'content-type'})
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertIn('PATCH', response.headers['access-control-allow-methods'])
+        self.assertEqual(response.headers['access-control-allow-origin'], 'http://127.0.0.1:5173')
+        rejected = self.client.options('/api/admin/settings', headers={
+            'Origin': 'https://untrusted.invalid', 'Access-Control-Request-Method': 'PATCH'})
+        self.assertEqual(rejected.status_code, 400)
+        self.assertNotIn('access-control-allow-origin', rejected.headers)
+
     def test_first_valid_seller_publication_grants_choice_once(self):
         self.invite_seller()
         self.assertEqual(self.reward()['reward_status'], 'NOT_EARNED')
