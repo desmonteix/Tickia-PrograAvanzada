@@ -8,6 +8,7 @@ from datetime import datetime, timezone, timedelta
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -17,8 +18,9 @@ from ..dependencies import get_current_user
 from ..payment_provider import get_payment_provider, PaymentUnavailable, PaymentDeclined, PaymentUncertain
 from ..rate_limit import limiter
 from ..state_machine import validate_ticket_transition
-from ..money import amounts
 from ..post_purchase import review_deadline
+from ..promotions import checkout_values, bind_reward, consume_reward, fail_transaction
+from ..campaigns import require_operation, settings_view
 
 router = APIRouter(prefix="/api/payments", tags=["payments"])
 logger = logging.getLogger(__name__)
@@ -31,6 +33,7 @@ def as_utc(value):
 
 class ChargeRequest(BaseModel):
     ticket_id: uuid.UUID
+    reservation_id: uuid.UUID | None = None
     culqi_token: str = Field(min_length=10, max_length=100, pattern=r"^(tkn|ype)_(test|live)_[A-Za-z0-9]+$")
 
 
@@ -75,6 +78,7 @@ def settle_verified_charge(db, tx, ticket, charge):
         ticket.renomination_reminder_sent = False
     tx.status = "SUCCEEDED"
     tx.culqi_charge_id = charge["id"]
+    consume_reward(db, tx)
     from ..post_purchase import ensure_review
     ensure_review(db, tx, ticket)
     db.add(models.AuditLog(
@@ -84,7 +88,7 @@ def settle_verified_charge(db, tx, ticket, charge):
 
 
 @router.get("/status")
-def payment_status():
+def payment_status(db: Session = Depends(get_db)):
     provider = get_payment_provider()
     name = os.getenv('PAYMENT_PROVIDER', 'culqi')
     payouts = False
@@ -95,12 +99,15 @@ def payment_status():
             payouts = provider.payouts_enabled()
         except (PaymentUnavailable, AttributeError):
             pass
-    return {"enabled": provider.enabled(), "provider": name, 'payouts_enabled': payouts}
+    settings = settings_view(db)
+    return {"enabled": provider.enabled() and settings['purchases_enabled'] and not settings['maintenance_mode'],
+            "provider": name, 'payouts_enabled': payouts}
 
 
 @router.post("/charge")
 @limiter.limit("5/minute")
 def process_charge(request: Request, charge_req: ChargeRequest, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    require_operation(db, 'purchases')
     if os.getenv('PAYMENT_PROVIDER', 'culqi') != 'culqi':
         raise HTTPException(409, 'Utiliza el checkout del proveedor configurado.')
     provider = get_payment_provider()
@@ -127,16 +134,18 @@ def process_charge(request: Request, charge_req: ChargeRequest, current_user: mo
     if ticket.event_end_date is not None and review_deadline(ticket.event_end_date) is None:
         db.rollback()
         raise HTTPException(422, 'La fecha de finalización requiere corrección antes de cobrar.')
-    total, fee, seller = amounts(ticket.price)
+    pricing = checkout_values(db, ticket, current_user.id, charge_req.reservation_id)
+    total = pricing['amount_total']
     tx = models.Transaction(
         ticket_id=ticket.id, buyer_id=current_user.id,
         payment_token_hash=hashlib.sha256(charge_req.culqi_token.encode()).hexdigest(),
-        amount_total=total, commission_platform=fee, amount_seller=seller,
+        **pricing,
         status="PROCESSING", ip_address=request.client.host if request.client else None,
         user_agent=request.headers.get("user-agent", "")[:512],
     )
     try:
         db.add(tx)
+        bind_reward(db, tx)
         db.commit()
         transaction_id = tx.id
     except IntegrityError:
@@ -156,11 +165,11 @@ def process_charge(request: Request, charge_req: ChargeRequest, current_user: mo
         db.rollback()
         # Compare-and-update in the database: a webhook/refund may already have
         # advanced the ledger while the original HTTP request was in flight.
-        db.query(models.Transaction).filter(
-            models.Transaction.id == transaction_id, models.Transaction.status == 'PROCESSING',
-        ).update({'status': 'FAILED'}, synchronize_session=False)
+        released = fail_transaction(db, transaction_id)
         db.commit()
-        raise HTTPException(402, "La pasarela rechazó el pago. Verifica los datos de tu tarjeta.")
+        return JSONResponse(status_code=402, content={
+            'detail': 'La pasarela rechazó el pago. Verifica los datos de tu tarjeta.',
+            'reservation_released': released})
     except (PaymentUnavailable, PaymentUncertain, IntegrityError):
         db.rollback()
         db.query(models.Transaction).filter(

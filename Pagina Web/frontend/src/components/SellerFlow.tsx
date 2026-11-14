@@ -2,11 +2,14 @@ import { useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import api, { errorMessage } from '../api';
 import { useResource } from '../useResource';
+import CommissionTerms from './CommissionTerms';
 import { money } from '../types';
 import type { Ticket } from '../types';
 import type { PayoutProfile } from '../payments';
 import { settlementLabel } from '../payments';
 import PayoutProfilePanel from './PayoutProfilePanel';
+import { operationAllowed } from '../promotions';
+import type { Campaign } from '../promotions';
 
 function validFile(file: File): string {
   if (!['image/png', 'image/jpeg'].includes(file.type)) return 'Selecciona una imagen PNG o JPG.';
@@ -118,8 +121,11 @@ function Sales() {
                     ) : (
                       <p>
                         Estimado después de la comisión Tickia:{' '}
-                        {money(ticket.estimated_seller_amount ?? ticket.price * 0.9)}. Falta
-                        conciliar los cargos del proveedor.
+                        {money(
+                          ticket.estimated_seller_amount ??
+                            ticket.price * (1 - (ticket.commission_rate ?? 0.1)),
+                        )}
+                        . Falta conciliar los cargos del proveedor.
                       </p>
                     )}
                     {ticket.provider_fee != null && (
@@ -168,9 +174,10 @@ function Sales() {
   );
 }
 
-export default function SellerFlow() {
+export default function SellerFlow({ campaign }: { campaign?: Campaign | null }) {
   const payoutProfile = useResource<PayoutProfile>('/payments/payout-profile');
   const canPublish =
+    operationAllowed(campaign?.settings, 'publications') &&
     !payoutProfile.loading &&
     !payoutProfile.error &&
     !!payoutProfile.data &&
@@ -232,11 +239,18 @@ export default function SellerFlow() {
         </button>
       </div>
       <PayoutProfilePanel
+        campaign={campaign}
         profile={payoutProfile.data}
         loading={payoutProfile.loading}
         error={payoutProfile.error}
         refresh={payoutProfile.refresh}
       />
+      {!operationAllowed(campaign?.settings, 'publications') && (
+        <p className="notice">
+          Las nuevas publicaciones están pausadas. Puedes consultar tus ventas y completar entregas
+          pendientes.
+        </p>
+      )}
       {tab === 'sales' ? (
         <Sales />
       ) : (
@@ -331,11 +345,7 @@ export default function SellerFlow() {
                   />
                 </div>
               </div>
-              <p className="notice">
-                Tickia cobra una comisión del 10 % con IGV incluido a quien vende. Los cargos de la
-                pasarela también son del vendedor. El comprador paga el precio publicado sin
-                sobrecostos.
-              </p>
+              <CommissionTerms campaign={campaign} />
               <div className="input-group">
                 <label htmlFor="event-type">Tipo de entrada</label>
                 <select

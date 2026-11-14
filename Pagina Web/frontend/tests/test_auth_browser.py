@@ -44,6 +44,11 @@ class AuthHandler(SimpleHTTPRequestHandler):
             self.respond(200, [])
         elif path == '/api/payments/status':
             self.respond(200, {'enabled': False, 'provider': 'culqi'})
+        elif path == '/api/promotions':
+            self.respond(200, {'active': False, 'settings': self.server.fixture.settings})
+        elif path == '/api/referrals':
+            self.respond(200, {'referral_code': 'Invite_123', 'qualifying_referral_count': 0,
+                'reward_status': 'NOT_EARNED', 'discount_rate': .05})
         else:
             super().do_GET()
 
@@ -54,6 +59,7 @@ class AuthHandler(SimpleHTTPRequestHandler):
         body = self.rfile.read(int(self.headers.get('Content-Length', '0')))
         if path == '/api/auth/register':
             value = json.loads(body)
+            fixture.registration = value
             fixture.account = (value['email'], value['password'])
             fixture.user['email'] = value['email']
             self.respond(201, fixture.user)
@@ -104,6 +110,8 @@ class AuthBrowserTests(unittest.TestCase):
         self.account = None
         self.fail_next_login = False
         self.fail_next_session = False
+        self.settings = {'registrations_enabled': True, 'publications_enabled': True, 'purchases_enabled': True,
+                         'maintenance_mode': False, 'announcement': ''}
         self.calls, self.external, self.errors = [], [], []
         self.user = {'id': 'b2d8c790-22a4-4c81-8ef2-5c073dac3f81', 'email': 'fixture@example.com',
                      'is_admin': False, 'rating': 4, 'warning_count': 0, 'trust_score': 100,
@@ -135,6 +143,8 @@ class AuthBrowserTests(unittest.TestCase):
     def test_signup_login_session_and_logout_use_the_real_same_origin_cookie(self):
         self.signup()
         expect(self.page.get_by_role('button', name='Salir', exact=True)).to_be_visible()
+        expect(self.page.get_by_role('heading', name='Entradas disponibles', exact=True)).to_be_visible()
+        expect(self.page.locator('section[aria-labelledby="auth-title"]')).to_have_count(0)
         self.page.reload(wait_until='domcontentloaded')
         expect(self.page.get_by_role('button', name='Salir', exact=True)).to_be_visible()
         self.page.get_by_role('button', name='Salir', exact=True).click()
@@ -148,8 +158,29 @@ class AuthBrowserTests(unittest.TestCase):
         self.page.locator('#auth-password').fill('FixturePassword123!')
         self.page.get_by_role('button', name='Iniciar sesión', exact=True).click()
         expect(self.page.get_by_role('button', name='Salir', exact=True)).to_be_visible()
+        expect(self.page.get_by_role('heading', name='Entradas disponibles', exact=True)).to_be_visible()
+        expect(self.page.locator('section[aria-labelledby="auth-title"]')).to_have_count(0)
         self.assertEqual(self.calls.count('/api/auth/register'), 1)
         self.assertEqual(self.external, [])
+
+    def test_referral_opens_signup_and_clears_attribution_after_register_even_when_login_fails(self):
+        self.fail_next_login = True
+        self.page.goto(self.origin + '/?ref=Invite_123#login')
+        expect(self.page.locator('#auth-title')).to_have_text('Crea tu cuenta')
+        expect(self.page.get_by_label('Código de invitación (opcional)')).to_have_value('Invite_123')
+        self.page.locator('#auth-email').fill('fixture@example.com')
+        self.page.locator('#auth-phone').fill('000000000')
+        self.page.locator('#auth-password').fill('FixturePassword123!')
+        self.page.get_by_role('button', name='Registrarse', exact=True).click()
+        expect(self.page.get_by_role('alert')).to_contain_text('temporalmente no disponible')
+        self.assertEqual(self.registration['referral_code'], 'Invite_123')
+        self.assertNotIn('ref=', self.page.url)
+        self.assertIsNone(self.page.evaluate("sessionStorage.getItem('tickia:referral-code')"))
+        self.page.get_by_role('button', name='Iniciar sesión', exact=True).click()
+        expect(self.page.get_by_role('button', name='Salir', exact=True)).to_be_visible()
+        expect(self.page.get_by_role('heading', name='Entradas disponibles', exact=True)).to_be_visible()
+        expect(self.page.locator('section[aria-labelledby="auth-title"]')).to_have_count(0)
+        self.assertEqual(self.calls.count('/api/auth/register'), 1)
 
     def test_created_account_can_retry_login_without_repeating_registration(self):
         self.fail_next_login = True
@@ -160,6 +191,14 @@ class AuthBrowserTests(unittest.TestCase):
         self.page.get_by_role('button', name='Iniciar sesión', exact=True).click()
         expect(self.page.get_by_role('button', name='Salir', exact=True)).to_be_visible()
         self.assertEqual(self.calls.count('/api/auth/register'), 1)
+
+    def test_registration_pause_keeps_login_available(self):
+        self.settings['registrations_enabled'] = False
+        self.page.goto(self.origin + '/?ref=Invite_123#login', wait_until='domcontentloaded')
+        expect(self.page.get_by_role('button', name='Registrarse', exact=True)).to_be_disabled()
+        self.page.get_by_role('button', name='¿Ya tienes cuenta? Inicia sesión').click()
+        expect(self.page.get_by_role('button', name='Iniciar sesión', exact=True)).to_be_enabled()
+        self.assertEqual(self.calls.count('/api/auth/register'), 0)
 
     def test_created_account_can_retry_when_login_succeeds_but_session_check_fails(self):
         self.fail_next_session = True

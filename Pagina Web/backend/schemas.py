@@ -10,6 +10,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=72)
     phone_number: str = Field(min_length=6, max_length=25)
+    referral_code: Optional[str] = Field(default=None, pattern=r'^[A-Za-z0-9_-]{6,64}$')
 
     @field_validator("email")
     @classmethod
@@ -49,6 +50,7 @@ class TicketResponse(BaseModel):
     ticket_type: str
     is_renominated: bool
     price: float
+    commission_rate: float
     estado: TicketState
     seller_id: uuid.UUID
     created_at: datetime

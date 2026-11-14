@@ -6,6 +6,14 @@ import { eventDate, money } from '../types';
 import type { Ticket } from '../types';
 import { paymentTransaction, safeCheckoutUrl } from '../payments';
 import type { PaymentCapabilities } from '../payments';
+import {
+  operationAllowed,
+  percent,
+  previewAmount,
+  reservationReleased,
+  verifyQuote,
+} from '../promotions';
+import type { OperationSettings, Referrals, ReservationQuote } from '../promotions';
 
 interface Checkout {
   token?: { id: string };
@@ -65,9 +73,15 @@ async function loadCheckout() {
 export default function BuyerFlow({
   onRequireLogin,
   searchQuery = '',
+  referrals = null,
+  onPaymentUpdated,
+  settings,
 }: {
   onRequireLogin?: () => void;
   searchQuery?: string;
+  referrals?: Referrals | null;
+  onPaymentUpdated?: () => void;
+  settings?: OperationSettings;
 }) {
   const { data, loading, error: loadError, refresh } = useResource<Ticket[]>('/tickets');
   const tickets = useMemo(() => data ?? [], [data]);
@@ -76,11 +90,17 @@ export default function BuyerFlow({
   const [pending, setPending] = useState<Ticket | null>(null);
   const [busy, setBusy] = useState(false);
   const [uncertain, setUncertain] = useState(false);
+  const [quote, setQuote] = useState<ReservationQuote | null>(null);
+  const [quoteChanged, setQuoteChanged] = useState(false);
+  const reservation = useRef<{ ticketId: string; quote: ReservationQuote } | null>(null);
   const selected = useRef<Ticket | null>(null);
   const checkout = useRef<Checkout | null>(null);
   const reservationExpiresAt = useRef(0);
   const charging = useRef(false);
   const dialog = useRef<HTMLDialogElement>(null);
+  const displayedCents = pending
+    ? (quote?.amount_total_cents ?? previewAmount(pending.price, referrals))
+    : 0;
   const filtered = useMemo(
     () =>
       !searchQuery.trim()
@@ -123,14 +143,24 @@ export default function BuyerFlow({
     setBusy(true);
     instance.close();
     try {
-      await api.post('/payments/charge', { ticket_id: ticket.id, culqi_token: token });
+      await api.post('/payments/charge', {
+        ticket_id: ticket.id,
+        culqi_token: token,
+        reservation_id: reservation.current?.quote.reservation_id,
+      });
       setNotice('Pago confirmado. Puedes consultar tu compra en Mis compras.');
+      onPaymentUpdated?.();
       selected.current = null;
       checkout.current = null;
       setPending(null);
       refresh();
     } catch (failure) {
       const status = (failure as { response?: { status?: number } }).response?.status;
+      if (reservationReleased(failure)) {
+        clearReleasedReservation();
+        setError(errorMessage(failure));
+        return;
+      }
       if (!status || status >= 500 || status === 409) {
         checkout.current = null;
         selected.current = null;
@@ -147,12 +177,43 @@ export default function BuyerFlow({
     }
   }
 
+  function clearReleasedReservation() {
+    checkout.current?.close();
+    checkout.current = null;
+    selected.current = null;
+    reservation.current = null;
+    reservationExpiresAt.current = 0;
+    setQuote(null);
+    setQuoteChanged(false);
+    setPending(null);
+    setUncertain(false);
+    dialog.current?.close();
+    setNotice(
+      'La reserva anterior se cerró. Revisa tu beneficio y vuelve a seleccionar la entrada para cotizarla.',
+    );
+    refresh();
+    onPaymentUpdated?.();
+  }
+
   async function pay() {
     if (!pending || busy || charging.current || uncertain) return;
+    if (!operationAllowed(settings, 'purchases')) {
+      setError(
+        'Las nuevas compras están pausadas. Tus compras anteriores siguen disponibles en Mis compras.',
+      );
+      return;
+    }
     if (checkout.current && Date.now() >= reservationExpiresAt.current) {
       checkout.current.close();
       checkout.current = null;
       selected.current = null;
+    }
+    if (
+      reservation.current &&
+      Date.parse(reservation.current.quote.reserved_until) <= Date.now()
+    ) {
+      reservation.current = null;
+      setQuote(null);
     }
     if (checkout.current && selected.current?.id === pending.id) {
       dialog.current?.close();
@@ -169,18 +230,25 @@ export default function BuyerFlow({
       if (!status.data.enabled || (go && !status.data.payouts_enabled) || (!go && !key))
         throw new Error('Los pagos no están disponibles en este momento. Inténtalo más tarde.');
       const CheckoutClass = go ? null : await loadCheckout();
-      const reservation = await api.post<{ amount_total_cents: number; reserved_until: string }>(
-        `/tickets/${pending.id}/buy`,
-      );
-      if (
-        !Number.isInteger(reservation.data.amount_total_cents) ||
-        reservation.data.amount_total_cents !== Math.round(pending.price * 100)
-      )
-        throw new Error('El precio cambió. Actualiza el catálogo antes de comprar.');
-      const expiresAt = Date.parse(reservation.data.reserved_until);
+      let reserved =
+        reservation.current?.ticketId === pending.id ? reservation.current.quote : null;
+      if (!reserved) {
+        const response = await api.post<ReservationQuote>(`/tickets/${pending.id}/buy`);
+        reserved = verifyQuote(response.data, pending.price);
+        reservation.current = { ticketId: pending.id, quote: reserved };
+      }
+      const expiresAt = Date.parse(reserved.reserved_until);
       if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
+        reservation.current = null;
+        setQuote(null);
         refresh();
         throw new Error('La reserva venció. Elige una entrada disponible para continuar.');
+      }
+      setQuote(reserved);
+      if (reserved.amount_total_cents !== displayedCents) {
+        setQuoteChanged(true);
+        setBusy(false);
+        return;
       }
       if (go) {
         creatingGoCheckout = true;
@@ -189,9 +257,14 @@ export default function BuyerFlow({
           redirect_url: string;
           status: string;
           amount_total: number;
-        }>('/payments/checkout', { ticket_id: pending.id });
+        }>('/payments/checkout', {
+          ticket_id: pending.id,
+          reservation_id: reserved.reservation_id,
+        });
         if (
-          ['SUCCEEDED', 'FAILED', 'REFUNDED', 'REFUND_PENDING', 'UNKNOWN'].includes(response.data.status) ||
+          ['SUCCEEDED', 'FAILED', 'REFUNDED', 'REFUND_PENDING', 'UNKNOWN'].includes(
+            response.data.status,
+          ) ||
           (response.data.status === 'PROCESSING' && !response.data.redirect_url)
         ) {
           const id = paymentTransaction(
@@ -207,8 +280,7 @@ export default function BuyerFlow({
         const redirect = safeCheckoutUrl(response.data.redirect_url);
         if (
           !redirect ||
-          Math.round(Number(response.data.amount_total) * 100) !==
-            reservation.data.amount_total_cents
+          Math.round(Number(response.data.amount_total) * 100) !== reserved.amount_total_cents
         )
           throw new Error(
             'No pudimos verificar el enlace o el importe del checkout. Consulta el estado de la compra antes de continuar.',
@@ -219,7 +291,7 @@ export default function BuyerFlow({
       const ticket = pending;
       if (!CheckoutClass || !key) throw new Error('El formulario de pago no está disponible.');
       const instance = new CheckoutClass(key, {
-        settings: { title: 'Tickia', currency: 'PEN', amount: reservation.data.amount_total_cents },
+        settings: { title: 'Tickia', currency: 'PEN', amount: reserved.amount_total_cents },
         options: {
           lang: 'es',
           modal: true,
@@ -246,6 +318,10 @@ export default function BuyerFlow({
     } catch (failure) {
       setError(errorMessage(failure));
       setBusy(false);
+      if (reservationReleased(failure)) {
+        clearReleasedReservation();
+        return;
+      }
       const status = (failure as { response?: { status?: number } }).response?.status;
       if (creatingGoCheckout && (!status || status >= 500 || status === 409)) {
         setUncertain(true);
@@ -268,12 +344,21 @@ export default function BuyerFlow({
       selected.current = null;
     }
     setError('');
+    const saved = reservation.current?.ticketId === ticket.id ? reservation.current.quote : null;
+    setQuote(saved);
+    setQuoteChanged(false);
     setPending(ticket);
     dialog.current?.showModal();
   }
   if (loading) return <p role="status">Cargando entradas…</p>;
   return (
     <div>
+      {!operationAllowed(settings, 'purchases') && (
+        <p className="notice" role="status">
+          Las nuevas compras están pausadas. Puedes consultar tus compras anteriores y presentar
+          reclamos en Mis compras.
+        </p>
+      )}
       {(loadError || error) && (
         <div className="error-message" role="alert">
           {loadError || error}
@@ -329,7 +414,7 @@ export default function BuyerFlow({
                     <strong className="price-tag">{money(ticket.price)}</strong>
                     <button
                       className="btn btn-primary"
-                      disabled={busy || uncertain}
+                      disabled={busy || uncertain || !operationAllowed(settings, 'purchases')}
                       onClick={() => choose(ticket)}
                       aria-label={`Comprar entrada para ${ticket.event_name}`}
                     >
@@ -356,15 +441,38 @@ export default function BuyerFlow({
         {pending && (
           <>
             <h2>Revisa tu compra</h2>
+            {referrals?.reward_status === 'AVAILABLE' && referrals.choice === null && (
+              <p className="notice">
+                Tienes un beneficio sin elegir. Cierra esta ventana y elige compra o venta en el
+                panel «Invita y recibe un descuento» para usarlo.
+              </p>
+            )}
             <h3>{pending.event_name}</h3>
             <p>
               {pending.zone} · {eventDate(pending.event_date)}
             </p>
             <p>
-              Precio total: <strong>{money(pending.price)}</strong>
+              Precio publicado: <strong>{money(pending.price)}</strong>
             </p>
+            {displayedCents < Math.round(pending.price * 100) && (
+              <p>
+                Descuento por referido (financiado por Tickia): −
+                {money(pending.price - displayedCents / 100)}
+              </p>
+            )}
             <p>
-              Tickia cobra una comisión del 10 % a quien vende. El comprador no paga sobrecostos.
+              Total a pagar: <strong>{money(displayedCents / 100)}</strong>
+            </p>
+            {quoteChanged && (
+              <p role="status">
+                El importe cambió respecto al mostrado. Revisa el nuevo total y confírmalo antes de
+                pagar.
+              </p>
+            )}
+            <p>
+              Comisión al vendedor:{' '}
+              {percent(quote?.commission_rate ?? pending.commission_rate ?? 0.1)} % con IGV
+              incluido. El comprador no paga sobrecostos.
             </p>
             <p className="muted">
               Tickia no es la tiquetera oficial. La lectura del QR no garantiza el ingreso al
@@ -378,10 +486,14 @@ export default function BuyerFlow({
             <div className="actions">
               <button
                 className="btn btn-primary"
-                disabled={busy || uncertain}
+                disabled={busy || uncertain || !operationAllowed(settings, 'purchases')}
                 onClick={() => void pay()}
               >
-                {busy ? 'Procesando…' : 'Continuar al pago'}
+                {busy
+                  ? 'Procesando…'
+                  : quoteChanged
+                    ? `Confirmar y pagar ${money(displayedCents / 100)}`
+                    : 'Continuar al pago'}
               </button>
               <button
                 className="btn btn-secondary"

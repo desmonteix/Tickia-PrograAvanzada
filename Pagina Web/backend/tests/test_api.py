@@ -69,6 +69,7 @@ class APITests(unittest.TestCase):
         self.files = {}
         self.provider = FakeProvider()
         self.patches = [
+            patch('backend.promotions.in_launch_window', return_value=False),
             patch.object(tickets, "upload_encrypted_qr", self.store),
             patch.object(tickets, "delete_qr_file", lambda key: self.files.pop(key, None)),
             patch.object(download, "download_encrypted_qr", lambda key: self.files[key]),
@@ -79,6 +80,8 @@ class APITests(unittest.TestCase):
             item.start()
         self.ids = {}
         with SessionLocal() as db:
+            from backend.campaigns import default_campaign
+            db.add(default_campaign())
             for role in ("seller", "buyer", "other", "admin"):
                 user = models.User(
                     email=role + "@example.com", hashed_password=PASSWORD_HASH,

@@ -70,6 +70,13 @@ class Ticket(Base):
     ticket_type = Column(String, nullable=False) # nominada, no_nominada
     is_renominated = Column(Boolean, default=False)
     price = Column(Numeric(12, 2), nullable=False)
+    commission_rate = Column(Numeric(5, 4), nullable=False, default=Decimal('.10'), server_default='0.10')
+    reservation_id = Column(UUID(as_uuid=True), nullable=True)
+    reservation_total = Column(Numeric(12, 2), nullable=True)
+    reservation_discount = Column(Numeric(12, 2), nullable=True)
+    reservation_discount_rate = Column(Numeric(5, 4), nullable=True)
+    reservation_commission_rate = Column(Numeric(5, 4), nullable=True)
+    reservation_seller_reward_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=True)
     
     # Estado de concurrencia y escrow
     estado = Column(Enum(TicketState), default=TicketState.DISPONIBLE, nullable=False)
@@ -93,6 +100,12 @@ class Ticket(Base):
         Index("uq_ticket_active_qr", "qr_hash_sha256", unique=True,
               postgresql_where=text("hash_estado = 'ACTIVO'"), sqlite_where=text("hash_estado = 'ACTIVO'")),
         CheckConstraint("price >= 3 AND price <= 5000", name="chk_ticket_price"),
+        CheckConstraint('commission_rate >= 0 AND commission_rate <= 1', name='chk_ticket_commission_rate'),
+        CheckConstraint('(reservation_id IS NULL AND reservation_total IS NULL AND reservation_discount IS NULL) OR '
+                        '(reservation_id IS NOT NULL AND reservation_total IS NOT NULL AND reservation_discount IS NOT NULL '
+                        'AND reservation_total > 0 AND reservation_discount >= 0 '
+                        'AND round(reservation_total * 100, 0) + round(reservation_discount * 100, 0) '
+                        '= round(price * 100, 0))', name='chk_ticket_quote'),
         CheckConstraint("estado NOT IN ('VENDIDA', 'PENDIENTE_RENOMINACION', 'LIBERADA') OR buyer_id IS NOT NULL", name="chk_ticket_buyer"),
     )
 
@@ -129,6 +142,13 @@ class Transaction(Base):
     fee_terms_hash = Column(String, nullable=True)
     payout_terms = Column(Text, nullable=True)
     amount_total = Column(Numeric(12, 2), nullable=False)
+    # NULL listed_amount/rate identifies an unchanged historical transaction.
+    listed_amount = Column(Numeric(12, 2), nullable=True)
+    buyer_discount = Column(Numeric(12, 2), nullable=False, default=Decimal('0'), server_default='0')
+    commission_rate = Column(Numeric(5, 4), nullable=True)
+    referral_reward_user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=True)
+    buyer_discount_rate = Column(Numeric(5, 4), nullable=False, default=Decimal('0'), server_default='0')
+    seller_referral_reward_user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=True)
     commission_platform = Column(Numeric(12, 2), nullable=False)
     amount_seller = Column(Numeric(12, 2), nullable=False)  # Estimate before provider fees.
     provider_fee = Column(Numeric(12, 2), nullable=True)
@@ -156,7 +176,93 @@ class Transaction(Base):
               postgresql_where=text("status IN ('PROCESSING','UNKNOWN','SUCCEEDED','REFUND_PENDING','REFUNDED')"),
               sqlite_where=text("status IN ('PROCESSING','UNKNOWN','SUCCEEDED','REFUND_PENDING','REFUNDED')")),
         CheckConstraint('amount_total > 0 AND commission_platform >= 0 AND amount_seller >= 0', name='chk_transaction_amounts'),
+        CheckConstraint("buyer_discount >= 0 AND ((listed_amount IS NULL AND buyer_discount = 0) OR "
+                        "(listed_amount IS NOT NULL AND commission_rate IS NOT NULL "
+                        "AND commission_rate >= 0 AND commission_rate <= 1 "
+                        "AND round(listed_amount * 100, 0) = round(amount_total * 100, 0) + round(buyer_discount * 100, 0) "
+                        "AND round(listed_amount * 100, 0) = round(commission_platform * 100, 0) + round(amount_seller * 100, 0) "
+                        "AND round(commission_platform * 100, 0) = round(listed_amount * commission_rate * 100, 0) "
+                        "AND buyer_discount_rate >= 0 AND buyer_discount_rate < 1 "
+                        "AND round(buyer_discount * 100, 0) = round(listed_amount * buyer_discount_rate * 100, 0)))", name='chk_transaction_promotion_amounts'),
+        CheckConstraint('(buyer_discount = 0 AND referral_reward_user_id IS NULL) OR '
+                        '(buyer_discount > 0 AND referral_reward_user_id IS NOT NULL '
+                        'AND referral_reward_user_id = buyer_id)', name='chk_transaction_reward_owner'),
     )
+
+
+class Referral(Base):
+    __tablename__ = 'referrals'
+    referred_user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), primary_key=True)
+    referrer_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False, index=True)
+    qualified = Column(Boolean, nullable=False, default=False)
+    seller_qualified_at = Column(DateTime(timezone=True), nullable=True)
+    seller_ticket_id = Column(UUID(as_uuid=True), ForeignKey('tickets.id'), nullable=True, unique=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    __table_args__ = (CheckConstraint('referrer_id != referred_user_id', name='chk_referral_not_self'),)
+
+
+class ReferralReward(Base):
+    __tablename__ = 'referral_rewards'
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), primary_key=True)
+    earned_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    campaign_id = Column(UUID(as_uuid=True), nullable=True)
+    reward_kind = Column(String, nullable=False, default='REGISTRATION', server_default='REGISTRATION')
+    buyer_discount_rate = Column(Numeric(5, 4), nullable=False, default=Decimal('.05'), server_default='0.05')
+    seller_commission_rate = Column(Numeric(5, 4), nullable=True)
+    choice = Column(String, nullable=True, default='BUY')
+    pending_upgrade = Column(Text, nullable=True)
+    revoked_at = Column(DateTime(timezone=True), nullable=True)
+    reserved_ticket_id = Column(UUID(as_uuid=True), ForeignKey('tickets.id'), nullable=True, index=True)
+    reserved_until = Column(DateTime(timezone=True), nullable=True)
+    reserved_transaction_id = Column(UUID(as_uuid=True), ForeignKey('transactions.id'), nullable=True, index=True)
+    used_transaction_id = Column(UUID(as_uuid=True), ForeignKey('transactions.id'), nullable=True)
+    used_at = Column(DateTime(timezone=True), nullable=True)
+    __table_args__ = (
+        CheckConstraint('buyer_discount_rate >= 0 AND buyer_discount_rate < 1 AND '
+                        '(seller_commission_rate IS NULL OR (seller_commission_rate >= 0 AND seller_commission_rate <= 1))', name='chk_reward_rates'),
+        CheckConstraint("choice IS NULL OR choice IN ('BUY','SELL')", name='chk_reward_choice'),
+        CheckConstraint('(used_transaction_id IS NULL AND used_at IS NULL) OR '
+                        '(used_transaction_id IS NOT NULL AND used_at IS NOT NULL '
+                        'AND reserved_ticket_id IS NULL AND reserved_transaction_id IS NULL '
+                        'AND reserved_until IS NULL)', name='chk_reward_used'),
+        CheckConstraint('reserved_transaction_id IS NULL OR reserved_ticket_id IS NOT NULL', name='chk_reward_transaction'),
+        CheckConstraint('reserved_ticket_id IS NOT NULL OR '
+                        '(reserved_transaction_id IS NULL AND reserved_until IS NULL)', name='chk_reward_empty_hold'),
+        CheckConstraint('reserved_ticket_id IS NULL OR reserved_transaction_id IS NOT NULL '
+                        'OR reserved_until IS NOT NULL', name='chk_reward_hold_expiry'),
+    )
+
+
+class PromotionCampaign(Base):
+    __tablename__ = 'promotion_campaigns'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String(120), nullable=False)
+    starts_at = Column(DateTime(timezone=True), nullable=False)
+    ends_at = Column(DateTime(timezone=True), nullable=False)
+    enabled = Column(Boolean, nullable=False, default=True)
+    archived = Column(Boolean, nullable=False, default=False)
+    listing_commission_rate = Column(Numeric(5, 4), nullable=False)
+    registration_discount_rate = Column(Numeric(5, 4), nullable=False)
+    seller_buyer_discount_rate = Column(Numeric(5, 4), nullable=False)
+    seller_commission_rate = Column(Numeric(5, 4), nullable=False)
+    __table_args__ = (
+        CheckConstraint('ends_at > starts_at', name='chk_campaign_dates'),
+        CheckConstraint('listing_commission_rate >= 0 AND listing_commission_rate < 1 AND '
+                        'registration_discount_rate >= 0 AND registration_discount_rate <= 0.5 AND '
+                        'seller_buyer_discount_rate >= 0 AND seller_buyer_discount_rate <= 0.5 AND '
+                        'seller_commission_rate >= 0 AND seller_commission_rate < 1', name='chk_campaign_rates'),
+    )
+
+
+class SiteSettings(Base):
+    __tablename__ = 'site_settings'
+    id = Column(Integer, primary_key=True, default=1)
+    registrations_enabled = Column(Boolean, nullable=False, default=True)
+    publications_enabled = Column(Boolean, nullable=False, default=True)
+    purchases_enabled = Column(Boolean, nullable=False, default=True)
+    maintenance_mode = Column(Boolean, nullable=False, default=False)
+    announcement = Column(String(500), nullable=False, default='')
+    __table_args__ = (CheckConstraint('id = 1', name='chk_settings_singleton'),)
 
 
 class PurchaseReview(Base):

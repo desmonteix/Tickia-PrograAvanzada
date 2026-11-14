@@ -6,6 +6,8 @@ La integración financiera requiere validación en staging. **No habilitar cobro
 
 Para payin/payout de dLocal Go, seguir la [guía de credenciales y migración](Resultados/Implementacion/2026-11-09/CONFIGURACION_DLOCAL_GO.md). Requiere `backend/migrations/dlocal_go.sql` y la habilitación de ambos servicios por Go. Sus claves pertenecen únicamente al backend.
 
+Para la campaña de lanzamiento, aplicar también `backend/migrations/launch_promotions.sql` antes de desplegar el código de promociones. La [especificación](Pagina%20Web/docs/promotions-spec.md) define la ventana de Perú, la comisión del 5 % fijada al publicar y el único descuento por referido financiado por Tickia. Esta migración no ejecuta cobros ni genera beneficios desde contadores antiguos.
+
 - Python 3.13 y Node 22.16 o superior.
 - Código backend: `Pagina Web/backend`; frontend: `Pagina Web/frontend`.
 - CI activo: `.github/workflows/production-quality.yml`, en la raíz del repositorio.
@@ -35,7 +37,7 @@ La clave secreta Culqi pertenece exclusivamente al backend. `VITE_CULQI_PUBLIC_K
 
 1. Crear respaldo verificado y copia de staging de PostgreSQL.
 2. Para una base nueva, desde `Pagina Web`: `python -m backend.init_db`.
-3. Para una base existente, revisar y ejecutar `backend/migrations/production_readiness.sql`, `backend/migrations/purchase_reviews.sql` y `backend/migrations/dlocal_go.sql`, en ese orden, en staging antes de producción. La versión con Go requiere el nuevo esquema incluso con los pagos apagados. No es suficiente `create_all`: no migra tablas existentes.
+3. Para una base existente, revisar y ejecutar `backend/migrations/production_readiness.sql`, `backend/migrations/purchase_reviews.sql`, `backend/migrations/dlocal_go.sql` y `backend/migrations/launch_promotions.sql`, en ese orden, en staging antes de producción. El backend requiere el esquema correspondiente a su versión incluso con los pagos apagados. No es suficiente `create_all`: no migra tablas existentes.
 4. Si hay duplicados, la migración debe fallar: resolverlos manualmente, sin borrar operaciones.
 5. Revisar con los vendedores los anuncios antiguos. El código anterior inventaba fechas y hashes QR; no hay evidencia de que esas entradas sean utilizables.
 6. El servidor verifica columnas e índices de integridad al arrancar; una migración pendiente debe impedir su inicio.
@@ -143,3 +145,26 @@ En Windows se puede usar `backend/venv/Scripts/python.exe` para backend. Los tes
 ## Reversión
 
 Antes de publicar, conservar la imagen/artefacto anterior y el respaldo de base verificado. Si aumenta la tasa de errores, deshabilitar pagos y volver al artefacto anterior solo si es compatible con el esquema actualizado. No revertir operaciones financieras ni restaurar una base sobre cargos posteriores: primero conciliar con la pasarela y aplicar el procedimiento de recuperación.
+### Campañas configurables y referidos de vendedores
+
+Antes de desplegar esta entrega, aplicar con respaldo y verificación en staging:
+
+1. `Pagina Web/backend/migrations/launch_promotions.sql`.
+2. `Pagina Web/backend/migrations/campaign_controls.sql`.
+
+La segunda migración crea la campaña inicial del 13/11/2026 00:00 al 13/12/2026
+00:00, hora de Perú, con comisión 5 %, referido por registro 5 % y mejora por
+primera publicación válida a 10 % en compra o 0 % de comisión en una venta.
+Repetirla no reactiva ni sobrescribe campañas ya editadas.
+
+Ingresar con una cuenta administradora existente para abrir Reclamos, Campañas,
+Beneficios, Operación y Auditoría. El rol se asigna únicamente desde un acceso
+servidor autorizado; nunca existe un registro público de administradores.
+Las pausas operativas no impiden atender compras anteriores, evidencias,
+notificaciones del proveedor ni conciliaciones.
+
+Sin campañas habilitadas la comisión base sigue siendo 10 %. Los beneficios
+ganados persisten. Mantener `PAYMENT_ENABLED` y `SETTLEMENT_ENABLED` desactivados
+hasta la validación operativa del proveedor y de la liquidez para los subsidios.
+No eliminar datos de promociones para revertir un despliegue: pausar compras y
+conservar las instantáneas financieras. Ver `Pagina Web/docs/promotions-spec.md`.

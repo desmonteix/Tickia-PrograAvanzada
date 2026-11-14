@@ -10,6 +10,7 @@ from .go_fees import payin_estimate, payout_amount
 from .payment_provider import PaymentUncertain
 from .post_purchase import ensure_review, utc
 from .state_machine import validate_ticket_transition
+from .promotions import consume_reward, release_failed_reward
 
 
 def lock_transaction(db, transaction_id):
@@ -28,23 +29,30 @@ def reconcile_payment(db, transaction_id, payment):
             or payment.get('country') != 'PE' or payment.get('currency') != 'PEN'
             or money_cents(payment.get('amount')) != int(tx.amount_total * 100)
             or not isinstance(payment.get('id'), str)
-            or (tx.provider_payment_id and tx.provider_payment_id != payment['id'])
-            or tx.buyer_id != ticket.buyer_id):
+            or (tx.provider_payment_id and tx.provider_payment_id != payment['id'])):
         raise PaymentUncertain('El pago no coincide con la reserva.')
     duplicate = db.query(models.Transaction).filter(
         models.Transaction.payment_provider == 'dlocal_go',
         models.Transaction.provider_payment_id == payment['id'], models.Transaction.id != tx.id).first()
     if duplicate:
         raise PaymentUncertain('El pago ya está asignado a otra compra.')
+    status = payment.get('status')
+    if tx.status == 'FAILED' and status in ('REJECTED', 'CANCELLED', 'EXPIRED'):
+        # A failed upgraded quote may already be released or reserved by a new
+        # buyer. A verified duplicate rejection acknowledges only the old order.
+        db.rollback()
+        return
+    if tx.buyer_id != ticket.buyer_id:
+        raise PaymentUncertain('El pago no coincide con la reserva.')
     tx.provider_payment_id = payment['id']
     if tx.status in ('REFUNDED', 'REFUND_PENDING'):
         db.rollback()
         return
-    status = payment.get('status')
     if status in ('REJECTED', 'CANCELLED', 'EXPIRED'):
         if tx.status in ('PROCESSING', 'UNKNOWN'):
             tx.status = 'FAILED'
             tx.checkout_url = None
+            release_failed_reward(db, tx)
         db.commit()
         return
     if status != 'PAID':
@@ -64,6 +72,7 @@ def reconcile_payment(db, transaction_id, payment):
             ticket.renomination_deadline = min(datetime.now(timezone.utc) + timedelta(hours=24), utc(ticket.event_date))
             ticket.renomination_reminder_sent = False
         tx.status = 'SUCCEEDED'
+        consume_reward(db, tx)
         try:
             approved = utc(datetime.fromisoformat(str(payment.get('approved_date', '')).replace('Z', '+00:00')))
             if approved > datetime.now(timezone.utc) + timedelta(minutes=5):

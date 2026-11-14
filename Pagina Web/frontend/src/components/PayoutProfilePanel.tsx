@@ -5,6 +5,8 @@ import { payoutPayload, safeValidationUrl } from '../payments';
 import type { PayoutProfile } from '../payments';
 import { money } from '../types';
 import './PaymentForms.css';
+import CommissionTerms from './CommissionTerms';
+import type { Campaign } from '../promotions';
 
 const statusText: Record<PayoutProfile['status'], string> = {
   NOT_CONFIGURED: 'Completa tus datos y cuenta bancaria para vender.',
@@ -23,11 +25,13 @@ export default function PayoutProfilePanel({
   loading,
   error,
   refresh,
+  campaign,
 }: {
   profile: PayoutProfile | null;
   loading: boolean;
   error: string;
   refresh: () => void;
+  campaign?: Campaign | null;
 }) {
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState('');
@@ -106,10 +110,7 @@ export default function PayoutProfilePanel({
           </p>
           {terms ? (
             <div className="notice">
-              <p>
-                Comisión Tickia: 10 % del precio, con IGV incluido. Todos los cargos son del
-                vendedor; el comprador paga el precio publicado.
-              </p>
+              <CommissionTerms campaign={campaign} />
               <p>
                 Procesamiento: {terms.payin_percent} % + {money(Number(terms.payin_fixed))}.
                 Desembolso: {terms.payout_percent} % + {money(Number(terms.payout_fixed))}.

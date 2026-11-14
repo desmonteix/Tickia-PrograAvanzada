@@ -25,12 +25,16 @@ def get_metrics(db: Session = Depends(get_db), admin: models.User = Depends(get_
     # Calculate revenue
     revenue_result = db.query(func.sum(models.Transaction.commission_platform)).filter(models.Transaction.status == "SUCCEEDED").scalar()
     total_revenue = float(revenue_result) if revenue_result else 0.0
+    discounts = db.query(func.sum(models.Transaction.buyer_discount)).filter(
+        models.Transaction.status == 'SUCCEEDED').scalar() or 0
     
     return {
         "total_users": total_users,
         "total_tickets": total_tickets,
         "total_transactions": total_transactions,
-        "total_revenue": total_revenue
+        "total_revenue": total_revenue,
+        "total_buyer_discounts": float(discounts),
+        "platform_after_discounts": float((revenue_result or 0) - discounts),
     }
 
 @router.get("/users")
@@ -66,3 +70,7 @@ def ban_user(user_id: uuid.UUID, days: Annotated[int, Query(ge=1, le=365)] = 7, 
     db.commit()
     
     return {"message": f"User banned for {days} days"}
+
+
+from .admin_campaigns import router as campaign_controls
+router.include_router(campaign_controls)

@@ -10,6 +10,13 @@ from playwright.sync_api import sync_playwright, expect
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "http://127.0.0.1:5178"
+CAMPAIGN = {'starts_at': '2026-11-13T05:00:00+00:00', 'ends_at': '2026-12-13T05:00:00+00:00',
+            'timezone': 'America/Lima', 'active': False, 'current_commission_rate': .10,
+            'regular_commission_rate': .10, 'launch_commission_rate': .05,
+            'referral_discount_rate': .05, 'referral_reward_expires': False}
+REFERRALS = {'referral_code': 'fixture-referral-code', 'invite_path': '/?ref=fixture-referral-code#login',
+             'qualifying_referral_count': 0, 'reward_status': 'NOT_EARNED', 'discount_rate': .05,
+             'reserved_ticket_id': None, 'reserved_until': None, 'campaign': CAMPAIGN}
 
 
 class FrontendTests(unittest.TestCase):
@@ -39,6 +46,7 @@ class FrontendTests(unittest.TestCase):
             warmup.route('**/api/**', lambda route: route.fulfill(json=[]))
             warmup.route('**/api/auth/me', lambda route: route.fulfill(status=401, json={}))
             warmup.route('**/api/payments/status', lambda route: route.fulfill(json={'enabled':False}))
+            warmup.route('**/api/promotions', lambda route: route.fulfill(json=CAMPAIGN))
             warmup.route('https://js.culqi.com/**', lambda route: route.fulfill(body='',content_type='application/javascript'))
             warmup.goto(BASE, wait_until='domcontentloaded')
             expect(warmup.get_by_role('heading', name='Entradas disponibles',exact=True)).to_be_visible(timeout=30000)
@@ -67,6 +75,8 @@ class FrontendTests(unittest.TestCase):
         self.page.route("**/api/**", lambda route: route.fulfill(status=401, json={"detail": "Sesión requerida"}))
         self.page.route("**/api/tickets", lambda route: route.fulfill(json=[]))
         self.page.route("**/api/payments/status", lambda route: route.fulfill(json={"enabled": False}))
+        self.page.route('**/api/promotions', lambda route: route.fulfill(json=CAMPAIGN))
+        self.page.route('**/api/referrals', lambda route: route.fulfill(json=REFERRALS))
         self.page.route('**/api/purchases/admin/cases', lambda route: route.fulfill(json=[]))
         self.page.route("https://js.culqi.com/**", lambda route: route.fulfill(body="", content_type="application/javascript"))
 

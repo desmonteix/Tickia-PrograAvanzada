@@ -19,6 +19,10 @@ os.environ.update({
 })
 from ..database import Base, engine, SessionLocal
 from .. import models
+from .. import promotions
+# Legacy journeys retain their regular prices regardless of the calendar date.
+# Campaign-specific fixtures override this policy in their own isolated process.
+promotions.in_launch_window = lambda *_args: False
 from ..auth_utils import get_password_hash
 from ..main import app
 from ..routers import tickets, download, payments, purchases
@@ -67,6 +71,8 @@ app.state.limiter.enabled = False
 
 Base.metadata.create_all(engine)
 with SessionLocal() as db:
+    from ..campaigns import default_campaign
+    db.add(default_campaign())
     for email, is_admin in (
         ("seller@example.com", False), ("buyer@example.com", False),
         ("other@example.com", False), ("admin@example.com", True),

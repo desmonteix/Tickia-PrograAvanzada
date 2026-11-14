@@ -31,6 +31,8 @@ def view(row, tx, ticket):
     result = schemas.TicketResponse.model_validate(ticket).model_dump(mode='json')
     available = can_respond(row, tx, ticket)
     return {**result, 'purchase_id': str(row.id), 'delivered_at': iso(row.delivered_at),
+        'listed_amount': float(tx.listed_amount if tx.listed_amount is not None else tx.amount_total),
+        'amount_paid': float(tx.amount_total), 'buyer_discount': float(tx.buyer_discount),
         'closes_at': iso(row.closes_at), 'review_state': row.review_state,
         'decision': row.decision, 'settlement_state': row.settlement_state,
         'settlement_error': row.settlement_error, 'can_confirm': available, 'can_report': available}
