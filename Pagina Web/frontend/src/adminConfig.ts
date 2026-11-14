@@ -24,7 +24,7 @@ function rate(form: FormData, key: string, max = 100) {
   const value = Number(raw);
   if (value < 0 || value > max || value >= 100)
     throw new Error('El porcentaje está fuera del rango permitido.');
-  return value / 100;
+  return Math.round(value * 100) / 10000;
 }
 function date(form: FormData, key: string) {
   const raw = text(form, key);

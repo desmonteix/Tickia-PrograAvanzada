@@ -208,6 +208,13 @@ export default function BuyerFlow({
       checkout.current = null;
       selected.current = null;
     }
+    if (
+      reservation.current &&
+      Date.parse(reservation.current.quote.reserved_until) <= Date.now()
+    ) {
+      reservation.current = null;
+      setQuote(null);
+    }
     if (checkout.current && selected.current?.id === pending.id) {
       dialog.current?.close();
       checkout.current.open();

@@ -58,6 +58,22 @@ test('manual rewards require a selected existing user, reason and explicit optio
     rewardPayload(form({ user_id: '../other', buyer_discount_rate: '10', reason: values.reason })),
   );
 });
+
+test('percentages serialize as rates with at most four decimal places', () => {
+  for (const [input, encoded] of [['0.07', '0.0007'], ['4.9', '0.049']]) {
+    const payload = campaignPayload(form({ ...values,
+      listing_commission_rate: input, registration_discount_rate: input,
+      seller_buyer_discount_rate: input, seller_commission_rate: input,
+    }));
+    for (const key of ['listing_commission_rate', 'registration_discount_rate', 'seller_buyer_discount_rate', 'seller_commission_rate'])
+      assert.equal(JSON.stringify(payload[key]), encoded);
+    const reward = rewardPayload(form({ user_id: 'b2d8c790-22a4-4c81-8ef2-5c073dac3f81',
+      buyer_discount_rate: input, seller_commission_rate: input, reason: values.reason }));
+    assert.equal(JSON.stringify(reward.buyer_discount_rate), encoded);
+    assert.equal(JSON.stringify(reward.seller_commission_rate), encoded);
+  }
+  assert.throws(() => campaignPayload(form({ ...values, listing_commission_rate: '0.071' })));
+});
 test('operation settings do not include provider credentials or payment enable flags', () => {
   const value = settingsPayload(
     form({

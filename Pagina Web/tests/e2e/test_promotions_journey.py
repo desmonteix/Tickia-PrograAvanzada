@@ -230,8 +230,12 @@ class PromotionJourneyTests(unittest.TestCase):
         expect(admin.get_by_label('Inicio (hora de Perú)', exact=True)).to_have_value('2098-01-01T00:00')
         admin.get_by_label('Comisión por publicación (%)', exact=True).fill('6')
         admin.get_by_label('Motivo del cambio', exact=True).fill('Actualizar comisión sin alterar historial')
+        invalid = admin.locator('form input:invalid, form textarea:invalid').evaluate_all(
+            'elements => elements.map(e => ({name:e.name, value:e.value, message:e.validationMessage}))')
+        self.assertEqual(invalid, [], 'Campaign edit fields must satisfy native browser validation')
         with admin.expect_response(lambda response: response.request.method == 'PATCH' and '/admin/campaigns/' in response.url) as edited:
             admin.get_by_role('button', name='Guardar campaña', exact=True).click()
+            self.assertEqual(admin.get_by_role('alert').all_text_contents(), [], 'Campaign edit must not fail client-side validation')
         self.assertEqual(edited.value.status, 200, edited.value.text())
         admin.get_by_role('button', name='Archivar ' + name, exact=True).click()
         admin.get_by_label('Motivo del archivo', exact=True).fill('Campaña de prueba finalizada correctamente')
