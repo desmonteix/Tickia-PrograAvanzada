@@ -1,6 +1,7 @@
 """Importación atómica de los 13 CSV entregados; consultas siempre de solo lectura."""
 import csv
 import hashlib
+import os
 from itertools import islice
 from pathlib import Path
 import sqlite3
@@ -8,7 +9,7 @@ import tempfile
 from contextlib import contextmanager
 
 SOURCE_DIR = Path(__file__).resolve().parents[2] / "Proyecto_PrograAvanzada"
-LOCAL_DIR = SOURCE_DIR / ".local"
+LOCAL_DIR = Path(os.getenv("TICKIA_LOCAL_DIR", str(SOURCE_DIR / ".local"))).resolve()
 DATASET_DB = LOCAL_DIR / "marketplace.sqlite3"
 
 # Los nombres SQL solo proceden de esta lista fija, nunca de una solicitud HTTP.

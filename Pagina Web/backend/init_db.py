@@ -1,6 +1,8 @@
 from .database import engine, Base
 from . import models
 from .local_config import LOCAL_MODE
+if LOCAL_MODE:
+    from . import marketplace_models
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -15,6 +17,8 @@ def init_db():
             from .dataset import ensure_dataset
             manifest = ensure_dataset()
             logger.info("Dataset local: %s tablas, %s registros", len(manifest), sum(t["rows"] for t in manifest))
+            from .marketplace import seed_marketplace
+            seed_marketplace(engine)
         logger.info("¡Tablas creadas exitosamente!")
     except Exception as e:
         logger.error("No se pudieron inicializar las tablas")

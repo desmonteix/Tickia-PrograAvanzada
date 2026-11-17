@@ -132,6 +132,8 @@ for router in (auth.router, tickets.router, payments.router, download.router, ad
 if LOCAL_MODE:
     from .routers.dataset import router as dataset_router
     app.include_router(dataset_router)
+    from .routers.marketplace import router as marketplace_router
+    app.include_router(marketplace_router)
 
 
 @app.get("/api/runtime")
