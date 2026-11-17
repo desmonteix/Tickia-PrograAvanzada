@@ -3,6 +3,7 @@ import argparse
 import os
 from pathlib import Path
 import shutil
+import signal
 import socket
 import subprocess
 import sys
@@ -14,6 +15,10 @@ LOCAL = Path(__file__).resolve().parent / ".local"
 
 
 def main():
+    if os.name == "nt":
+        def interrupted(signum, frame):
+            raise KeyboardInterrupt
+        signal.signal(signal.SIGBREAK, interrupted)
     parser = argparse.ArgumentParser(description="Tickia con el dataset local, sin Supabase")
     parser.add_argument("--api-port", type=int, default=8001)
     parser.add_argument("--web-port", type=int, default=5174)
@@ -61,7 +66,12 @@ def main():
     finally:
         for process in processes:
             if process.poll() is None:
-                process.terminate()
+                if os.name == "nt":
+                    # El ejecutable del venv puede crear otro python.exe: cerrar todo el árbol.
+                    subprocess.run(["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+                else:
+                    process.terminate()
                 try:
                     process.wait(timeout=10)
                 except subprocess.TimeoutExpired:
