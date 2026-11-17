@@ -1,0 +1,701 @@
+id_vendedor,id_usuario,razon_social,reputacion
+1,5875,Inversiones Mistura S.R.L. 0,3.73
+2,22395,Corporación Inca S.R.L. 1,3.0
+3,13773,Corporación Los Andes E.I.R.L.,4.5
+4,16276,Corporación Pacífico S.A. 3,3.75
+5,10016,Comercial Inca E.I.R.L. 4,3.89
+6,24138,Distribuidora Norte S.A.,5.0
+7,9724,Grupo Amazonía S.A.C. 6,3.0
+8,28575,Tienda Rímac S.R.L.,4.0
+9,28242,Tienda Norte S.A. 8,3.0
+10,18625,Corporación Vicuña E.I.R.L. 9,4.0
+11,7637,Corporación Wari E.I.R.L. 10,3.33
+12,17501,Importaciones Sol S.A. 11,3.67
+13,13048,Comercial Sol S.R.L. 12,4.0
+14,28030,Inversiones Huascarán E.I.R.L. 13,2.29
+15,26209,Grupo Rímac S.R.L.,4.0
+16,23958,Inversiones Andina S.A.,4.0
+17,5878,Negocios Los Andes S.A. 16,4.0
+18,836,Importaciones Nazca S.A. 17,5.0
+19,14827,Grupo Huascarán S.A. 18,4.55
+20,16492,Distribuidora Vicuña E.I.R.L.,3.5
+21,27357,Grupo Los Andes S.R.L. 20,4.31
+22,20828,Tienda Andina S.A. 21,4.0
+23,19500,Tienda Andina S.A. 22,3.88
+24,3138,Distribuidora Huascarán E.I.R.L.,4.25
+25,8408,Grupo Inca S.A. 24,4.25
+26,6027,Inversiones del Sur S.A.C. 25,4.0
+27,10959,Grupo Sol S.A.C. 26,4.17
+28,23778,Inversiones Mistura S.R.L. 27,3.65
+29,13599,Negocios Cóndor S.A.C.,2.79
+30,10344,Inversiones Cóndor E.I.R.L. 29,4.0
+31,22941,Negocios Inca S.R.L. 30,4.0
+32,4304,Negocios Rímac E.I.R.L.,4.25
+33,28742,Importaciones Pacífico E.I.R.L.,3.04
+34,16736,Inversiones del Sur S.R.L. 33,4.43
+35,6661,Grupo Rímac S.A.C. 34,4.09
+36,22289,Comercial del Sur E.I.R.L.,4.11
+37,11126,Inversiones Sol S.A.C.,4.0
+38,620,Comercial Amazonía S.A.C. 37,4.06
+39,28411,Comercial Norte S.R.L. 38,3.93
+40,26150,Comercial del Sur S.A.C. 39,4.5
+41,1285,Importaciones Norte S.A.C.,4.2
+42,7249,Corporación Misti E.I.R.L.,4.35
+43,21478,Inversiones Rímac S.A.,5.0
+44,3286,Inversiones Titicaca S.A. 43,4.0
+45,9083,Inversiones Los Andes E.I.R.L. 44,4.39
+46,7939,Inversiones Sol E.I.R.L. 45,3.8
+47,7995,Comercial Pacífico S.R.L. 46,4.0
+48,13529,Tienda Mistura S.A.,4.35
+49,1085,Corporación Pacífico S.A. 48,4.2
+50,14358,Tienda Titicaca S.A. 49,5.0
+51,12209,Importaciones Norte S.A. 50,4.65
+52,16756,Inversiones Mistura S.A.C. 51,4.0
+53,4957,Negocios Rímac S.R.L. 52,2.71
+54,29004,Grupo Amazonía E.I.R.L.,5.0
+55,15289,Corporación Rímac S.R.L.,4.32
+56,26296,Corporación Huascarán S.A.C. 55,4.21
+57,19665,Corporación Cóndor S.A.,4.0
+58,23679,Grupo Rímac S.A.C. 57,2.99
+59,4692,Tienda Titicaca S.A. 58,4.18
+60,19335,Negocios Pacífico S.A.,3.93
+61,15753,Comercial Huascarán E.I.R.L. 60,4.62
+62,12077,Negocios Los Andes E.I.R.L. 61,4.8
+63,14201,Negocios Los Andes E.I.R.L. 62,4.0
+64,3115,Importaciones Lima Center S.A.C. 63,4.0
+65,27988,Tienda Los Andes S.R.L.,4.0
+66,9866,Negocios Norte E.I.R.L. 65,5.0
+67,3314,Corporación Wari S.A. 66,4.0
+68,16959,Distribuidora Andina S.A. 67,4.34
+69,29679,Grupo Huascarán S.A. 68,5.0
+70,27053,Importaciones del Sur S.A.C.,4.25
+71,26638,Corporación Norte S.R.L. 70,4.75
+72,10478,Distribuidora Los Andes S.A.C. 71,4.29
+73,27075,Tienda Inca S.A.C.,4.0
+74,22464,Corporación Wari S.A. 73,4.53
+75,2364,Tienda Misti S.A.,4.0
+76,21111,Inversiones Amazonía E.I.R.L. 75,5.0
+77,17600,Distribuidora Los Andes S.A. 76,4.5
+78,23957,Distribuidora Nazca E.I.R.L. 77,4.0
+79,9806,Comercial Moche S.A. 78,4.22
+80,10174,Comercial Nazca S.A.C. 79,5.0
+81,21681,Distribuidora del Sur S.A.C.,4.62
+82,9756,Inversiones Amazonía S.R.L.,4.0
+83,20411,Importaciones Rímac S.R.L.,4.57
+84,20954,Corporación Sol S.R.L.,4.33
+85,28388,Corporación Norte S.A. 84,3.0
+86,4059,Negocios Inca S.A.C.,4.11
+87,9004,Corporación Chavín S.A. 86,4.0
+88,1703,Distribuidora Chavín S.A. 87,4.0
+89,25030,Comercial Huascarán S.A. 88,4.0
+90,3852,Inversiones del Sur S.R.L. 89,4.0
+91,13043,Tienda Los Andes E.I.R.L. 90,4.0
+92,1355,Distribuidora Moche S.A. 91,3.33
+93,2321,Tienda Cóndor S.R.L.,4.11
+94,22078,Negocios Huascarán S.A. 93,4.0
+95,27714,Negocios Pacífico E.I.R.L.,4.0
+96,25763,Importaciones Inca S.A.C. 95,5.0
+97,14012,Distribuidora Nazca E.I.R.L. 96,4.5
+98,28919,Grupo Vicuña E.I.R.L.,4.33
+99,8980,Importaciones Wari S.R.L. 98,3.0
+100,29466,Inversiones Inca S.A.C. 99,3.2
+101,637,Distribuidora Titicaca S.A.C.,4.0
+102,15656,Negocios Sol S.A.,3.09
+103,28111,Comercial Vicuña E.I.R.L. 102,4.53
+104,22444,Comercial Inca E.I.R.L. 103,4.47
+105,11393,Distribuidora Los Andes E.I.R.L. 104,5.0
+106,12335,Importaciones Los Andes S.R.L.,4.0
+107,23118,Negocios Norte S.A.,4.0
+108,1037,Importaciones Titicaca E.I.R.L. 107,4.0
+109,24385,Importaciones Moche E.I.R.L.,4.0
+110,804,Importaciones del Sur S.R.L. 109,4.0
+111,5107,Corporación Pacífico E.I.R.L. 110,4.12
+112,598,Comercial del Sur S.A. 111,4.0
+113,17010,Comercial Titicaca E.I.R.L.,2.0
+114,20407,Distribuidora Moche S.A. 113,3.1
+115,23627,Importaciones Lima Center S.R.L.,5.0
+116,4078,Corporación Chavín S.A. 115,3.75
+117,24245,Corporación Andina E.I.R.L. 116,4.46
+118,19484,Negocios Rímac S.A. 117,4.0
+119,1823,Distribuidora Lima Center S.A.,3.71
+120,7025,Grupo del Sur S.A.C.,4.6
+121,15814,Comercial Los Andes S.R.L. 120,4.14
+122,10623,Importaciones Lima Center S.A.C. 121,4.0
+123,3419,Corporación Lima Center E.I.R.L. 122,3.6
+124,7718,Negocios Inca S.R.L. 123,4.0
+125,18924,Grupo Titicaca S.A. 124,4.1
+126,28870,Importaciones Lima Center S.A. 125,4.33
+127,437,Importaciones Los Andes S.A.C. 126,3.0
+128,23743,Importaciones Andina S.A. 127,5.0
+129,24532,Corporación Moche S.A. 128,4.32
+130,21347,Corporación Los Andes S.A.,4.35
+131,14550,Distribuidora Chavín S.R.L.,4.0
+132,5119,Grupo Moche E.I.R.L. 131,3.9
+133,17433,Negocios Nazca E.I.R.L. 132,4.0
+134,22536,Grupo Misti S.A.C.,4.0
+135,6931,Corporación Inca S.R.L. 134,4.0
+136,14038,Comercial Lima Center S.A. 135,4.0
+137,9103,Grupo Rímac S.A. 136,5.0
+138,24869,Distribuidora Norte E.I.R.L. 137,3.0
+139,15144,Tienda Sol S.A.C.,4.0
+140,3242,Comercial Mistura E.I.R.L. 139,4.0
+141,3456,Negocios Norte E.I.R.L. 140,3.75
+142,12362,Grupo Huascarán E.I.R.L. 141,4.22
+143,9657,Corporación Andina S.A. 142,4.0
+144,3118,Grupo Cóndor S.A. 143,4.0
+145,9887,Grupo Nazca S.A. 144,4.0
+146,17451,Tienda del Sur S.R.L.,4.19
+147,17663,Grupo Moche S.A. 146,4.9
+148,2998,Grupo Titicaca S.R.L. 147,3.89
+149,750,Tienda Lima Center S.A. 148,4.67
+150,9321,Comercial Misti E.I.R.L. 149,4.38
+151,232,Distribuidora Rímac S.A.,3.0
+152,16587,Grupo Nazca S.A.C. 151,4.33
+153,8484,Inversiones Amazonía E.I.R.L. 152,4.18
+154,21592,Tienda Norte S.A. 153,4.0
+155,4038,Comercial Vicuña S.A.C.,4.0
+156,13853,Importaciones Amazonía E.I.R.L. 155,3.0
+157,28868,Tienda Inca S.R.L.,4.09
+158,20366,Comercial del Sur S.A. 157,4.0
+159,21816,Tienda Chavín S.R.L.,5.0
+160,14093,Importaciones Los Andes E.I.R.L. 159,4.45
+161,23449,Comercial Norte S.A.C. 160,2.97
+162,29710,Inversiones Chavín S.A. 161,5.0
+163,13466,Negocios Nazca S.A.,3.95
+164,15047,Corporación Huascarán E.I.R.L. 163,4.0
+165,17167,Distribuidora Amazonía E.I.R.L. 164,4.0
+166,28413,Corporación Chavín S.A. 165,4.67
+167,17483,Importaciones Nazca S.A. 166,4.11
+168,2963,Comercial Moche S.R.L. 167,4.0
+169,23035,Tienda Chavín S.A.,4.5
+170,26447,Negocios Inca S.A. 169,4.5
+171,18566,Inversiones Cóndor S.A.,4.46
+172,18481,Inversiones Cóndor E.I.R.L. 171,4.42
+173,25903,Tienda Lima Center E.I.R.L.,4.16
+174,24020,Tienda Vicuña S.A.C. 173,2.5
+175,25405,Grupo Misti S.A. 174,2.75
+176,23428,Importaciones Moche S.A.C. 175,3.25
+177,2813,Inversiones Sol S.R.L.,3.8
+178,9845,Inversiones Inca S.A. 177,3.0
+179,2950,Grupo Rímac E.I.R.L. 178,3.78
+180,11913,Negocios Vicuña E.I.R.L. 179,4.0
+181,9985,Inversiones Titicaca S.R.L. 180,4.14
+182,26192,Comercial del Sur S.R.L.,4.06
+183,26451,Grupo Los Andes S.A.,4.17
+184,29647,Distribuidora del Sur E.I.R.L.,3.67
+185,18835,Tienda Chavín S.A.C. 184,4.23
+186,23478,Distribuidora Inca S.R.L.,3.5
+187,22644,Importaciones Sol S.A. 186,3.0
+188,11310,Tienda Vicuña S.A.C. 187,4.33
+189,21545,Distribuidora Sol S.A.C.,3.11
+190,24100,Comercial Amazonía S.A.C. 189,4.5
+191,13374,Comercial Chavín E.I.R.L.,4.12
+192,23405,Tienda Titicaca S.R.L. 191,4.57
+193,1201,Inversiones Titicaca S.R.L. 192,4.2
+194,19805,Negocios Misti S.A. 193,3.8
+195,10399,Grupo del Sur S.A. 194,4.0
+196,22942,Inversiones Wari S.A.,5.0
+197,5184,Negocios Huascarán S.A. 196,2.72
+198,28102,Corporación Pacífico S.A. 197,3.57
+199,13337,Importaciones Cóndor S.R.L.,5.0
+200,6272,Corporación Cóndor S.R.L.,4.5
+201,11182,Grupo Vicuña S.A.,4.67
+202,22702,Distribuidora Misti E.I.R.L.,4.5
+203,28750,Distribuidora Pacífico S.A.,4.4
+204,29383,Distribuidora Cóndor S.R.L. 203,4.0
+205,12849,Negocios Chavín E.I.R.L.,4.0
+206,1377,Distribuidora Cóndor S.R.L. 205,2.6
+207,22824,Importaciones Lima Center S.A. 206,4.43
+208,29375,Corporación Norte S.R.L. 207,4.67
+209,18331,Importaciones Cóndor E.I.R.L.,3.75
+210,6929,Distribuidora Los Andes E.I.R.L. 209,3.0
+211,5269,Comercial Moche S.R.L. 210,4.2
+212,1630,Inversiones Mistura S.A.C. 211,4.5
+213,25246,Tienda Wari S.A.,4.67
+214,13311,Grupo Los Andes E.I.R.L.,4.08
+215,12823,Importaciones Rímac S.A. 214,4.2
+216,26362,Distribuidora Wari S.A. 215,4.0
+217,27258,Comercial Sol S.R.L. 216,4.36
+218,19649,Distribuidora Vicuña S.A.,5.0
+219,22219,Negocios Nazca S.R.L. 218,4.0
+220,8118,Importaciones Wari S.A.,2.78
+221,5131,Corporación Cóndor S.A.C.,4.4
+222,7510,Distribuidora Chavín E.I.R.L.,4.75
+223,24609,Corporación Chavín S.R.L. 222,4.0
+224,23485,Comercial Huascarán E.I.R.L. 223,2.5
+225,15907,Importaciones Wari S.R.L. 224,4.0
+226,23567,Grupo Sol E.I.R.L. 225,2.31
+227,8026,Negocios Amazonía S.A. 226,4.86
+228,28914,Corporación Huascarán E.I.R.L. 227,4.0
+229,25298,Grupo Moche E.I.R.L. 228,4.33
+230,18899,Comercial Huascarán S.A.C. 229,4.27
+231,15699,Comercial Huascarán E.I.R.L. 230,3.5
+232,24801,Distribuidora Vicuña S.A.C.,4.34
+233,19560,Negocios Rímac S.A. 232,4.0
+234,27355,Grupo Sol S.A.C. 233,4.08
+235,16417,Tienda Amazonía S.A.,4.46
+236,13331,Corporación Lima Center E.I.R.L. 235,4.0
+237,10989,Negocios Misti S.A.C. 236,3.69
+238,11086,Grupo Los Andes S.A.C.,4.0
+239,4920,Corporación Chavín S.R.L. 238,4.4
+240,20922,Distribuidora del Sur S.A. 239,4.0
+241,18759,Distribuidora Norte S.R.L.,4.32
+242,22732,Negocios Pacífico S.A.C. 241,4.06
+243,27282,Grupo Huascarán S.A.C.,4.5
+244,27754,Inversiones Pacífico S.R.L.,5.0
+245,22409,Negocios Andina S.A.C.,4.0
+246,10286,Corporación Norte S.A. 245,4.25
+247,19572,Grupo del Sur S.R.L. 246,4.5
+248,14463,Inversiones Huascarán S.R.L.,4.0
+249,23674,Distribuidora Pacífico S.A.C. 248,4.0
+250,6832,Comercial Norte S.R.L. 249,4.5
+251,10180,Distribuidora Andina S.A. 250,4.32
+252,10128,Distribuidora Mistura E.I.R.L.,4.27
+253,12498,Distribuidora Moche S.A. 252,5.0
+254,18714,Distribuidora Wari S.A. 253,4.0
+255,12640,Tienda Nazca S.R.L. 254,1.67
+256,21535,Distribuidora Lima Center S.R.L.,4.57
+257,982,Corporación Chavín S.A. 256,4.26
+258,22578,Negocios Nazca S.R.L. 257,4.3
+259,10508,Importaciones Los Andes S.A.C. 258,4.24
+260,9289,Comercial Moche S.A. 259,3.8
+261,4630,Corporación Amazonía S.A.C. 260,4.33
+262,23530,Negocios Inca E.I.R.L. 261,4.14
+263,64,Corporación Norte S.R.L. 262,5.0
+264,3167,Grupo Lima Center E.I.R.L.,2.8
+265,8638,Importaciones Amazonía E.I.R.L. 264,4.3
+266,21597,Importaciones Inca S.A.C. 265,3.88
+267,18,Negocios Misti S.R.L. 266,4.0
+268,18551,Inversiones Moche S.R.L. 267,4.29
+269,24474,Corporación Titicaca S.R.L. 268,4.67
+270,25245,Comercial Nazca S.A.,4.0
+271,23895,Negocios Nazca E.I.R.L. 270,4.3
+272,13756,Inversiones Andina S.A.C.,4.5
+273,26872,Negocios Amazonía S.A.C. 272,2.5
+274,15905,Corporación Huascarán S.R.L.,4.0
+275,21443,Corporación Chavín S.A. 274,2.27
+276,12702,Grupo Lima Center S.A.C. 275,4.07
+277,19096,Distribuidora Pacífico S.A.C. 276,4.15
+278,19200,Distribuidora Nazca S.A.,5.0
+279,26980,Distribuidora Lima Center S.A.C.,4.25
+280,4801,Inversiones Wari S.A.C. 279,3.5
+281,143,Corporación Inca E.I.R.L. 280,3.0
+282,29411,Inversiones Sol E.I.R.L. 281,4.17
+283,8251,Comercial Norte S.A.C. 282,4.57
+284,10921,Importaciones Cóndor S.A.C.,4.0
+285,9457,Grupo del Sur S.A. 284,3.71
+286,6407,Grupo Mistura E.I.R.L. 285,3.75
+287,8670,Tienda Misti S.R.L.,4.29
+288,18300,Distribuidora Sol S.A. 287,4.39
+289,370,Comercial Moche S.A.C. 288,3.87
+290,7891,Distribuidora Andina S.A. 289,2.25
+291,1623,Grupo Misti E.I.R.L. 290,4.24
+292,26180,Inversiones Vicuña E.I.R.L.,4.0
+293,9113,Tienda Nazca S.A.,5.0
+294,23046,Comercial Huascarán E.I.R.L. 293,4.32
+295,25981,Inversiones Lima Center E.I.R.L.,4.0
+296,6428,Importaciones Inca S.R.L.,4.0
+297,13956,Negocios Inca S.A. 296,4.0
+298,28840,Negocios Nazca E.I.R.L. 297,4.0
+299,5963,Importaciones Titicaca E.I.R.L. 298,4.0
+300,24105,Corporación Misti S.R.L. 299,3.75
+301,28658,Corporación Huascarán S.A. 300,4.0
+302,21101,Grupo Mistura E.I.R.L. 301,4.36
+303,22375,Corporación Misti S.A. 302,4.0
+304,29202,Distribuidora Wari S.A.C.,2.84
+305,27457,Distribuidora Norte E.I.R.L. 304,4.38
+306,14894,Inversiones Nazca S.R.L. 305,4.0
+307,12526,Grupo Rímac E.I.R.L. 306,4.33
+308,24529,Tienda Nazca S.R.L. 307,3.71
+309,28210,Comercial Chavín S.A. 308,4.67
+310,12333,Importaciones Sol S.A. 309,3.0
+311,26573,Corporación Andina E.I.R.L. 310,3.8
+312,5370,Comercial Amazonía S.R.L.,2.83
+313,6772,Comercial Cóndor S.A.,3.25
+314,25519,Comercial Pacífico S.R.L. 313,3.89
+315,26433,Tienda Sol S.A.,3.6
+316,28773,Comercial Lima Center E.I.R.L.,4.26
+317,4212,Inversiones Moche E.I.R.L.,3.0
+318,13744,Corporación Huascarán S.A.C. 317,4.0
+319,308,Negocios Amazonía E.I.R.L.,4.0
+320,15751,Negocios Los Andes S.R.L.,4.0
+321,25694,Distribuidora Norte S.A.C.,4.0
+322,22641,Distribuidora del Sur S.A. 321,3.67
+323,24721,Importaciones Andina S.A. 322,4.86
+324,13225,Distribuidora Amazonía S.A.C. 323,4.5
+325,3690,Distribuidora Titicaca S.R.L.,4.45
+326,26854,Corporación Inca S.R.L. 325,2.0
+327,8503,Comercial Andina S.A.C. 326,3.5
+328,7024,Corporación Pacífico S.R.L.,4.64
+329,16744,Corporación Lima Center S.A.C.,4.43
+330,13015,Tienda Pacífico E.I.R.L. 329,3.0
+331,24898,Comercial Pacífico S.A.C.,4.2
+332,24660,Corporación Rímac S.A.C. 331,4.0
+333,24239,Importaciones Rímac S.A.C. 332,4.48
+334,21140,Grupo Titicaca S.A. 333,4.56
+335,26309,Comercial Los Andes S.R.L. 334,4.2
+336,7831,Importaciones Andina S.A. 335,4.11
+337,12832,Comercial Rímac S.A.,4.31
+338,12229,Tienda Pacífico S.R.L. 337,4.0
+339,1349,Negocios Wari S.A.,4.14
+340,8391,Corporación Mistura E.I.R.L.,4.5
+341,24052,Grupo Pacífico S.R.L. 340,4.0
+342,16104,Corporación Nazca S.R.L.,4.0
+343,20985,Grupo Andina S.A.,4.3
+344,15918,Corporación Sol S.A.,4.06
+345,2225,Grupo Misti S.A. 344,5.0
+346,6193,Negocios Andina E.I.R.L.,3.77
+347,2865,Importaciones Mistura S.A.C.,4.47
+348,10824,Negocios del Sur S.A.C. 347,4.38
+349,19668,Distribuidora del Sur S.A. 348,4.0
+350,4481,Distribuidora Pacífico S.A.C. 349,4.2
+351,22170,Tienda Los Andes E.I.R.L. 350,4.0
+352,1516,Grupo Moche S.A. 351,4.24
+353,29954,Importaciones Moche S.A.C. 352,4.38
+354,23610,Corporación Andina S.A. 353,4.47
+355,24164,Inversiones Moche S.R.L. 354,4.0
+356,22262,Grupo Nazca S.A. 355,2.67
+357,25441,Inversiones Wari S.R.L.,4.0
+358,11788,Inversiones Misti S.A.C.,4.0
+359,12044,Distribuidora Wari S.R.L.,4.0
+360,19105,Inversiones Inca E.I.R.L.,2.75
+361,8778,Importaciones Inca S.A.C. 360,4.0
+362,479,Comercial Inca S.A. 361,4.0
+363,3359,Inversiones Titicaca S.R.L. 362,3.91
+364,25438,Grupo Moche S.R.L.,4.15
+365,23054,Comercial Lima Center S.R.L.,3.0
+366,3061,Corporación Norte E.I.R.L.,4.14
+367,14135,Comercial Chavín S.A. 366,4.0
+368,21596,Distribuidora Amazonía S.A.C. 367,4.0
+369,26848,Corporación Lima Center S.R.L. 368,4.71
+370,11022,Negocios del Sur S.A.C. 369,4.67
+371,26675,Comercial Nazca E.I.R.L.,4.18
+372,19003,Distribuidora del Sur S.A. 371,4.33
+373,6345,Grupo Sol S.R.L. 372,4.11
+374,10423,Grupo Lima Center S.A.,5.0
+375,4242,Tienda Amazonía S.R.L. 374,3.8
+376,3958,Negocios Pacífico S.A.C. 375,4.0
+377,9016,Negocios Wari E.I.R.L.,4.0
+378,10115,Corporación Inca E.I.R.L. 377,4.0
+379,3300,Grupo Mistura S.A.C.,5.0
+380,2548,Inversiones Nazca S.R.L. 379,4.0
+381,2328,Distribuidora Sol S.A. 380,4.0
+382,27329,Corporación Huascarán S.A.C. 381,4.26
+383,13719,Comercial Huascarán S.A. 382,5.0
+384,21539,Inversiones Inca S.A.C. 383,4.11
+385,11285,Tienda Cóndor S.A.C. 384,1.67
+386,7233,Negocios Titicaca S.A.C.,2.88
+387,1718,Importaciones Huascarán S.A.C.,4.0
+388,8364,Inversiones Los Andes S.R.L. 387,4.25
+389,11459,Inversiones Mistura S.R.L. 388,3.69
+390,9377,Tienda Mistura E.I.R.L.,3.0
+391,17344,Corporación Lima Center S.A. 390,3.0
+392,29966,Importaciones Chavín S.A.,4.5
+393,13674,Corporación Wari E.I.R.L. 392,3.6
+394,9871,Tienda Amazonía E.I.R.L.,4.29
+395,2889,Tienda Los Andes S.A.,4.4
+396,26299,Corporación Misti S.A.C. 395,4.54
+397,20766,Comercial Misti E.I.R.L. 396,3.5
+398,9426,Corporación Nazca S.A. 397,4.4
+399,14490,Inversiones Wari S.A.C. 398,4.57
+400,20748,Distribuidora Huascarán S.R.L.,4.11
+401,23100,Corporación Inca E.I.R.L. 400,3.0
+402,28194,Distribuidora Cóndor E.I.R.L.,4.5
+403,27146,Corporación Moche S.A.C.,4.29
+404,17243,Importaciones Wari E.I.R.L. 403,4.0
+405,6009,Grupo del Sur S.A. 404,4.4
+406,28660,Tienda Nazca S.R.L. 405,3.67
+407,6951,Inversiones Huascarán E.I.R.L. 406,3.78
+408,18682,Inversiones Cóndor S.R.L.,4.75
+409,3582,Grupo Amazonía S.A.,4.5
+410,21934,Inversiones del Sur S.A.C. 409,3.98
+411,27406,Negocios Rímac S.R.L. 410,3.0
+412,19051,Comercial Nazca S.R.L.,4.25
+413,29977,Distribuidora Moche S.A.C.,4.2
+414,10380,Comercial Andina E.I.R.L.,4.0
+415,1901,Comercial Mistura S.A. 414,4.0
+416,6656,Corporación Nazca S.A. 415,5.0
+417,17127,Tienda del Sur S.A.,4.0
+418,29582,Inversiones Moche S.R.L. 417,3.67
+419,11956,Tienda Los Andes S.A.C.,4.0
+420,19376,Negocios Mistura E.I.R.L.,4.14
+421,10715,Corporación Chavín S.R.L. 420,4.0
+422,12358,Distribuidora Misti S.A. 421,4.58
+423,6338,Distribuidora Misti S.A.C.,3.17
+424,17588,Grupo Moche S.A.C.,3.0
+425,11690,Inversiones Moche S.R.L. 424,4.0
+426,19079,Negocios Misti S.A. 425,5.0
+427,18253,Tienda Amazonía S.R.L. 426,4.0
+428,5482,Distribuidora Los Andes S.A. 427,3.61
+429,3775,Importaciones Huascarán E.I.R.L.,3.75
+430,8071,Importaciones Mistura S.R.L.,4.0
+431,17755,Negocios Amazonía S.A. 430,4.0
+432,24045,Tienda Pacífico E.I.R.L. 431,3.5
+433,1904,Comercial Wari E.I.R.L. 432,4.0
+434,7431,Grupo Sol S.A.,4.25
+435,14291,Tienda Wari S.A.C. 434,4.22
+436,10801,Grupo Andina E.I.R.L.,4.36
+437,17747,Negocios Huascarán E.I.R.L.,4.17
+438,20244,Comercial Vicuña E.I.R.L. 437,4.3
+439,20711,Negocios del Sur E.I.R.L.,4.45
+440,3364,Grupo Pacífico S.R.L. 439,4.5
+441,26464,Corporación Amazonía S.A.C. 440,4.44
+442,1380,Negocios Moche S.A.,4.0
+443,12707,Corporación Amazonía E.I.R.L.,4.33
+444,19071,Corporación Rímac S.A.C. 443,3.25
+445,5709,Importaciones Los Andes E.I.R.L. 444,3.67
+446,16927,Distribuidora Nazca E.I.R.L. 445,3.92
+447,22502,Corporación Chavín S.A. 446,4.0
+448,20700,Comercial Wari S.A.,4.0
+449,18265,Grupo Cóndor E.I.R.L.,4.23
+450,16614,Corporación del Sur S.A.C. 449,3.67
+451,20423,Comercial Moche S.R.L. 450,3.52
+452,7371,Grupo Los Andes S.R.L. 451,4.62
+453,14465,Grupo Misti E.I.R.L. 452,4.5
+454,1227,Grupo Inca E.I.R.L.,4.25
+455,16149,Importaciones Chavín S.A.C. 454,2.11
+456,20849,Importaciones Chavín S.A.C. 455,4.0
+457,29885,Distribuidora Inca E.I.R.L.,4.0
+458,14454,Inversiones Huascarán S.A. 457,4.1
+459,6649,Distribuidora Huascarán S.A.,2.45
+460,726,Importaciones Wari E.I.R.L. 459,4.17
+461,1475,Inversiones Sol S.A.,5.0
+462,13914,Inversiones Rímac E.I.R.L.,4.0
+463,18443,Comercial Moche S.A.C. 462,4.33
+464,5324,Importaciones Mistura E.I.R.L. 463,4.5
+465,24981,Importaciones Amazonía S.A.C.,4.0
+466,16972,Negocios Lima Center E.I.R.L.,4.0
+467,29602,Comercial Mistura E.I.R.L. 466,4.09
+468,16513,Importaciones Amazonía E.I.R.L. 467,4.0
+469,7965,Distribuidora Rímac E.I.R.L.,4.0
+470,16233,Inversiones Huascarán S.A. 469,3.0
+471,20405,Distribuidora Andina S.A.C.,4.31
+472,392,Negocios Huascarán S.R.L.,4.75
+473,19429,Importaciones Lima Center E.I.R.L.,3.88
+474,16437,Grupo Wari S.R.L.,3.0
+475,5914,Inversiones Titicaca S.A.C. 474,4.5
+476,5259,Importaciones Amazonía S.R.L. 475,4.07
+477,11132,Importaciones Norte S.A. 476,5.0
+478,11368,Tienda Mistura S.A.C.,3.0
+479,6582,Tienda Wari E.I.R.L.,3.91
+480,16538,Tienda Norte S.R.L.,4.09
+481,2418,Negocios Amazonía S.A.C. 480,5.0
+482,7835,Corporación Rímac E.I.R.L.,4.0
+483,11569,Comercial Norte E.I.R.L. 482,4.0
+484,16524,Importaciones Vicuña S.A.C.,4.0
+485,10905,Negocios Titicaca S.R.L.,4.22
+486,14952,Grupo Amazonía S.R.L.,3.65
+487,3850,Negocios Nazca S.R.L. 486,4.5
+488,23685,Inversiones Los Andes S.R.L. 487,4.5
+489,22948,Importaciones Andina S.R.L.,3.58
+490,13240,Tienda Lima Center S.A. 489,4.43
+491,15255,Distribuidora Vicuña S.R.L. 490,5.0
+492,1373,Corporación Andina S.R.L.,5.0
+493,5246,Tienda Pacífico E.I.R.L. 492,4.0
+494,22189,Corporación Pacífico E.I.R.L. 493,3.0
+495,1792,Distribuidora Vicuña S.R.L. 494,5.0
+496,21386,Inversiones Mistura S.A.,4.0
+497,26254,Negocios Los Andes E.I.R.L. 496,4.0
+498,640,Comercial Huascarán S.A. 497,2.45
+499,8268,Grupo Sol S.R.L. 498,5.0
+500,3095,Negocios Wari S.R.L.,3.6
+501,28576,Distribuidora Moche S.A. 500,4.67
+502,21183,Corporación Misti S.A. 501,4.0
+503,9332,Grupo Chavín E.I.R.L.,4.25
+504,9367,Comercial Nazca S.A.C. 503,4.11
+505,4556,Corporación Mistura S.A.C. 504,4.5
+506,10080,Negocios Sol E.I.R.L.,4.0
+507,7370,Corporación Andina E.I.R.L. 506,4.04
+508,2681,Tienda Titicaca S.R.L. 507,3.8
+509,12051,Negocios Norte S.R.L. 508,4.23
+510,4853,Importaciones Amazonía E.I.R.L. 509,4.38
+511,7635,Corporación Andina S.A. 510,2.75
+512,5946,Grupo Inca S.A.C. 511,4.37
+513,21226,Grupo Titicaca S.R.L. 512,3.67
+514,12949,Grupo Wari S.A.C.,2.81
+515,5220,Importaciones del Sur S.R.L. 514,5.0
+516,2264,Grupo Cóndor S.R.L.,4.0
+517,15110,Inversiones Los Andes S.A.C.,4.0
+518,24080,Corporación Titicaca S.R.L. 517,4.55
+519,10443,Corporación Titicaca S.A. 518,4.24
+520,29400,Tienda Huascarán S.R.L. 519,4.15
+521,15668,Grupo Chavín S.A.C.,3.67
+522,23565,Grupo Norte S.A.,3.98
+523,5204,Negocios del Sur S.R.L.,5.0
+524,2847,Corporación Moche S.A. 523,4.5
+525,9634,Tienda Misti S.A.C. 524,3.5
+526,9096,Comercial Lima Center S.A.C.,3.5
+527,2868,Inversiones Chavín S.A. 526,4.6
+528,27610,Distribuidora Mistura S.A.C.,4.0
+529,15076,Negocios Cóndor S.A.,4.0
+530,20708,Corporación del Sur S.A.C. 529,2.91
+531,21019,Importaciones del Sur S.R.L. 530,4.0
+532,27536,Importaciones Wari S.A.C.,5.0
+533,15340,Negocios Sol S.A.C.,4.2
+534,16516,Importaciones Mistura S.A.,3.92
+535,21438,Negocios Amazonía S.A.C. 534,3.75
+536,27522,Negocios Vicuña S.R.L.,4.11
+537,579,Corporación Misti S.A.C. 536,4.11
+538,25431,Importaciones Wari E.I.R.L. 537,5.0
+539,8330,Tienda Norte E.I.R.L.,4.5
+540,28945,Corporación Lima Center S.R.L. 539,4.04
+541,11457,Distribuidora Los Andes S.R.L.,2.5
+542,27117,Tienda Misti S.A.C. 541,2.33
+543,3080,Grupo Lima Center S.R.L.,4.67
+544,15279,Corporación Inca S.A.,5.0
+545,10249,Distribuidora Chavín S.A. 544,3.82
+546,14138,Inversiones Misti E.I.R.L. 545,4.14
+547,21246,Grupo Wari E.I.R.L. 546,4.15
+548,3453,Comercial Inca S.A. 547,4.44
+549,21993,Negocios Rímac S.R.L. 548,3.75
+550,7200,Comercial Inca S.A. 549,3.33
+551,14516,Negocios Los Andes E.I.R.L. 550,5.0
+552,13143,Comercial Chavín S.R.L. 551,4.13
+553,28423,Distribuidora del Sur S.R.L.,4.0
+554,18377,Corporación Titicaca S.A. 553,4.0
+555,4151,Inversiones Nazca S.A.C.,4.53
+556,28311,Grupo Sol E.I.R.L. 555,4.16
+557,28705,Negocios Titicaca E.I.R.L.,4.0
+558,324,Inversiones Misti S.A. 557,5.0
+559,483,Negocios del Sur S.A.C. 558,2.74
+560,29390,Corporación Moche E.I.R.L.,4.18
+561,12116,Comercial Huascarán E.I.R.L. 560,5.0
+562,7714,Corporación Vicuña E.I.R.L. 561,4.8
+563,3979,Corporación Andina S.A. 562,4.0
+564,20302,Tienda Huascarán S.R.L. 563,4.33
+565,28502,Distribuidora Los Andes S.A.C. 564,4.68
+566,28008,Grupo Inca S.A. 565,4.23
+567,20604,Distribuidora Sol S.A. 566,4.0
+568,3207,Inversiones Titicaca S.A.C. 567,4.0
+569,13912,Grupo Misti E.I.R.L. 568,3.62
+570,9448,Distribuidora Amazonía S.A.,4.0
+571,7320,Importaciones Mistura E.I.R.L. 570,4.26
+572,25367,Negocios Chavín S.R.L.,3.5
+573,3642,Tienda Chavín S.A.C. 572,3.89
+574,17846,Grupo Cóndor S.A.C.,3.43
+575,9097,Distribuidora Amazonía E.I.R.L. 574,3.0
+576,20194,Inversiones Los Andes E.I.R.L. 575,4.0
+577,6192,Distribuidora Moche S.R.L.,3.0
+578,21363,Inversiones Misti S.A. 577,4.02
+579,5351,Tienda Huascarán S.R.L. 578,4.0
+580,26247,Comercial Norte E.I.R.L. 579,4.0
+581,19486,Tienda Misti E.I.R.L. 580,5.0
+582,13115,Tienda Wari S.R.L.,5.0
+583,15874,Negocios Rímac S.A. 582,4.33
+584,1362,Negocios Lima Center S.A.C.,2.79
+585,11701,Importaciones Misti E.I.R.L.,4.0
+586,12596,Comercial Andina S.A.C. 585,3.64
+587,2126,Corporación Lima Center S.A. 586,4.06
+588,5235,Grupo Amazonía S.A.C. 587,4.0
+589,2459,Corporación Misti S.R.L. 588,4.0
+590,21813,Tienda Misti S.A.C. 589,4.0
+591,22141,Inversiones Inca S.A. 590,4.22
+592,25768,Comercial Wari E.I.R.L. 591,4.3
+593,18114,Comercial Wari E.I.R.L. 592,4.0
+594,5372,Importaciones Nazca S.R.L.,4.16
+595,25907,Distribuidora Misti S.A. 594,2.56
+596,5416,Tienda Moche S.R.L.,4.0
+597,12597,Comercial Norte S.A.,4.0
+598,25554,Tienda Pacífico E.I.R.L. 597,3.17
+599,173,Comercial Mistura S.A. 598,4.0
+600,15489,Negocios Vicuña E.I.R.L. 599,4.23
+601,17115,Grupo Rímac S.A. 600,4.57
+602,19672,Importaciones Rímac S.A. 601,4.0
+603,14729,Corporación Huascarán S.A. 602,4.5
+604,4027,Negocios Pacífico S.A.C. 603,4.5
+605,2466,Importaciones Amazonía S.R.L. 604,5.0
+606,1215,Corporación del Sur E.I.R.L.,4.2
+607,5943,Grupo Inca S.A.C. 606,4.33
+608,20764,Negocios Inca E.I.R.L. 607,4.0
+609,6034,Grupo Vicuña S.A.C.,4.5
+610,20339,Negocios Andina S.R.L.,2.58
+611,26410,Negocios Titicaca S.A.,2.76
+612,6109,Comercial Lima Center S.A. 611,3.62
+613,12258,Tienda Huascarán E.I.R.L.,4.29
+614,21138,Inversiones Wari S.A.C. 613,4.0
+615,19586,Corporación Norte S.A.C.,3.85
+616,29119,Inversiones Titicaca E.I.R.L.,3.0
+617,9701,Tienda Nazca S.A.C.,4.14
+618,23787,Negocios Lima Center S.A.,5.0
+619,4468,Negocios Norte S.R.L. 618,4.17
+620,1327,Negocios Misti S.R.L. 619,3.0
+621,13300,Comercial Misti S.A. 620,5.0
+622,16580,Distribuidora Moche E.I.R.L.,4.36
+623,11546,Corporación Rímac S.A.,4.0
+624,14137,Importaciones del Sur E.I.R.L.,4.39
+625,3705,Tienda Titicaca S.A. 624,2.5
+626,20086,Grupo Nazca S.A.C. 625,4.67
+627,11172,Importaciones Mistura E.I.R.L. 626,4.27
+628,20228,Grupo Cóndor S.A. 627,3.91
+629,7091,Tienda Chavín E.I.R.L.,4.0
+630,11645,Grupo Inca S.A. 629,3.0
+631,29505,Tienda Titicaca S.A.C. 630,4.29
+632,21458,Tienda Huascarán S.A.C.,5.0
+633,23141,Negocios Vicuña S.A.,4.32
+634,14316,Comercial Huascarán S.A. 633,3.67
+635,1389,Negocios Misti S.A.C. 634,4.33
+636,4156,Inversiones Cóndor E.I.R.L. 635,4.4
+637,3216,Negocios Huascarán S.A.C.,4.0
+638,11283,Inversiones Rímac S.A.C.,4.25
+639,12266,Tienda Wari S.A.C. 638,3.78
+640,5859,Tienda Misti E.I.R.L. 639,4.52
+641,17036,Importaciones Titicaca S.A.C.,4.0
+642,2821,Corporación Pacífico S.A. 641,4.53
+643,24400,Inversiones Titicaca S.A. 642,3.2
+644,3973,Negocios Misti S.A. 643,4.0
+645,24788,Inversiones Nazca E.I.R.L.,3.3
+646,25008,Grupo Lima Center S.A.C. 645,4.0
+647,21334,Grupo del Sur S.R.L. 646,4.13
+648,6577,Inversiones Misti E.I.R.L. 647,4.45
+649,7768,Tienda Huascarán S.A.,4.31
+650,29237,Tienda Vicuña S.A.C. 649,4.19
+651,28764,Corporación Wari S.R.L.,4.5
+652,14451,Grupo Huascarán E.I.R.L. 651,4.4
+653,17246,Tienda Titicaca S.A.C. 652,4.0
+654,26552,Distribuidora Los Andes S.A.C. 653,3.89
+655,6761,Comercial Huascarán S.A.C. 654,3.5
+656,14579,Corporación Titicaca E.I.R.L.,4.0
+657,13525,Importaciones Norte S.A. 656,4.0
+658,2854,Corporación Mistura S.A. 657,3.67
+659,27073,Negocios Sol S.R.L.,4.37
+660,3023,Importaciones Cóndor S.A.,4.0
+661,9174,Tienda Andina S.A.C.,4.0
+662,4167,Comercial Misti S.R.L. 661,3.88
+663,24854,Distribuidora Rímac S.A.C.,1.5
+664,24110,Inversiones Titicaca S.A. 663,4.12
+665,17783,Comercial Misti S.A.C.,4.2
+666,20446,Negocios Los Andes E.I.R.L. 665,4.3
+667,1412,Corporación Mistura S.R.L.,4.0
+668,28785,Importaciones Amazonía S.R.L. 667,3.94
+669,8594,Tienda Vicuña S.A.,4.0
+670,22294,Corporación Nazca S.A.C.,4.0
+671,27903,Importaciones Rímac S.A.C. 670,3.86
+672,4984,Tienda Pacífico S.R.L. 671,4.11
+673,17754,Comercial Chavín S.R.L. 672,4.0
+674,28236,Grupo Misti E.I.R.L. 673,3.79
+675,880,Comercial Pacífico S.A.,4.0
+676,2499,Corporación Amazonía S.A.C. 675,5.0
+677,7381,Corporación Amazonía S.A.C. 676,4.4
+678,27598,Grupo Wari E.I.R.L. 677,5.0
+679,21999,Distribuidora Nazca E.I.R.L. 678,4.67
+680,19100,Comercial Misti E.I.R.L. 679,4.25
+681,24686,Importaciones Chavín S.A.C. 680,5.0
+682,8972,Inversiones Vicuña S.A.C.,3.98
+683,27123,Corporación Nazca S.A. 682,4.25
+684,3805,Distribuidora Cóndor S.R.L. 683,4.75
+685,22879,Comercial Misti S.R.L. 684,4.0
+686,29047,Grupo Mistura S.R.L.,4.53
+687,23240,Distribuidora Titicaca E.I.R.L.,3.0
+688,11684,Corporación Mistura S.A. 687,5.0
+689,1852,Comercial Misti S.A. 688,4.0
+690,5366,Grupo Titicaca E.I.R.L.,4.33
+691,25461,Corporación Sol E.I.R.L.,4.3
+692,29598,Tienda Wari S.A.C. 691,3.5
+693,29738,Corporación Huascarán S.A. 692,4.17
+694,16346,Tienda Cóndor S.A.C. 693,4.23
+695,26760,Negocios Los Andes S.A. 694,4.5
+696,6876,Comercial del Sur S.A.C. 695,3.0
+697,20881,Negocios Moche S.A.C.,2.66
+698,8998,Corporación Mistura S.A.C. 697,3.6
+699,4123,Distribuidora Cóndor S.A.,4.59
+700,27547,Grupo Inca S.R.L.,3.85

@@ -1,0 +1,66 @@
+id_distrito,nombre,provincia,departamento
+1,Miraflores,Lima,Lima
+2,San Isidro,Lima,Lima
+3,Surco,Lima,Lima
+4,La Molina,Lima,Lima
+5,San Borja,Lima,Lima
+6,Barranco,Lima,Lima
+7,Jesús María,Lima,Lima
+8,Lince,Lima,Lima
+9,Pueblo Libre,Lima,Lima
+10,Magdalena del Mar,Lima,Lima
+11,San Miguel,Lima,Lima
+12,Los Olivos,Lima,Lima
+13,San Martín de Porres,Lima,Lima
+14,Comas,Lima,Lima
+15,Independencia,Lima,Lima
+16,San Juan de Lurigancho,Lima,Lima
+17,Ate,Lima,Lima
+18,Santa Anita,Lima,Lima
+19,La Victoria,Lima,Lima
+20,Cercado de Lima,Lima,Lima
+21,Rímac,Lima,Lima
+22,Breña,Lima,Lima
+23,Chorrillos,Lima,Lima
+24,San Juan de Miraflores,Lima,Lima
+25,Villa El Salvador,Lima,Lima
+26,Villa María del Triunfo,Lima,Lima
+27,Surquillo,Lima,Lima
+28,Carabayllo,Lima,Lima
+29,Puente Piedra,Lima,Lima
+30,El Agustino,Lima,Lima
+31,Callao,Lima,Lima
+32,Bellavista,Lima,Lima
+33,Ventanilla,Lima,Lima
+34,Lurín,Lima,Lima
+35,Chaclacayo,Lima,Lima
+36,Callao,Callao,Callao
+37,Arequipa,Arequipa,Arequipa
+38,Cayma,Arequipa,Arequipa
+39,Yanahuara,Arequipa,Arequipa
+40,Trujillo,Trujillo,La Libertad
+41,Víctor Larco Herrera,Trujillo,La Libertad
+42,Chiclayo,Chiclayo,Lambayeque
+43,Piura,Piura,Piura
+44,Castilla,Piura,Piura
+45,Cusco,Cusco,Cusco
+46,Wanchaq,Cusco,Cusco
+47,Huancayo,Huancayo,Junín
+48,El Tambo,Huancayo,Junín
+49,Iquitos,Maynas,Loreto
+50,Tacna,Tacna,Tacna
+51,Puno,Puno,Puno
+52,Juliaca,San Román,Puno
+53,Ica,Ica,Ica
+54,Cajamarca,Cajamarca,Cajamarca
+55,Huánuco,Huánuco,Huánuco
+56,Ayacucho,Huamanga,Ayacucho
+57,Pucallpa,Coronel Portillo,Ucayali
+58,Tarapoto,San Martín,San Martín
+59,Chimbote,Santa,Áncash
+60,Huaraz,Huaraz,Áncash
+61,Tumbes,Tumbes,Tumbes
+62,Moquegua,Mariscal Nieto,Moquegua
+63,Abancay,Abancay,Apurímac
+64,Puerto Maldonado,Tambopata,Madre de Dios
+65,Chachapoyas,Chachapoyas,Amazonas

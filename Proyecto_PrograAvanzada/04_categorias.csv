@@ -1,0 +1,111 @@
+id_categoria,id_padre,nombre
+1,,Tecnología
+2,1,Celulares
+3,2,Smartphones
+4,2,Fundas
+5,2,Cargadores
+6,1,Computación
+7,6,Laptops
+8,6,Monitores
+9,6,Teclados
+10,1,Audio
+11,10,Audífonos
+12,10,Parlantes
+13,10,Micrófonos
+14,,Moda
+15,14,Ropa Hombre
+16,15,Polos
+17,15,Jeans
+18,15,Casacas
+19,14,Ropa Mujer
+20,19,Blusas
+21,19,Vestidos
+22,19,Leggings
+23,14,Calzado
+24,23,Zapatillas
+25,23,Botines
+26,23,Sandalias
+27,,Hogar
+28,27,Cocina
+29,28,Ollas
+30,28,Licuadoras
+31,28,Cafeteras
+32,27,Muebles
+33,32,Sillas
+34,32,Escritorios
+35,32,Estantes
+36,27,Decoración
+37,36,Lámparas
+38,36,Cuadros
+39,36,Cortinas
+40,,Deportes
+41,40,Fitness
+42,41,Mancuernas
+43,41,Colchonetas
+44,41,Bandas elásticas
+45,40,Ciclismo
+46,45,Bicicletas
+47,45,Cascos
+48,45,Luces LED
+49,40,Outdoor
+50,49,Carpas
+51,49,Mochilas trekking
+52,49,Linternas
+53,,Belleza
+54,53,Cuidado facial
+55,54,Cremas
+56,54,Sérums
+57,54,Protector solar
+58,53,Maquillaje
+59,58,Labiales
+60,58,Bases
+61,58,Paletas de sombras
+62,53,Cabello
+63,62,Shampoo
+64,62,Secadoras
+65,62,Planchas
+66,,Juguetes y Bebés
+67,66,Juguetes
+68,67,Peluches
+69,67,Bloques de construcción
+70,67,Juegos de mesa
+71,66,Bebés
+72,71,Pañales
+73,71,Coches de bebé
+74,71,Biberones
+75,,Herramientas
+76,75,Eléctricas
+77,76,Taladros
+78,76,Amoladoras
+79,76,Sierras
+80,75,Manuales
+81,80,Juegos de llaves
+82,80,Destornilladores
+83,80,Martillos
+84,,Electrodomésticos
+85,84,Línea blanca
+86,85,Refrigeradoras
+87,85,Lavadoras
+88,85,Cocinas
+89,84,Climatización
+90,89,Ventiladores
+91,89,Calefactores
+92,89,Aire acondicionado
+93,,Mascotas
+94,93,Perros
+95,94,Alimento para perro
+96,94,Camas para perro
+97,94,Correas
+98,93,Gatos
+99,98,Alimento para gato
+100,98,Arena sanitaria
+101,98,Rascadores
+102,,Libros y Papelería
+103,102,Libros
+104,103,Novelas
+105,103,Libros técnicos
+106,103,Libros infantiles
+107,102,Papelería
+108,107,Cuadernos
+109,107,Lapiceros
+110,107,Mochilas escolares
