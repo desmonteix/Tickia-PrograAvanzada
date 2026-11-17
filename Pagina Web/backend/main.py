@@ -14,6 +14,7 @@ from .database import SessionLocal, engine
 from .routers import auth, tickets, payments, download, admin, purchases, dlocal, promotions
 from .rate_limit import limiter
 from .body_limit import BodyLimitMiddleware
+from .local_config import DATA_MODE, LOCAL_MODE
 
 logger = logging.getLogger(__name__)
 is_production = os.getenv("ENVIRONMENT") == "production"
@@ -98,6 +99,9 @@ def validate_production():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    if LOCAL_MODE:
+        from .init_db import init_db
+        await asyncio.to_thread(init_db)
     validate_production()
     task = asyncio.create_task(reservation_cleanup_loop())
     try:
@@ -124,6 +128,15 @@ app.add_middleware(
 )
 for router in (auth.router, tickets.router, payments.router, download.router, admin.router, purchases.router, dlocal.router, promotions.router):
     app.include_router(router)
+
+if LOCAL_MODE:
+    from .routers.dataset import router as dataset_router
+    app.include_router(dataset_router)
+
+
+@app.get("/api/runtime")
+def runtime_config():
+    return {"data_mode": DATA_MODE}
 
 
 @app.middleware("http")

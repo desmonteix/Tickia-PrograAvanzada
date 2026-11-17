@@ -5,20 +5,32 @@ Gestiona la subida y descarga de archivos cifrados al bucket privado de QRs.
 import os
 import io
 import logging
-from supabase import create_client, Client, ClientOptions
+from pathlib import Path
+from .local_config import LOCAL_MODE
+from .dataset import LOCAL_DIR
 
 logger = logging.getLogger(__name__)
 
 # Nombre del bucket privado en Supabase Storage
 QR_BUCKET = "qr-encrypted"
 
-def _get_supabase_client() -> Client:
+def _get_supabase_client():
     """Crea y retorna el cliente de Supabase."""
+    from supabase import create_client, ClientOptions
     url = os.getenv("SUPABASE_URL")
     key = os.getenv("SUPABASE_KEY")
     if not url or not key:
         raise RuntimeError("SUPABASE_URL o SUPABASE_KEY no están configuradas.")
     return create_client(url, key, options=ClientOptions(storage_client_timeout=15, postgrest_client_timeout=15))
+
+
+def _local_path(storage_path):
+    root = (LOCAL_DIR / "storage").resolve()
+    relative = Path(storage_path)
+    path = (root / relative).resolve()
+    if relative.is_absolute() or relative.drive or path == root or not path.is_relative_to(root):
+        raise ValueError("Ruta de almacenamiento inválida")
+    return path
 
 
 def upload_encrypted_qr(storage_path: str, encrypted_bytes: bytes) -> str:
@@ -35,6 +47,11 @@ def upload_encrypted_qr(storage_path: str, encrypted_bytes: bytes) -> str:
     Raises:
         Exception si la subida falla.
     """
+    if LOCAL_MODE:
+        path = _local_path(storage_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(encrypted_bytes)
+        return storage_path
     client = _get_supabase_client()
     
     try:
@@ -69,6 +86,8 @@ def download_encrypted_qr(storage_path: str) -> bytes:
     Raises:
         Exception si la descarga falla o el archivo no existe.
     """
+    if LOCAL_MODE:
+        return _local_path(storage_path).read_bytes()
     client = _get_supabase_client()
 
     try:
@@ -84,6 +103,9 @@ def delete_qr_file(storage_path: str) -> None:
     """
     Elimina un archivo de QR del bucket. Se usa durante reembolsos o devoluciones.
     """
+    if LOCAL_MODE:
+        _local_path(storage_path).unlink(missing_ok=True)
+        return
     client = _get_supabase_client()
     try:
         client.storage.from_(QR_BUCKET).remove([storage_path])

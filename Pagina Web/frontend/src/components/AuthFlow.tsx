@@ -7,10 +7,12 @@ export default function AuthFlow({
   onLoginSuccess,
   signedIn = false,
   registrationsEnabled = true,
+  academicMode = false,
 }: {
   onLoginSuccess: () => Promise<void>;
   signedIn?: boolean;
   registrationsEnabled?: boolean;
+  academicMode?: boolean;
 }) {
   const [referral, setReferral] = useState(() =>
     rememberReferral(window.location.search, {
@@ -66,9 +68,11 @@ export default function AuthFlow({
       <p className="eyebrow">Tu próximo plan empieza aquí</p>
       <h1 id="auth-title">{isLogin ? 'Bienvenido a Tickia' : 'Crea tu cuenta'}</h1>
       <p>
-        {isLogin
-          ? 'Ingresa para comprar, vender y seguir tus entradas.'
-          : 'Compra y vende entradas con otras personas.'}
+        {academicMode
+          ? 'Ingresa con tu cuenta local del proyecto académico.'
+          : isLogin
+            ? 'Ingresa para comprar, vender y seguir tus entradas.'
+            : 'Compra y vende entradas con otras personas.'}
       </p>
       {error && (
         <p className="error-message" role="alert">

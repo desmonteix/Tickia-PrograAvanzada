@@ -3,6 +3,7 @@ import api, { errorMessage } from './api';
 import type { User } from './types';
 import SellerFlow from './components/SellerFlow';
 import BuyerFlow from './components/BuyerFlow';
+import ProductCatalog from './components/ProductCatalog';
 import AuthFlow from './components/AuthFlow';
 import WalletFlow from './components/WalletFlow';
 import AdminDashboard from './components/AdminDashboard';
@@ -28,6 +29,8 @@ export default function App() {
   const [search, setSearch] = useState('');
   const [isDark, setIsDark] = useState(true);
   const campaign = useResource<Campaign>('/promotions');
+  const runtime = useResource<{ data_mode: 'dataset' | 'remote' }>('/runtime');
+  const datasetMode = runtime.data?.data_mode === 'dataset';
   const [referrals, setReferrals] = useState<Referrals | null>(null);
   const [referralError, setReferralError] = useState('');
   const [referralRevision, setReferralRevision] = useState(0);
@@ -152,13 +155,15 @@ export default function App() {
             >
               Explorar
             </button>
-            <button
-              className="btn btn-ghost"
-              aria-current={view === 'seller' ? 'page' : undefined}
-              onClick={() => (user ? navigate('seller') : requireLogin('seller'))}
-            >
-              Vender
-            </button>
+            {!datasetMode && (
+              <button
+                className="btn btn-ghost"
+                aria-current={view === 'seller' ? 'page' : undefined}
+                onClick={() => (user ? navigate('seller') : requireLogin('seller'))}
+              >
+                Vender
+              </button>
+            )}
             {user && (
               <button className="btn btn-ghost" onClick={() => navigate('wallet')}>
                 Mis compras
@@ -217,32 +222,45 @@ export default function App() {
             {visibleView === 'catalog' && (
               <>
                 <section className="hero-section" aria-labelledby="hero-title">
-                  <p className="eyebrow">Entradas entre personas</p>
+                  <p className="eyebrow">
+                    {datasetMode ? 'Proyecto de Programación Avanzada' : 'Entradas entre personas'}
+                  </p>
                   <h1 id="hero-title">
-                    Tu entrada,
+                    {datasetMode ? 'Tu próximo' : 'Tu entrada,'}
                     <br />
-                    <span>su próximo plan.</span>
+                    <span>{datasetMode ? 'gran hallazgo.' : 'su próximo plan.'}</span>
                   </h1>
-                  <p>Tickia conecta a quien ya no puede ir con quien sí quiere ir.</p>
+                  <p>
+                    {datasetMode
+                      ? 'Explora productos, compara precios y conoce a sus vendedores.'
+                      : 'Tickia conecta a quien ya no puede ir con quien sí quiere ir.'}
+                  </p>
                   <div className="hero-actions">
                     <a className="btn btn-primary" href="#events">
-                      Buscar mi evento <span aria-hidden="true">↗</span>
+                      {datasetMode ? 'Explorar productos' : 'Buscar mi evento'}{' '}
+                      <span aria-hidden="true">↗</span>
                     </a>
-                    <button
-                      className="btn btn-secondary"
-                      onClick={() => (user ? navigate('seller') : requireLogin('seller'))}
-                    >
-                      Vender mi entrada
-                    </button>
+                    {!datasetMode && (
+                      <button
+                        className="btn btn-secondary"
+                        onClick={() => (user ? navigate('seller') : requireLogin('seller'))}
+                      >
+                        Vender mi entrada
+                      </button>
+                    )}
                   </div>
                   <div className="brand-ticket" aria-hidden="true">
                     <img src="/brand/tickia-symbol-lime.png" alt="" />
                     <span>
-                      Si tú no vas,
+                      {datasetMode ? 'Encuentra eso' : 'Si tú no vas,'}
                       <br />
-                      que vaya alguien.
+                      {datasetMode ? 'que buscabas.' : 'que vaya alguien.'}
                     </span>
-                    <small>UNA ENTRADA · DOS PERSONAS · UN PLAN</small>
+                    <small>
+                      {datasetMode
+                        ? 'PRODUCTOS · VENDEDORES · HISTORIAS'
+                        : 'UNA ENTRADA · DOS PERSONAS · UN PLAN'}
+                    </small>
                   </div>
                 </section>
                 {campaign.data?.active && (
@@ -262,31 +280,56 @@ export default function App() {
                 <section id="events" aria-labelledby="events-title">
                   <div className="section-heading">
                     <div>
-                      <p className="eyebrow">Encuentra tu próximo plan</p>
-                      <h2 id="events-title">Entradas disponibles</h2>
+                      <p className="eyebrow">
+                        {datasetMode
+                          ? 'Encuentra tu próximo favorito'
+                          : 'Encuentra tu próximo plan'}
+                      </p>
+                      <h2 id="events-title">
+                        {datasetMode ? 'Catálogo de productos' : 'Entradas disponibles'}
+                      </h2>
                     </div>
                     <div className="search-field">
                       <label className="sr-only" htmlFor="event-search">
-                        Buscar eventos o zonas
+                        {datasetMode
+                          ? 'Buscar productos, categorías o vendedores'
+                          : 'Buscar eventos o zonas'}
                       </label>
                       <input
                         id="event-search"
                         type="search"
                         className="input-field"
-                        placeholder="Busca un evento o una zona"
+                        placeholder={
+                          datasetMode
+                            ? 'Busca un producto, categoría o vendedor'
+                            : 'Busca un evento o una zona'
+                        }
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
                       />
                     </div>
                   </div>
                   <div className="catalog-results">
-                    <BuyerFlow
-                      searchQuery={search}
-                      onRequireLogin={() => requireLogin('catalog')}
-                      referrals={user ? referrals : null}
-                      onPaymentUpdated={refreshReferrals}
-                      settings={campaign.data?.settings}
-                    />
+                    {runtime.loading ? (
+                      <p role="status">Cargando catálogo…</p>
+                    ) : runtime.error ? (
+                      <p className="error-message" role="alert">
+                        {runtime.error}{' '}
+                        <button className="btn btn-secondary" onClick={runtime.refresh}>
+                          Reintentar
+                        </button>
+                      </p>
+                    ) : datasetMode ? (
+                      <ProductCatalog searchQuery={search} />
+                    ) : (
+                      <BuyerFlow
+                        searchQuery={search}
+                        onRequireLogin={() => requireLogin('catalog')}
+                        referrals={user ? referrals : null}
+                        onPaymentUpdated={refreshReferrals}
+                        settings={campaign.data?.settings}
+                      />
+                    )}
                   </div>
                 </section>
               </>
@@ -328,12 +371,17 @@ export default function App() {
               ))}
             {visibleView === 'login' && (
               <AuthFlow
+                academicMode={datasetMode}
                 signedIn={!!user}
                 registrationsEnabled={operationAllowed(campaign.data?.settings, 'registrations')}
                 onLoginSuccess={async () => {
                   const response = await api.get<User>('/auth/me');
                   setUser(response.data);
-                  setNotice('Ya puedes comprar y vender entradas.');
+                  setNotice(
+                    datasetMode
+                      ? 'Ingresaste a la versión académica de Tickia.'
+                      : 'Ya puedes comprar y vender entradas.',
+                  );
                   navigate(
                     paymentTransaction(window.location.search)
                       ? 'wallet'
@@ -348,8 +396,15 @@ export default function App() {
         )}
       </main>
       <footer className="site-footer container">
-        <p>tickia · Tu entrada, su próximo plan.</p>
-        <p>Entradas entre personas. Tickia no es una tiquetera oficial.</p>
+        <p>
+          tickia ·{' '}
+          {datasetMode ? 'Proyecto de Programación Avanzada.' : 'Tu entrada, su próximo plan.'}
+        </p>
+        <p>
+          {datasetMode
+            ? 'Catálogo académico · 13 tablas de datos · Sin cobros reales.'
+            : 'Entradas entre personas. Tickia no es una tiquetera oficial.'}
+        </p>
         <a href="https://www.instagram.com/tickia.lat/" target="_blank" rel="noopener noreferrer">
           @tickia.lat ↗
         </a>

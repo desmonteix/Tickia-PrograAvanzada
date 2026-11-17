@@ -1,0 +1,103 @@
+.catalog-filters {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.catalog-filters > label {
+  display: grid;
+  gap: 0.5rem;
+  flex: 1 1 200px;
+}
+.catalog-filters select {
+  width: 100%;
+  min-width: 0;
+}
+.catalog-filters .stock-filter {
+  display: flex;
+  align-items: center;
+  flex: 0 1 auto;
+  min-height: 48px;
+}
+.stock-filter input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-primary);
+}
+.product-catalog .ticket-grid {
+  margin-top: 1rem;
+}
+.product-catalog .ticket-info h3 {
+  overflow-wrap: anywhere;
+}
+.catalog-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+.dataset-summary {
+  margin-top: 2rem;
+  border-top: 1px solid var(--color-border);
+  padding-top: 1rem;
+}
+.dataset-summary summary {
+  cursor: pointer;
+  padding-block: 0.5rem;
+}
+.dataset-summary dl > div {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-block: 0.5rem;
+}
+.dataset-summary dd {
+  margin: 0;
+}
+.product-dialog {
+  width: min(720px, calc(100% - 2rem));
+  max-width: 720px;
+  max-height: 85dvh;
+  overflow-y: auto;
+}
+.product-dialog-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.product-dialog h2 {
+  overflow-wrap: anywhere;
+}
+.product-dialog h3 {
+  margin-block: 1.8rem 1rem;
+}
+.product-table-scroll {
+  overflow-x: auto;
+}
+.product-dialog table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.product-dialog th,
+.product-dialog td {
+  text-align: left;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+}
+.product-comments {
+  list-style: none;
+  padding: 0;
+}
+.product-comments li {
+  padding-block: 1rem;
+  border-bottom: 1px solid var(--color-border);
+  overflow-wrap: anywhere;
+}
+.product-comments p {
+  margin-block: 0.5rem;
+}

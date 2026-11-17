@@ -2,13 +2,14 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from dotenv import load_dotenv
+from .local_config import LOCAL_MODE, configure_local
 
 # Asegurar que se cargue el .env correcto sin importar desde dónde se ejecute
 env_path = os.path.join(os.path.dirname(__file__), '.env')
-if os.getenv("TICKIA_LOAD_ENV", "1") != "0":
+if not LOCAL_MODE and os.getenv("TICKIA_LOAD_ENV", "1") != "0":
     load_dotenv(env_path)
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = configure_local() if LOCAL_MODE else os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
     if os.getenv("ENVIRONMENT") == "production":
