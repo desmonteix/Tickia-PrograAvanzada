@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useResource } from '../useResource';
 import { money } from '../types';
+import type { User } from '../types';
 import ProductDetail from './ProductDetail';
 import './ProductCatalog.css';
 
 export interface Product {
+  owner_id: string | null;
+  descripcion: string;
+  imagen: string | null;
   id_producto: number;
   titulo: string;
   precio: number;
@@ -70,10 +74,19 @@ function ProductResults({
         )}
         {data.items.map((product) => (
           <article key={product.id_producto} className="ticket-card">
-            <div className="ticket-art" aria-hidden="true">
-              <span>{product.categoria}</span>
-              <img src="/brand/tickia-symbol.png" alt="" />
-            </div>
+            {product.imagen ? (
+              <img
+                className="product-photo"
+                src={`/api/marketplace/images/${product.imagen}`}
+                alt={product.titulo}
+                loading="lazy"
+              />
+            ) : (
+              <div className="ticket-art" aria-hidden="true">
+                <span>{product.categoria}</span>
+                <img src="/brand/tickia-symbol.png" alt="" />
+              </div>
+            )}
             <div className="ticket-info">
               <p className="eyebrow">{product.categoria}</p>
               <h3>{product.titulo}</h3>
@@ -89,9 +102,9 @@ function ProductResults({
                 <button
                   className="btn btn-primary"
                   onClick={() => onSelect(product.id_producto)}
-                  aria-label={`Ver detalle de ${product.titulo}`}
+                  aria-label={`Comprar ${product.titulo}`}
                 >
-                  Ver detalle
+                  {product.stock > 0 ? 'Comprar' : 'Ver detalle'}
                 </button>
               </div>
             </div>
@@ -123,7 +136,19 @@ function ProductResults({
   );
 }
 
-export default function ProductCatalog({ searchQuery }: { searchQuery: string }) {
+export default function ProductCatalog({
+  searchQuery,
+  user,
+  onRequireLogin,
+  initialProduct = null,
+  onSelectionClosed,
+}: {
+  searchQuery: string;
+  user: User | null;
+  onRequireLogin: (id: number) => void;
+  initialProduct?: number | null;
+  onSelectionClosed: () => void;
+}) {
   const categories = useResource<Category[]>('/dataset/categories');
   const summary = useResource<Summary>('/dataset/summary');
   const [filters, setFilters] = useState({
@@ -133,7 +158,8 @@ export default function ProductCatalog({ searchQuery }: { searchQuery: string })
     inStock: false,
     page: 1,
   });
-  const [selected, setSelected] = useState<number | null>(null);
+  const [selected, setSelected] = useState<number | null>(initialProduct);
+  const [revision, setRevision] = useState(0);
   useEffect(() => {
     const timer = window.setTimeout(
       () => setFilters((value) => ({ ...value, q: searchQuery, page: 1 })),
@@ -148,7 +174,7 @@ export default function ProductCatalog({ searchQuery }: { searchQuery: string })
     page: String(filters.page),
   });
   if (filters.category) params.set('category', filters.category);
-  const path = `/dataset/products?${params}`;
+  const path = `/marketplace/products?${params}`;
   return (
     <div className="product-catalog">
       <div className="catalog-filters">
@@ -177,6 +203,7 @@ export default function ProductCatalog({ searchQuery }: { searchQuery: string })
             onChange={(event) => setFilters({ ...filters, sort: event.target.value, page: 1 })}
           >
             <option value="id">Orden del catálogo</option>
+            <option value="newest">Publicaciones más recientes</option>
             <option value="price_asc">Menor precio</option>
             <option value="price_desc">Mayor precio</option>
             <option value="rating">Mejor vendedor</option>
@@ -201,7 +228,7 @@ export default function ProductCatalog({ searchQuery }: { searchQuery: string })
         </p>
       )}
       <ProductResults
-        key={path}
+        key={`${path}-${revision}`}
         path={path}
         onSelect={setSelected}
         onPage={(page) => {
@@ -225,7 +252,18 @@ export default function ProductCatalog({ searchQuery }: { searchQuery: string })
           </dl>
         </details>
       )}
-      {selected !== null && <ProductDetail id={selected} onClose={() => setSelected(null)} />}
+      {selected !== null && (
+        <ProductDetail
+          id={selected}
+          user={user}
+          onRequireLogin={() => onRequireLogin(selected)}
+          onPurchased={() => setRevision((value) => value + 1)}
+          onClose={() => {
+            setSelected(null);
+            onSelectionClosed();
+          }}
+        />
+      )}
     </div>
   );
 }

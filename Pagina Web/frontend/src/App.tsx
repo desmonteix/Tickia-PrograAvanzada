@@ -4,6 +4,8 @@ import type { User } from './types';
 import SellerFlow from './components/SellerFlow';
 import BuyerFlow from './components/BuyerFlow';
 import ProductCatalog from './components/ProductCatalog';
+import MarketplaceSeller from './components/MarketplaceSeller';
+import MarketplaceOrders from './components/MarketplaceOrders';
 import AuthFlow from './components/AuthFlow';
 import WalletFlow from './components/WalletFlow';
 import AdminDashboard from './components/AdminDashboard';
@@ -27,6 +29,7 @@ export default function App() {
   const [checkingSession, setCheckingSession] = useState(true);
   const [notice, setNotice] = useState('');
   const [search, setSearch] = useState('');
+  const [pendingProduct, setPendingProduct] = useState<number | null>(null);
   const [isDark, setIsDark] = useState(true);
   const campaign = useResource<Campaign>('/promotions');
   const runtime = useResource<{ data_mode: 'dataset' | 'remote' }>('/runtime');
@@ -155,15 +158,13 @@ export default function App() {
             >
               Explorar
             </button>
-            {!datasetMode && (
-              <button
-                className="btn btn-ghost"
-                aria-current={view === 'seller' ? 'page' : undefined}
-                onClick={() => (user ? navigate('seller') : requireLogin('seller'))}
-              >
-                Vender
-              </button>
-            )}
+            <button
+              className="btn btn-ghost"
+              aria-current={view === 'seller' ? 'page' : undefined}
+              onClick={() => (user ? navigate('seller') : requireLogin('seller'))}
+            >
+              Vender
+            </button>
             {user && (
               <button className="btn btn-ghost" onClick={() => navigate('wallet')}>
                 Mis compras
@@ -240,14 +241,12 @@ export default function App() {
                       {datasetMode ? 'Explorar productos' : 'Buscar mi evento'}{' '}
                       <span aria-hidden="true">↗</span>
                     </a>
-                    {!datasetMode && (
-                      <button
-                        className="btn btn-secondary"
-                        onClick={() => (user ? navigate('seller') : requireLogin('seller'))}
-                      >
-                        Vender mi entrada
-                      </button>
-                    )}
+                    <button
+                      className="btn btn-secondary"
+                      onClick={() => (user ? navigate('seller') : requireLogin('seller'))}
+                    >
+                      {datasetMode ? 'Vender un producto' : 'Vender mi entrada'}
+                    </button>
                   </div>
                   <div className="brand-ticket" aria-hidden="true">
                     <img src="/brand/tickia-symbol-lime.png" alt="" />
@@ -320,7 +319,16 @@ export default function App() {
                         </button>
                       </p>
                     ) : datasetMode ? (
-                      <ProductCatalog searchQuery={search} />
+                      <ProductCatalog
+                        searchQuery={search}
+                        user={user}
+                        initialProduct={pendingProduct}
+                        onSelectionClosed={() => setPendingProduct(null)}
+                        onRequireLogin={(id) => {
+                          setPendingProduct(id);
+                          requireLogin('catalog');
+                        }}
+                      />
                     ) : (
                       <BuyerFlow
                         searchQuery={search}
@@ -336,8 +344,18 @@ export default function App() {
             )}
             {visibleView === 'seller' && (
               <>
-                <SellerFlow campaign={campaign.data} />
-                {user && (
+                {datasetMode ? (
+                  <MarketplaceSeller
+                    onSelect={(id) => {
+                      setPendingProduct(id);
+                      setSearch('');
+                      navigate('catalog');
+                    }}
+                  />
+                ) : (
+                  <SellerFlow campaign={campaign.data} />
+                )}
+                {user && !datasetMode && (
                   <ReferralPanel
                     data={referrals}
                     error={referralError}
@@ -348,8 +366,12 @@ export default function App() {
             )}
             {visibleView === 'wallet' && (
               <>
-                <WalletFlow onPaymentUpdated={refreshReferrals} />
-                {user && (
+                {datasetMode ? (
+                  <MarketplaceOrders />
+                ) : (
+                  <WalletFlow onPaymentUpdated={refreshReferrals} />
+                )}
+                {user && !datasetMode && (
                   <ReferralPanel
                     data={referrals}
                     error={referralError}
@@ -402,7 +424,7 @@ export default function App() {
         </p>
         <p>
           {datasetMode
-            ? 'Catálogo académico · 13 tablas de datos · Sin cobros reales.'
+            ? 'Compra y vende en la versión académica · Sin cobros reales.'
             : 'Entradas entre personas. Tickia no es una tiquetera oficial.'}
         </p>
         <a href="https://www.instagram.com/tickia.lat/" target="_blank" rel="noopener noreferrer">

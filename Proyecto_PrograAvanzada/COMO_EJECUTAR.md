@@ -37,11 +37,19 @@ cd ../..
 - Fichas con variantes, reputación, reseñas y preguntas reales del dataset.
 - Resumen del número de registros por tabla, al pie del catálogo.
 - Registro e inicio de sesión originales de Tickia, sobre una BD local de cuentas.
+- Compra directa con selección de variante y cantidad, confirmación e historial.
+- Publicación de productos con precio, descripción, stock y foto opcional.
+- **Vender** muestra tus publicaciones y tus ventas; **Mis compras**, tus pedidos.
 
-El catálogo es de consulta: no inventa QRs o fechas de eventos para los productos,
-y no realiza compras, ventas ni cobros de productos. Los datos históricos de
-pedidos y envíos se conservan íntegros en la BD y se pueden consultar por la API.
+Las compras son de demostración: generan un pedido local y descuentan stock,
+sin cobros de dinero ni envíos reales. No se inventan QRs o fechas de eventos para
+los productos. Los pedidos y envíos históricos se conservan íntegros en el dataset.
 Los flujos originales de entradas se conservan en el código para referencia.
+
+Para vender, inicia sesión y entra en **Vender**. Completa el formulario y pulsa
+**Publicar producto**. Para comprar, pulsa **Comprar** en el catálogo, elige la
+variante y cantidad y pulsa **Confirmar compra**. No puedes comprar tus propios
+artículos. Revisa el resultado en **Mis compras**.
 
 Las cuentas de `02_usuarios.csv` son datos del histórico y **no** credenciales de
 Tickia: el CSV no contiene contraseñas. Puedes crear tu propia cuenta local.
@@ -53,9 +61,10 @@ La primera ejecución crea `Proyecto_PrograAvanzada/.local/`:
 | Archivo | Uso |
 | --- | --- |
 | `marketplace.sqlite3` | Copia fija de las 13 tablas, abierta en modo de solo lectura por la API |
-| `tickia.sqlite3` | Cuentas, sesiones y tablas originales de la aplicación |
+| `tickia.sqlite3` | Cuentas, catálogo de trabajo, publicaciones, inventario, compras y ventas |
 | `secrets.json` | Claves locales generadas, persistentes entre reinicios |
 | `storage/` | Archivos cifrados de los flujos originales de Tickia |
+| `product-images/` | Fotos públicas de los productos publicados localmente |
 | `backend.log`, `frontend.log` | Salida de los servicios |
 
 Esta carpeta está excluida de Git. Los CSV originales no se modifican. La rama
@@ -74,6 +83,8 @@ Detén la aplicación y ejecuta desde `Pagina Web/`:
 La importación valida columnas y relaciones, registra SHA-256 y número de filas
 por archivo, y reemplaza la BD solo cuando toda la carga termina correctamente.
 No reimporta ni duplica registros al reiniciar normalmente.
+Reconstruir la copia fija no restablece las compras ni el stock del catálogo de
+trabajo. Las tablas `local_*` se inicializan una sola vez para conservar las ventas.
 
 El README original enumera también `10_pagos.csv` y `15_favoritos.csv`; estos
 archivos **no se entregaron en esta carpeta** y no se fabrican ni se importan de
@@ -90,6 +101,13 @@ Documentación interactiva: **http://127.0.0.1:8001/docs**.
 - `GET /api/dataset/products/1`: producto con variantes, últimas reseñas y preguntas.
 - `GET /api/dataset/tables/pedidos?page=1&page_size=25`: consulta paginada de cualquiera
   de las 13 tablas. El explorador omite los correos de la tabla de usuarios.
+- `GET /api/marketplace/products`: catálogo con stock actual y publicaciones nuevas.
+- `GET /api/marketplace/products/1`: ficha con variantes e inventario actual.
+- `POST /api/marketplace/products`: publicación autenticada, con formulario multipart.
+- `POST /api/marketplace/orders`: compra autenticada con `variant_id`, `quantity` y
+  `request_id` UUID para evitar duplicados.
+- `GET /api/marketplace/orders`, `/sales`, `/my-products`: compras, ventas y
+  publicaciones de la cuenta autenticada, con paginación.
 
 ## Verificar
 
