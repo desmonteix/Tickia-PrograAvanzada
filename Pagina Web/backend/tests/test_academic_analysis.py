@@ -5,7 +5,7 @@ import unittest
 import pandas as pd
 
 sys.path.insert(0,str(Path(__file__).parents[2]))
-from backend.academic.analysis_frames import rfm,cohorts,co_purchases,delivery_summary,vendor_summary
+from backend.academic.analysis_frames import rfm,cohorts,co_purchases,delivery_summary,vendor_summary,stars_vs_sales
 
 
 class AcademicAnalysisTests(unittest.TestCase):
@@ -39,6 +39,21 @@ class AcademicAnalysisTests(unittest.TestCase):
         result=delivery_summary(shipments).iloc[0]
         self.assertEqual(result.envios,2)
         self.assertEqual(result.retraso_pct,50)
+
+    def test_stars_vs_sales_groups_products_by_rating_and_correlates_by_rank(self):
+        items=pd.DataFrame(dict(id_pedido=[1,2,3,3,4],id_producto=[1,2,3,1,4],id_vendedor=[1,1,2,2,2],
+                                cantidad=[1,2,3,1,4],precio_unit_centimos=[1000]*5))
+        reviews=pd.DataFrame(dict(id_resena=[1,2,3,4,5],id_producto=[1,2,3,4,4],estrellas=[5,4,3,2,4]))
+        vendors=pd.DataFrame(dict(pedidos=[10,12,15,3],estrellas_promedio=[4.0,3.0,2.0,5.0],
+                                  ventas_brutas=[100.0,200.0,300.0,999.0]))
+        products,bands,summary=stars_vs_sales(items,reviews,vendors,min_reviews=1)
+        self.assertEqual(summary['productos'],4)
+        self.assertEqual(products.set_index('id_producto').loc[1,'unidades'],2)
+        self.assertEqual(products.set_index('id_producto').loc[1,'ventas_brutas'],20)
+        self.assertEqual(bands.set_index('tramo_estrellas').loc['3,0–3,5','productos'],2)
+        self.assertAlmostEqual(bands.participacion_ventas_pct.sum(),100,places=1)
+        self.assertEqual(summary['vendedores'],3)          # el de 3 pedidos no es elegible
+        self.assertEqual(summary['spearman_vendedor_estrellas_ventas'],-1.0)
 
     def test_vendor_reviews_and_sales_are_aggregated_separately(self):
         items=pd.DataFrame(dict(id_pedido=[1,1],id_producto=[1,2],id_vendedor=[1,1],cantidad=[2,1],precio_unit_centimos=[1000,2000]))

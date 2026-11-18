@@ -96,6 +96,43 @@ def vendor_summary(items,reviews,shipments,vendors):
     result['retraso_pct']=result.retraso_pct*100
     return result.drop(columns='ventas_brutas_centimos').round(2).sort_values('ventas_brutas',ascending=False)
 
+STAR_BANDS=[0,3,3.5,4,4.5,5.0001]
+STAR_LABELS=['≤ 3,0','3,0–3,5','3,5–4,0','4,0–4,5','4,5–5,0']
+
+
+def stars_vs_sales(items,reviews,vendors,min_reviews=5):
+    """Relación entre estrellas de reseña y ventas, por producto y por vendedor.
+
+    Por producto: promedio de estrellas (con al menos `min_reviews` reseñas) frente a
+    unidades y ventas brutas del histórico. Por vendedor: mismas elegibilidades que el
+    diagnóstico (10+ pedidos y con reseñas). Se usa Spearman porque las ventas tienen
+    una distribución muy asimétrica (pocos productos concentran la mayoría)."""
+    sales=items.assign(linea_centimos=items.cantidad*items.precio_unit_centimos).groupby('id_producto').agg(
+        unidades=('cantidad','sum'),ventas_centimos=('linea_centimos','sum'),pedidos=('id_pedido','nunique'))
+    ratings=reviews.groupby('id_producto').agg(estrellas_promedio=('estrellas','mean'),resenas=('id_resena','nunique'))
+    products=ratings[ratings.resenas>=min_reviews].join(sales,how='inner')
+    products['ventas_brutas']=(products.pop('ventas_centimos')/100).round(2)
+    products['tramo_estrellas']=pd.cut(products.estrellas_promedio,STAR_BANDS,labels=STAR_LABELS,right=False)
+    bands=products.groupby('tramo_estrellas',observed=False).agg(productos=('unidades','size'),
+        unidades_mediana=('unidades','median'),ventas_mediana=('ventas_brutas','median'),
+        ventas_totales=('ventas_brutas','sum')).reset_index()
+    bands['participacion_ventas_pct']=(100*bands.ventas_totales/bands.ventas_totales.sum()).round(2)
+    eligible=vendors[(vendors.pedidos>=10)&vendors.estrellas_promedio.notna()]
+
+    def spearman(frame,left,right):
+        frame=frame[[left,right]].dropna()
+        if len(frame)<3:
+            return None
+                # Spearman = Pearson sobre rangos (empates promediados); no requiere scipy.
+        value=float(frame[left].rank().corr(frame[right].rank()))
+        return round(value,3) if np.isfinite(value) else None
+
+    summary=dict(minimo_resenas_producto=min_reviews,productos=len(products),
+        spearman_producto_estrellas_unidades=spearman(products,'estrellas_promedio','unidades'),
+        spearman_producto_estrellas_ventas=spearman(products,'estrellas_promedio','ventas_brutas'),
+        vendedores=len(eligible),spearman_vendedor_estrellas_ventas=spearman(eligible,'estrellas_promedio','ventas_brutas'))
+    products=products.reset_index().sort_values('ventas_brutas',ascending=False)
+    return products.round(2),bands.round(2),summary
 
 def diagnose(vendors):
     eligible=vendors[(vendors.pedidos>=10)&vendors.estrellas_promedio.notna()]

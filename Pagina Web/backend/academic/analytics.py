@@ -14,7 +14,7 @@ from sqlalchemy import text
 from .database import engine
 from .settings import SQL_DIR
 from ..dataset import LOCAL_DIR
-from .analysis_frames import rfm,cohorts,co_purchases,delivery_summary,vendor_summary,diagnose,clean_shipments
+from .analysis_frames import rfm,cohorts,co_purchases,delivery_summary,vendor_summary,diagnose,clean_shipments,stars_vs_sales
 
 router=APIRouter(prefix='/api/analytics',tags=['Pandas y consultas SQL'])
 _cache={}
@@ -57,7 +57,7 @@ def load_frames(connection):
         FROM envios e JOIN pedidos pe USING(id_pedido) JOIN couriers c USING(id_courier)
         JOIN usuarios u ON pe.id_usuario=u.id_usuario JOIN v_distritos d ON u.id_distrito=d.id_distrito
         LEFT JOIN v_distritos dest ON pe.id_distrito_entrega=dest.id_distrito WHERE '''+valid),connection)
-    reviews=pd.read_sql_query(text('''SELECT r.id_resena,p.id_vendedor,r.estrellas,r.comentario FROM resenas r
+    reviews=pd.read_sql_query(text('''SELECT r.id_resena,r.id_producto,p.id_vendedor,r.estrellas,r.comentario FROM resenas r
         JOIN productos p USING(id_producto) JOIN usuarios u ON r.id_usuario=u.id_usuario WHERE u.auth_uuid IS NULL'''),connection)
     vendors=pd.read_sql_query(text('''SELECT s.id_vendedor,s.razon_social,s.reputacion reputacion_registrada
         FROM vendedores s JOIN usuarios u USING(id_usuario) WHERE u.auth_uuid IS NULL'''),connection)
@@ -70,8 +70,10 @@ def build_bundle():
         rfm_frame,reference=rfm(orders,clients)
         vendor_frame=vendor_summary(items,reviews,shipments,vendors)
         flagged,criteria=diagnose(vendor_frame)
+        star_products,star_bands,star_summary=stars_vs_sales(items,reviews,vendor_frame)
         reports=dict(rfm=rfm_frame,cohortes=cohorts(orders),cocompras=co_purchases(items),
-            entregas=delivery_summary(shipments),vendedores=vendor_frame,diagnostico=flagged)
+            entregas=delivery_summary(shipments),vendedores=vendor_frame,diagnostico=flagged,
+            estrellas_ventas=star_bands,estrellas_ventas_productos=star_products)
         queries=sql_queries()
         for name in (name for name in NOTES if name in queries):
             reports[name]=pd.read_sql_query(text(queries[name]),connection)
@@ -84,7 +86,7 @@ def build_bundle():
     scatter=vendor_frame[['razon_social','ventas_brutas','estrellas_promedio','retraso_pct']].dropna()
     charts=dict(rfm=json.loads(segments.to_json(orient='records')),cohortes=json.loads(retention[['label','value']].to_json(orient='records')),
                 entregas=json.loads(times.to_json(orient='records')),vendedores=json.loads(scatter.to_json(orient='records')))
-    return dict(reports=reports,charts=charts,criteria=criteria,generated_at=datetime.now(timezone.utc).isoformat(),
+    return dict(reports=reports,charts=charts,criteria=criteria,estrellas_ventas=star_summary,generated_at=datetime.now(timezone.utc).isoformat(),
         reference_date=reference.date().isoformat(),summary=dict(clientes=len(clients),pedidos_analizados=len(orders),
         vendedores=len(vendors),resenas=len(reviews),envios_validos=len(valid_shipments),vendedores_detectados=len(flagged)))
 
