@@ -13,22 +13,29 @@ SELECT * FROM arbol ORDER BY ruta;
 -- name: ventas_distrito
 -- JOIN de nueve tablas base (sin vistas): pedido_detalle, variantes, productos,
 -- vendedores, pedidos, usuarios, distritos, provincias y departamentos.
+-- La subconsulta agrega primero los hechos (pedidos y sus líneas) por vendedor y
+-- distrito; las cuatro tablas de nombres se unen después sobre ese resultado.
+-- STRAIGHT_JOIN fija el orden: parte de pedidos y resuelve el resto por clave
+-- primaria, así el plan no depende de estadísticas recién cargadas o restauradas.
 -- El distrito histórico procede de usuarios: el dataset no contiene una dirección de entrega.
-SELECT s.id_vendedor,s.razon_social,di.id_distrito,di.nombre distrito,pr.nombre provincia,
-  de2.nombre departamento,COUNT(DISTINCT pe.id_pedido) pedidos,SUM(de.cantidad) unidades,
-  ROUND(SUM(de.cantidad*de.precio_unit),2) ventas_brutas
-FROM pedido_detalle de
-JOIN variantes va USING(id_variante)
-JOIN productos p USING(id_producto)
-JOIN vendedores s ON s.id_vendedor=p.id_vendedor
-JOIN pedidos pe ON pe.id_pedido=de.id_pedido
-JOIN usuarios u ON u.id_usuario=pe.id_usuario
-JOIN distritos di ON di.id_distrito=u.id_distrito
+SELECT STRAIGHT_JOIN s.id_vendedor,s.razon_social,di.id_distrito,di.nombre distrito,
+  pr.nombre provincia,dp.nombre departamento,v.pedidos,v.unidades,v.ventas_brutas
+FROM (
+  SELECT STRAIGHT_JOIN p.id_vendedor,u.id_distrito,COUNT(DISTINCT pe.id_pedido) pedidos,
+    SUM(de.cantidad) unidades,ROUND(SUM(de.cantidad*de.precio_unit),2) ventas_brutas
+  FROM pedidos pe
+  JOIN pedido_detalle de ON de.id_pedido=pe.id_pedido
+  JOIN variantes va ON va.id_variante=de.id_variante
+  JOIN productos p ON p.id_producto=va.id_producto
+  JOIN usuarios u ON u.id_usuario=pe.id_usuario
+  WHERE pe.origen='dataset' AND pe.estado IN ('pagado','enviado','entregado')
+  GROUP BY p.id_vendedor,u.id_distrito
+) v
+JOIN vendedores s ON s.id_vendedor=v.id_vendedor
+JOIN distritos di ON di.id_distrito=v.id_distrito
 JOIN provincias pr ON pr.id_provincia=di.id_provincia
-JOIN departamentos de2 ON de2.id_departamento=pr.id_departamento
-WHERE pe.origen='dataset' AND pe.estado IN ('pagado','enviado','entregado')
-GROUP BY s.id_vendedor,s.razon_social,di.id_distrito,di.nombre,pr.nombre,de2.nombre
-ORDER BY ventas_brutas DESC,s.id_vendedor,di.id_distrito;
+JOIN departamentos dp ON dp.id_departamento=pr.id_departamento
+ORDER BY v.ventas_brutas DESC,s.id_vendedor,di.id_distrito;
 
 -- name: stock
 SELECT p.id_producto,p.titulo,va.id_variante,va.talla,va.color,va.stock,
