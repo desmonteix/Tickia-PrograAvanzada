@@ -187,6 +187,27 @@ ax.set(xlabel='Pedidos tardíos (%)',ylabel='Estrellas promedio',title='Asociaci
 ax.text(.02,.05,f"n = {len(eligible)}; Pearson r = {bundle['criteria']['correlacion_estrellas_retrasos']:.3f}",transform=ax.transAxes)
 fig.tight_layout(); fig.savefig(OUTPUT/'grafico_reputacion.png', bbox_inches='tight'); plt.show()
 print('14 vendedores cumplen los tres criterios. La asociación no demuestra causalidad.')''','26_pandas_diagnostico')
+    md('### Estrellas de reseña y ventas\nSe agrupan los productos con al menos cinco reseñas por tramo de estrellas y se compara con sus unidades y ventas. La correlación de Spearman se usa porque las ventas son muy asimétricas.')
+    code('''bands = reports['estrellas_ventas']
+relation = bundle['estrellas_ventas']
+display(bands)
+display(pd.DataFrame([relation]))
+vendors_frame = reports['vendedores']
+eligible = vendors_frame[(vendors_frame.pedidos>=10)&vendors_frame.estrellas_promedio.notna()]
+fig, axes = plt.subplots(1,2,figsize=(11,4.4))
+bars = axes[0].bar(bands.tramo_estrellas.astype(str), bands.unidades_mediana, color='#1E597C')
+axes[0].bar_label(bars, labels=[f'{u:.0f} u.\\n({p} prod.)' for u,p in zip(bands.unidades_mediana,bands.productos)], padding=3, fontsize=8)
+axes[0].set(xlabel='Estrellas promedio del producto', ylabel='Unidades vendidas (mediana)',
+            title=f"Por producto: Spearman ρ = {relation['spearman_producto_estrellas_unidades']:.3f}")
+axes[0].set_ylim(0, bands.unidades_mediana.max()*1.3)
+axes[1].scatter(eligible.estrellas_promedio, eligible.ventas_brutas, s=18, alpha=.6, color='#1E597C')
+axes[1].set_yscale('log')
+axes[1].set(xlabel='Estrellas promedio del vendedor', ylabel='Ventas brutas S/ (escala log)',
+            title=f"Por vendedor: Spearman ρ = {relation['spearman_vendedor_estrellas_ventas']:.3f} (n = {relation['vendedores']})")
+fig.suptitle('Relación entre estrellas de reseña y ventas del histórico')
+fig.tight_layout(); fig.savefig(OUTPUT/'grafico_estrellas_ventas.png', bbox_inches='tight'); plt.show()
+print(f"{relation['productos']} productos con al menos {relation['minimo_resenas_producto']} reseñas. "
+      'Las estrellas no se asocian con más o menos ventas; sí con los retrasos (sección anterior).')''','28_pandas_estrellas_ventas')
     md('## 4. Análisis SQL adicionales\nInactividad adaptada a la cadencia del cliente, concentración por categoría, riesgo de courier y afinidad mediante canastas deduplicadas.')
     code('''advanced = pd.DataFrame([{'reporte':name, 'filas':len(reports[name])}
     for name in ['clientes_inactivos','participacion_categorias','riesgo_courier','afinidad_sql']])
