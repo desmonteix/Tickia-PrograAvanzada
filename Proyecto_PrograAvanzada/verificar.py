@@ -53,11 +53,11 @@ def main():
             TICKIA_ACADEMIC_MYSQL_URL=engine.url.set(database='tickia_universidad_test').render_as_string(hide_password=False))
         with (output/'mysql-tests.log').open('w',encoding='utf-8') as log:
             result=subprocess.run([sys.executable,'-m','unittest','discover','-s','backend/tests','-p',
-                'test_academic_mysql.py','-v'],cwd=WEB,env=env,stdout=log,stderr=subprocess.STDOUT)
+                'test_academic_*.py','-v'],cwd=WEB,env=env,stdout=log,stderr=subprocess.STDOUT)
         if result.returncode:
             print('Fallaron las pruebas MySQL. Revisa .local/mysql-tests.log.')
             return result.returncode
-        print('MySQL: siete pruebas correctas.',flush=True)
+        print('Pruebas académicas, MySQL y generación NumPy: correctas. Detalle en .local/mysql-tests.log.',flush=True)
         if args.sin_navegador:
             return 0
         launcher=None

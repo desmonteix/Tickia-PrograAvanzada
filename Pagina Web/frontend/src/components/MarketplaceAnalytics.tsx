@@ -12,6 +12,15 @@ const REPORTS = [
   ['ventas_distrito', 'Ventas por vendedor y distrito'],
   ['stock', 'Stock crítico'],
   ['categorias', 'Categorías jerárquicas'],
+  ['ranking_vendedores', 'Ranking y ventas acumuladas'],
+  ['ventas_mensuales', 'Ventas mensuales y comparación anterior'],
+  ['resenas_producto', 'Reseñas por producto y categoría'],
+  ['favoritos_categoria', 'Favoritos por categoría y vendedor'],
+  ['entregas_departamento', 'Entregas por departamento (SQL)'],
+  ['clientes_inactivos', 'Clientes inactivos según su frecuencia de compra'],
+  ['participacion_categorias', 'Participación y concentración por categoría'],
+  ['riesgo_courier', 'Riesgo de retrasos y comparación de couriers'],
+  ['afinidad_sql', 'Afinidad entre productos (SQL)'],
 ];
 type Cell = string | number | null;
 type ChartPoint =

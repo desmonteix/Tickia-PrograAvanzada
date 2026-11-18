@@ -80,3 +80,50 @@ class AcademicRequirementsTests(unittest.TestCase):
                 transaction.rollback()
         with self.engine.connect() as db:
             self.assertEqual(row(db,'SELECT estado FROM pedidos WHERE id_pedido=:id',{'id':identifier})['estado'],'pagado')
+
+    def test_numpy_generation_loads_ten_thousand_facts_without_changing_originals(self):
+        from backend.academic.generation import load_generated
+        with self.engine.connect() as db:
+            original=row(db,"SELECT COUNT(*) n,SUM(total) importe FROM pedidos WHERE origen='dataset'")
+        result=load_generated(self.engine,count=10000,seed=20261118)
+        self.assertEqual(result['pedidos'],10000)
+        repeated=load_generated(self.engine,count=10000,seed=20261118)
+        self.assertFalse(repeated['loaded'])
+        with self.engine.connect() as db:
+            self.assertEqual(row(db,"SELECT COUNT(*) n,SUM(total) importe FROM pedidos WHERE origen='dataset'"),original)
+            totals=row(db,'''SELECT COUNT(*) n,SUM(pe.total) total,SUM(pa.monto) pagado
+                FROM pedidos pe JOIN pagos pa USING(id_pedido) WHERE pe.origen='numpy' AND pe.solicitud_hash=:hash''',{'hash':result['batch_hash']})
+            self.assertEqual(totals['n'],10000)
+            self.assertEqual(totals['total'],totals['pagado'])
+
+    def test_advanced_queries_keep_business_metrics_consistent(self):
+        from backend.academic.analytics import sql_queries
+        queries=sql_queries()
+        with self.engine.connect() as db:
+            categories=rows(db,queries['participacion_categorias'])
+            self.assertAlmostEqual(float(sum(r['participacion_pct'] for r in categories)),100,places=2)
+            self.assertEqual(categories[-1]['participacion_acumulada_pct'],100)
+            for courier in rows(db,queries['riesgo_courier']):
+                self.assertGreaterEqual(courier['envios'],30)
+                self.assertLessEqual(courier['limite_inferior_95_pct'],courier['retraso_pct'])
+                self.assertGreaterEqual(courier['limite_superior_95_pct'],courier['retraso_pct'])
+            for buyer in rows(db,queries['clientes_inactivos']):
+                self.assertGreaterEqual(buyer['pedidos'],3)
+                self.assertGreater(buyer['recencia_dias'],buyer['umbral_inactividad_dias'])
+            pairs=rows(db,queries['afinidad_sql'])
+            self.assertTrue(pairs)
+            for pair in pairs:
+                self.assertLess(pair['producto_a'],pair['producto_b'])
+                self.assertLessEqual(pair['pedidos_juntos'],min(pair['pedidos_a'],pair['pedidos_b']))
+                self.assertLessEqual(pair['confianza_a_b_pct'],100)
+                self.assertGreater(pair['lift'],0)
+
+    def test_read_only_audit_reports_all_requirements_and_actual_objects(self):
+        from backend.academic.audit import build_audit
+        report=build_audit(self.engine,generated_target=self.engine)
+        self.assertTrue(report['cumple'],report['checks'])
+        self.assertEqual(len(report['tablas']),17)
+        self.assertEqual(len(report['vistas']),3)
+        self.assertGreaterEqual(sum(q['ventana'] for q in report['consultas'].values()),2)
+        self.assertEqual(report['consultas']['clientes_inactivos']['tablas_base'],['pedidos','usuarios'])
+        self.assertFalse(report['consultas']['clientes_inactivos']['join_tres_tablas'])

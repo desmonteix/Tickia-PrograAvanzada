@@ -29,6 +29,15 @@ NOTES={
  'ventas_distrito':'JOIN de seis tablas. Ventas brutas por vendedor y distrito del cliente; el dataset no identifica otra dirección histórica de entrega.',
  'stock':'Inventario actual con 0 a 3 unidades por variante, incluyendo productos publicados en la plataforma.',
  'categorias':'Árbol completo obtenido con WITH RECURSIVE, mostrando nivel y ruta de cada categoría.',
+ 'ranking_vendedores':'RANK ordena por ventas preservando empates. SUM OVER calcula ventas acumuladas con un orden determinista por importe e ID.',
+ 'ventas_mensuales':'LAG compara con el mes observado anterior del mismo vendedor. SUM OVER acumula sus ventas; un mes sin operaciones no aparece como una observación.',
+ 'resenas_producto':'Cuatro tablas: reseñas, productos, categorías y vendedores. Las estrellas se agregan sin cruzar líneas de pedido.',
+ 'favoritos_categoria':'Cuatro tablas: favoritos, productos, categorías y vendedores. Usuarios interesados cuenta personas distintas por categoría y vendedor.',
+ 'entregas_departamento':'Consulta SQL de envíos, couriers, pedidos, usuarios y geografía normalizada. Se excluyen fechas inválidas y promesas desconocidas del porcentaje tardío.',
+ 'clientes_inactivos':'Clientes con al menos tres compras cuya recencia supera 30 días y dos veces su intervalo medio de compra. Referencia: día posterior a la última compra del histórico; prioridad por valor monetario.',
+ 'participacion_categorias':'Participación en ventas brutas y concentración acumulada por categoría. Ventas y utilidades son medidas diferentes; el dataset no contiene costos de adquisición.',
+ 'riesgo_courier':'Comparación dentro de cada departamento con al menos 30 envíos por courier. Intervalo aproximado de Wilson al 95% para proporción tardía; supone observaciones independientes, sin demostrar responsabilidad causal.',
+ 'afinidad_sql':'Hasta 100 pares con al menos cinco pedidos conjuntos. Soporte, confianza en ambas direcciones y lift; cada producto cuenta una sola vez por pedido.',
 }
 
 
@@ -64,7 +73,7 @@ def build_bundle():
         reports=dict(rfm=rfm_frame,cohortes=cohorts(orders),cocompras=co_purchases(items),
             entregas=delivery_summary(shipments),vendedores=vendor_frame,diagnostico=flagged)
         queries=sql_queries()
-        for name in ('ventas_distrito','stock','categorias'):
+        for name in (name for name in NOTES if name in queries):
             reports[name]=pd.read_sql_query(text(queries[name]),connection)
     valid_shipments=clean_shipments(shipments)
     segments=rfm_frame.segmento.value_counts().rename_axis('label').reset_index(name='value')
