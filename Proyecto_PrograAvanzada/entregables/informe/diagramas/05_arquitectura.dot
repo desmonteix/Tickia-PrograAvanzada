@@ -1,0 +1,13 @@
+digraph G { graph [bgcolor="white", pad="0.25", nodesep="0.35", ranksep="0.50", splines=polyline]; node [fontname="Arial"]; edge [fontname="Arial", fontsize=10, color="#577188", arrowsize=.7];
+graph [rankdir=LR]; node [shape=box,style="rounded,filled",fillcolor="#EDF3F7",fontsize=13,margin=.2];
+ui [label="React + TypeScript
+Catalogo, carrito y reportes"]; api [label="FastAPI
+Auth y rutas de la aplicacion"]; domain [label="Dominio Python
+Builder, Strategy, Decorator, State"]; repositories [label="Repository de compras
+SQLAlchemy en los demas modulos"]; database [label="MySQL 8.4
+17 tablas, 3 vistas
+Procedimiento y trigger"]; pandas [label="Pandas
+RFM, cohortes, afinidad y entregas"]; loader [label="CSV originales / NumPy
+Carga y validacion de datos"];
+ui -> api [label="HTTP / JSON y cookies"]; api -> domain; api -> repositories; repositories -> database [label="SQL parametrizado"]; pandas -> database [label="SELECT"]; api -> pandas [label="reportes / CSV"]; loader -> database [label="carga transaccional"];
+}

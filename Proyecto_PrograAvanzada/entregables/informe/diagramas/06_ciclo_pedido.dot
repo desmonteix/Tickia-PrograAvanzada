@@ -1,0 +1,6 @@
+digraph G { graph [bgcolor="white", pad="0.25", nodesep="0.35", ranksep="0.50", splines=polyline]; node [fontname="Arial"]; edge [fontname="Arial", fontsize=10, color="#577188", arrowsize=.7];
+graph [rankdir=LR]; node [shape=box,style="rounded,filled",fillcolor="#EDF3F7",fontsize=14,margin=.2];
+pendiente -> pagado [label="pago simulado
+y stock atomico"]; pagado -> enviado [label="simular despacho"]; enviado -> entregado [label="comprador confirma
+recepcion"];
+}

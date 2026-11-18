@@ -1,0 +1,48 @@
+digraph G { graph [bgcolor="white", pad="0.25", nodesep="0.35", ranksep="0.50", splines=polyline]; node [fontname="Arial"]; edge [fontname="Arial", fontsize=10, color="#577188", arrowsize=.7];
+graph [rankdir=TB];
+departamentos [shape=plain label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6"><TR><TD BGCOLOR="#183B56"><FONT FACE="Arial" COLOR="white" POINT-SIZE="13"><B>departamentos</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT FACE="Arial" POINT-SIZE="11">PK id_departamento</FONT></TD></TR></TABLE>>];
+provincias [shape=plain label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6"><TR><TD BGCOLOR="#183B56"><FONT FACE="Arial" COLOR="white" POINT-SIZE="13"><B>provincias</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT FACE="Arial" POINT-SIZE="11">PK id_provincia</FONT></TD></TR></TABLE>>];
+distritos [shape=plain label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6"><TR><TD BGCOLOR="#183B56"><FONT FACE="Arial" COLOR="white" POINT-SIZE="13"><B>distritos</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT FACE="Arial" POINT-SIZE="11">PK id_distrito</FONT></TD></TR></TABLE>>];
+usuarios [shape=plain label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6"><TR><TD BGCOLOR="#183B56"><FONT FACE="Arial" COLOR="white" POINT-SIZE="13"><B>usuarios</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT FACE="Arial" POINT-SIZE="11">PK id_usuario</FONT></TD></TR></TABLE>>];
+cupones [shape=plain label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6"><TR><TD BGCOLOR="#183B56"><FONT FACE="Arial" COLOR="white" POINT-SIZE="13"><B>cupones</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT FACE="Arial" POINT-SIZE="11">PK id_cupon</FONT></TD></TR></TABLE>>];
+pedidos [shape=plain label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6"><TR><TD BGCOLOR="#183B56"><FONT FACE="Arial" COLOR="white" POINT-SIZE="13"><B>pedidos</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT FACE="Arial" POINT-SIZE="11">PK id_pedido</FONT></TD></TR></TABLE>>];
+vendedores [shape=plain label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6"><TR><TD BGCOLOR="#183B56"><FONT FACE="Arial" COLOR="white" POINT-SIZE="13"><B>vendedores</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT FACE="Arial" POINT-SIZE="11">PK id_vendedor</FONT></TD></TR></TABLE>>];
+preguntas [shape=plain label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6"><TR><TD BGCOLOR="#183B56"><FONT FACE="Arial" COLOR="white" POINT-SIZE="13"><B>preguntas</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT FACE="Arial" POINT-SIZE="11">PK id_pregunta</FONT></TD></TR></TABLE>>];
+pagos [shape=plain label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6"><TR><TD BGCOLOR="#183B56"><FONT FACE="Arial" COLOR="white" POINT-SIZE="13"><B>pagos</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT FACE="Arial" POINT-SIZE="11">PK id_pago</FONT></TD></TR></TABLE>>];
+pedido_detalle [shape=plain label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6"><TR><TD BGCOLOR="#B45C29"><FONT FACE="Arial" COLOR="white" POINT-SIZE="13"><B>pedido_detalle</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT FACE="Arial" POINT-SIZE="11">PK/FK id_pedido</FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT FACE="Arial" POINT-SIZE="11">PK/FK id_variante</FONT></TD></TR></TABLE>>];
+productos [shape=plain label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6"><TR><TD BGCOLOR="#183B56"><FONT FACE="Arial" COLOR="white" POINT-SIZE="13"><B>productos</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT FACE="Arial" POINT-SIZE="11">PK id_producto</FONT></TD></TR></TABLE>>];
+resenas [shape=plain label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6"><TR><TD BGCOLOR="#183B56"><FONT FACE="Arial" COLOR="white" POINT-SIZE="13"><B>resenas</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT FACE="Arial" POINT-SIZE="11">PK id_resena</FONT></TD></TR></TABLE>>];
+couriers [shape=plain label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6"><TR><TD BGCOLOR="#183B56"><FONT FACE="Arial" COLOR="white" POINT-SIZE="13"><B>couriers</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT FACE="Arial" POINT-SIZE="11">PK id_courier</FONT></TD></TR></TABLE>>];
+envios [shape=plain label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6"><TR><TD BGCOLOR="#183B56"><FONT FACE="Arial" COLOR="white" POINT-SIZE="13"><B>envios</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT FACE="Arial" POINT-SIZE="11">PK id_envio</FONT></TD></TR></TABLE>>];
+variantes [shape=plain label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6"><TR><TD BGCOLOR="#183B56"><FONT FACE="Arial" COLOR="white" POINT-SIZE="13"><B>variantes</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT FACE="Arial" POINT-SIZE="11">PK id_variante</FONT></TD></TR></TABLE>>];
+favoritos [shape=plain label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6"><TR><TD BGCOLOR="#B45C29"><FONT FACE="Arial" COLOR="white" POINT-SIZE="13"><B>favoritos</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT FACE="Arial" POINT-SIZE="11">PK/FK id_usuario</FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT FACE="Arial" POINT-SIZE="11">PK/FK id_producto</FONT></TD></TR></TABLE>>];
+categorias [shape=plain label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6"><TR><TD BGCOLOR="#183B56"><FONT FACE="Arial" COLOR="white" POINT-SIZE="13"><B>categorias</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT FACE="Arial" POINT-SIZE="11">PK id_categoria</FONT></TD></TR></TABLE>>];
+{rank=same; departamentos;provincias;distritos;usuarios; departamentos -> provincias -> distritos -> usuarios [style=invis,weight=40];}
+{rank=same; cupones;pedidos;vendedores;preguntas; cupones -> pedidos -> vendedores -> preguntas [style=invis,weight=40];}
+{rank=same; pagos;pedido_detalle;productos;resenas; pagos -> pedido_detalle -> productos -> resenas [style=invis,weight=40];}
+{rank=same; couriers;envios;variantes;favoritos; couriers -> envios -> variantes -> favoritos [style=invis,weight=40];}
+{rank=same;categorias;}
+departamentos -> cupones -> pagos -> couriers -> categorias [style=invis,weight=80];
+departamentos -> provincias [constraint=false,taillabel="1",headlabel="0..N",labeldistance=1.4,arrowhead=none];
+provincias -> distritos [constraint=false,taillabel="1",headlabel="0..N",labeldistance=1.4,arrowhead=none];
+distritos -> usuarios [constraint=false,taillabel="1",headlabel="0..N",labeldistance=1.4,arrowhead=none];
+usuarios -> vendedores [constraint=false,taillabel="1",headlabel="0..N",labeldistance=1.4,arrowhead=none];
+usuarios -> pedidos [constraint=false,taillabel="1",headlabel="0..N",labeldistance=1.4,arrowhead=none];
+cupones -> pedidos [constraint=false,taillabel="0..1",headlabel="0..N",labeldistance=1.4,arrowhead=none];
+distritos -> pedidos [constraint=false,taillabel="0..1",headlabel="0..N",labeldistance=1.4,arrowhead=none];
+vendedores -> productos [constraint=false,taillabel="1",headlabel="0..N",labeldistance=1.4,arrowhead=none];
+categorias -> productos [constraint=false,taillabel="1",headlabel="0..N",labeldistance=1.4,arrowhead=none];
+productos -> variantes [constraint=false,taillabel="1",headlabel="0..N",labeldistance=1.4,arrowhead=none];
+pedidos -> pedido_detalle [constraint=false,taillabel="1",headlabel="0..N",labeldistance=1.4,arrowhead=none];
+variantes -> pedido_detalle [constraint=false,taillabel="1",headlabel="0..N",labeldistance=1.4,arrowhead=none];
+pedidos -> pagos [constraint=false,taillabel="1",headlabel="0..N",labeldistance=1.4,arrowhead=none];
+pedidos -> envios [constraint=false,taillabel="1",headlabel="0..N",labeldistance=1.4,arrowhead=none];
+couriers -> envios [constraint=false,taillabel="1",headlabel="0..N",labeldistance=1.4,arrowhead=none];
+productos -> resenas [constraint=false,taillabel="1",headlabel="0..N",labeldistance=1.4,arrowhead=none];
+usuarios -> resenas [constraint=false,taillabel="1",headlabel="0..N",labeldistance=1.4,arrowhead=none];
+productos -> preguntas [constraint=false,taillabel="1",headlabel="0..N",labeldistance=1.4,arrowhead=none];
+usuarios -> preguntas [constraint=false,taillabel="1",headlabel="0..N",labeldistance=1.4,arrowhead=none];
+usuarios -> favoritos [constraint=false,taillabel="1",headlabel="0..N",labeldistance=1.4,arrowhead=none];
+productos -> favoritos [constraint=false,taillabel="1",headlabel="0..N",labeldistance=1.4,arrowhead=none];
+categorias -> categorias [constraint=false,taillabel="0..1",headlabel="0..N",labeldistance=1.4,arrowhead=none];
+}

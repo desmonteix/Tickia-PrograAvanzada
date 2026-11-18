@@ -1,0 +1,91 @@
+{
+  "date": "18-11-2026",
+  "report": {
+    "pages": 96,
+    "figures": 38,
+    "cover_blank": true,
+    "index_starts_page": 2,
+    "empty_pages": [
+      1
+    ],
+    "native_word_toc": true,
+    "source_markdown": "Informe_Tickia.md"
+  },
+  "notebook": {
+    "cells": 24,
+    "code_cells": 19,
+    "executed": true,
+    "errors": 0,
+    "captures": {
+      "15_bd_conteos": 1,
+      "16_bd_relaciones": 2,
+      "17_bd_objetos": 3,
+      "18_sql_ranking": 4,
+      "19_sql_ventanas": 5,
+      "20_sql_indices": 6,
+      "21_pandas_resumen": 7,
+      "22_pandas_rfm": 8,
+      "23_pandas_cohortes": 10,
+      "24_pandas_afinidad": 12,
+      "25_pandas_entregas": 14,
+      "26_pandas_diagnostico": 16,
+      "27_sql_avanzado": 18
+    }
+  },
+  "package": {
+    "file": "Entrega_Tickia_PrograAvanzada.zip",
+    "bytes": 44451389,
+    "sha256": "75d57f7413222986572fc848e5bfaf52eb1d1c3e7d3e5366b9d5454881bb6690",
+    "files": 393,
+    "zip_crc_ok": true,
+    "csv_raw_bytes_preserved": true,
+    "backup_restore": true
+  },
+  "restore": {
+    "success": true,
+    "container_isolated": true,
+    "counts": {
+      "categorias": 110,
+      "couriers": 8,
+      "cupones": 350,
+      "departamentos": 23,
+      "distritos": 65,
+      "envios": 98077,
+      "favoritos": 79971,
+      "pagos": 111529,
+      "pedido_detalle": 247485,
+      "pedidos": 111017,
+      "preguntas": 38001,
+      "productos": 9339,
+      "provincias": 25,
+      "resenas": 40072,
+      "usuarios": 45003,
+      "variantes": 19809,
+      "vendedores": 702
+    },
+    "objects": {
+      "views": 3,
+      "foreign_keys": 22,
+      "stored_procedures": 1,
+      "triggers": 1
+    },
+    "trigger_rejected_invalid_transition": true,
+    "application_bootstrap_succeeded": true,
+    "demo_login_and_order_verified": true
+  },
+  "startup_test": {
+    "zip_sha256": "ae0c022a9860019b122ce2378c49fbba4d8f5974afe35c09d2450cf2b4786d21",
+    "hashed_files": 386,
+    "independent_docker_project": "tickia-prueba-zip-500e88e9",
+    "web_ready": true,
+    "api_ready": true,
+    "login_verified": true,
+    "order_verified": true,
+    "repeat_did_not_reimport": true,
+    "source_csv_marker_accepted": true
+  },
+  "final_application_payload_identical": true,
+  "identical_payload_files": 238,
+  "note": "El ZIP final agrega documentación y herramientas a la copia probada; aplicación, fuentes CSV, lanzador y respaldo son idénticos por SHA-256.",
+  "local_credentials_excluded": true
+}

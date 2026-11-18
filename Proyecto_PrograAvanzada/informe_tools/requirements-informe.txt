@@ -1,0 +1,10 @@
+# Instalar con -c "Pagina Web/backend/requirements.txt" en el entorno del backend.
+python-docx==1.2.0
+matplotlib==3.11.1
+PyMuPDF==1.28.2
+pywin32==311; sys_platform == "win32"
+nbformat==5.11.1
+nbclient==0.11.0
+nbconvert==7.17.2
+ipykernel==7.4.0
+playwright==1.62.0
