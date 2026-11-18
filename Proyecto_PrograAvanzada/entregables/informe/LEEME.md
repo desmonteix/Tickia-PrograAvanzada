@@ -2,10 +2,12 @@
 
 * [Informe Word editable](Informe_Tickia.docx): versión definitiva. Primera hoja
   para la carátula; índice nativo desde la segunda hoja.
-* [Copia PDF](Informe_Tickia.pdf): exportada desde el Word, con 40 figuras de evidencia.
+* [Copia PDF](Informe_Tickia.pdf): exportada desde el Word, con 27 figuras de evidencia.
 * [Redacción inicial](Informe_Tickia.md): borrador generado por `informe_tools`.
   Las secciones 7.8 a 7.10, 6.5 y los cambios de patrones se editaron
-  directamente en el Word; no regenerar el Word desde este borrador.
+  directamente en el Word. El Word final además omite figuras redundantes,
+  el diccionario de datos y el glosario, y reordena los anexos (A: respaldo,
+  B: pruebas, C: instalación); no regenerar el Word desde este borrador.
 * [Cuaderno ejecutado](Analisis_Tickia.ipynb) y [HTML](Analisis_Tickia.html):
   veintiuna celdas de código ejecutadas sin errores.
 * [Estructura SQL consolidada](SQL_estructura_objetos.sql): tablas, índices,
