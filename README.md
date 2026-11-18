@@ -1,7 +1,7 @@
 # Tickia · Marketplace multivendedor
 
 Proyecto universitario de Programación Avanzada. Conserva la interfaz Tickia y
-utiliza **MySQL 8.4, 15 tablas y 801.519 registros originales**. Incluye productos
+utiliza **MySQL 8.4 y 17 tablas normalizadas**, a partir de 15 CSV con 801.519 filas originales. Incluye productos
 con variantes, carrito multivendedor, cupones, pedidos, reseñas, preguntas,
 favoritos y análisis con Pandas. Los pagos y envíos son simulados.
 
@@ -27,6 +27,9 @@ arranques conservan cuentas, pedidos y stock. No requiere Supabase ni credencial
 
 - [Manual de ejecución y pruebas](Proyecto_PrograAvanzada/COMO_EJECUTAR.md).
 - [Matriz de cumplimiento](Proyecto_PrograAvanzada/entregables/MATRIZ_CUMPLIMIENTO.md).
+- [Auditoría de requisitos](Proyecto_PrograAvanzada/entregables/AUDITORIA_REQUISITOS.md).
+- [Normalización a 3FN](Proyecto_PrograAvanzada/entregables/NORMALIZACION_3FN.md).
+- [Consultas avanzadas](Proyecto_PrograAvanzada/entregables/CONSULTAS_AVANZADAS.md).
 - [Modelo de datos](Proyecto_PrograAvanzada/entregables/ERD.md).
 - [Los cuatro patrones](Proyecto_PrograAvanzada/entregables/PATRONES.md).
 - [Informe de análisis](Proyecto_PrograAvanzada/entregables/INFORME_ANALISIS.md).

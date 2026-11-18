@@ -79,3 +79,21 @@ descuenta stock condicionalmente bajo bloqueos InnoDB. Si falla una variante,
 revierte todo. La clave `(id_usuario, solicitud_uuid)` y el hash del contenido
 evitan duplicar una solicitud. Las pruebas reales cubren concurrencia para la
 última unidad y rollback de pedidos multítem.
+
+
+## Repository: acceso a datos con clases
+
+`academic/repositories.py` define CatalogRepository y OrderRepository.
+La cotización obtiene variantes, cupón, courier y distrito mediante el primero;
+el segundo consulta recibos en lote, comprueba acceso, lista compras/ventas,
+bloquea y actualiza estados y llama al procedimiento transaccional.
+`commerce.py` usa ambas clases; no son ejemplos desconectados de la aplicación.
+
+Las conexiones se inyectan por constructor. El Repository de pedidos encapsula
+la llamada al procedimiento en una conexión con transacción propia; los errores
+se propagan y el servicio decide su respuesta HTTP. Los valores se pasan como
+parámetros. Las decisiones de precio y estado pertenecen al dominio, no al SQL
+de presentación. Esto separa persistencia, reglas comerciales y rutas HTTP.
+
+Así se justifican cinco patrones en la entrega: Builder, Strategy, Decorator,
+State y Repository. Las compras y las pruebas de integración usan esta capa.

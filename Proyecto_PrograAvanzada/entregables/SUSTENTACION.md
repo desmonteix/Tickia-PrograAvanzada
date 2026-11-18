@@ -26,9 +26,9 @@ WHERE CONSTRAINT_SCHEMA = DATABASE();
 SHOW CREATE PROCEDURE confirmar_pedido;
 ```
 
-Son 15 tablas y 19 FK contando la autorrelación de categorías. Ejecutar los
+Son 17 tablas, 22 FK, tres vistas, un procedimiento y un trigger. Ejecutar los
 bloques de `sql/03_consultas.sql`: `WITH RECURSIVE`, ventas por vendedor/distrito
-con seis tablas (cinco operadores JOIN en la cadena), stock 0–3 y diagnóstico.
+con seis fuentes lógicas (una es la vista de geografía normalizada), stock 0–3 y diagnóstico.
 
 En el procedimiento, señalar `START TRANSACTION`, `JSON_TABLE`, validación del
 total, UPDATE condicional de stock, handler de rollback y `COMMIT`. Pedido,

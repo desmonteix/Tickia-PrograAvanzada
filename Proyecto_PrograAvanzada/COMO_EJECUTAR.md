@@ -21,7 +21,8 @@ python Proyecto_PrograAvanzada/iniciar.py
 | Disponibilidad | http://127.0.0.1:8001/ready |
 | MySQL | 127.0.0.1:3307, base `tickia_universidad` |
 
-La primera ejecución descarga MySQL, crea 15 tablas e importa 801.519 filas.
+La primera ejecución descarga MySQL, crea 17 tablas e importa las 801.519 filas de los 15 CSV,
+separando provincia y departamento en sus catálogos normalizados.
 El lanzador espera a ambos servicios antes de mostrar la URL. Ctrl+C cierra
 API y frontend; MySQL conserva el volumen `tickia-universidad_mysql-data`.
 No elimines ese volumen para reiniciar la aplicación.
@@ -51,7 +52,7 @@ y la salida del lanzador si un servicio no inicia.
 6. En **Mis compras**, usa **Simular despacho** y **Confirmar recepción**.
    Después puedes reseñar el producto una vez. El vendedor ve **Mis ventas**.
 7. En cada ficha puedes guardar favoritos, preguntar y responder como propietario.
-8. **Análisis** ofrece nueve reportes y sus CSV completos.
+8. **Análisis** ofrece 18 reportes y sus CSV completos.
 
 Pagos y envíos son educativos: no se cobra dinero ni se contrata un courier.
 El comprador también puede simular despacho para demostrar compras a vendedores
@@ -61,7 +62,7 @@ históricos que no tienen cuentas de acceso.
 
 | Ubicación | Contenido |
 | --- | --- |
-| Volumen Docker | Las 15 tablas operativas MySQL |
+| Volumen Docker | Las 17 tablas operativas MySQL |
 | `.local/mysql.env` | Contraseñas aleatorias y nombre de la base |
 | `.local/mysql-manifest.json` | SHA-256 de los CSV y conteos verificados al iniciar |
 | `.local/secrets.json` | Claves persistentes de sesión |
@@ -76,10 +77,16 @@ Una base poblada con otros hashes se rechaza sin sobrescribirla.
 
 Para otro MySQL 8.4, configura `TICKIA_ACADEMIC_MYSQL_URL` (URL SQLAlchemy
 `mysql+pymysql`) en el entorno; se omite Docker. El usuario SQL debe poder crear
-las tablas, índices y procedimiento y ejecutar este último.
+tablas, índices, vistas, procedimientos y triggers. Con binary log habilitado,
+el administrador debe permitir crear el trigger sin SUPER; el Docker local
+configura log_bin_trust_function_creators=ON.
 `TICKIA_LOCAL_DIR` permite aislar claves, fotos y logs.
 
-La primera activación migra cuentas, hashes, publicaciones, compras y stock de
+La actualización a 3FN conserva los datos y guarda los valores trasladados en
+`.local/pre-3fn-*.json`. Reconstruye los importes en vistas y sustituye el destino
+JSON por una FK a distritos.
+
+La primera activación desde SQLite migra cuentas, hashes, publicaciones, compras y stock de
 `.local/tickia.sqlite3` en modo de solo lectura. La migración es idempotente y
 preserva SQLite. El respaldo puede ejecutarse con `--legacy-sqlite`, en puertos
 distintos. Después de migrar, no alternar ambos modos para registrar compras:
@@ -95,7 +102,7 @@ Push-Location "Pagina Web"
 Pop-Location
 ```
 
-Genera nueve CSV y `resultados.json` en `.local/analisis/`. El histórico usa
+Genera 18 CSV y `resultados.json` en `.local/analisis/`. El histórico usa
 `origen='dataset'`; las compras web no alteran RFM/cohortes/diagnóstico. Stock
 crítico sí refleja inventario actual.
 
@@ -126,3 +133,26 @@ El verificador crea únicamente `tickia_universidad_test`, ejecuta la integraci�
 real y abre una instancia temporal en 8031/5201 para Chromium. Cierra sus procesos
 al terminar y conserva capturas/logs en `.local/`. `--sin-navegador` ejecuta solo
 MySQL. No elimina ni reinicia la base del usuario.
+
+
+## Auditoría de requisitos y generación NumPy
+
+Con MySQL iniciado, desde la raíz:
+
+```powershell
+Push-Location "Pagina Web"
+& "backend/venv/Scripts/python.exe" -m backend.academic.generation --count 10000 --seed 20261118
+& "backend/venv/Scripts/python.exe" -m backend.academic.audit --incluir-pruebas
+Pop-Location
+```
+
+Primero ejecutar `verificar.py` para crear la base de pruebas y sus permisos.
+El generador carga solo en `tickia_universidad_test`, con `origen='numpy'`.
+Es idempotente por semilla/cantidad; conserva los 111.016 pedidos originales
+sin modificar su stock. El arranque principal no agrega estos pedidos.
+
+La auditoría consulta objetos reales, PK/FK, índices y EXPLAIN; comprueba el
+volumen, las consultas, vistas, trigger y el uso de Repository. Es de solo
+lectura. Guarda `.local/auditoria-requisitos.json`; el generador guarda
+`.local/generacion_numpy.json`. La justificación semántica de 3FN está en
+`entregables/NORMALIZACION_3FN.md`.

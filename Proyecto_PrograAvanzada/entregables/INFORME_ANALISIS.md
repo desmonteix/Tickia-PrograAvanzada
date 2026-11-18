@@ -128,11 +128,13 @@ sea causada por una entrega específica.
 
 ## Reproducción y límites
 
-En **Análisis**, seleccionar cualquiera de los nueve reportes y descargar el CSV
+En **Análisis**, seleccionar cualquiera de los 18 reportes y descargar el CSV
 completo. Por CLI: `python -m backend.academic.analytics` desde `Pagina Web/`
 con el entorno del backend y MySQL iniciado. El manual contiene el comando completo.
 Se regeneran RFM, cohortes, co-compras, entregas, vendedores, diagnóstico,
-ventas/distrito, stock crítico y árbol de categorías.
+ventas/distrito, stock crítico, árbol de categorías y nueve reportes SQL
+adicionales. Las métricas originales se conservan tras normalizar el esquema.
+Ver [consultas avanzadas](CONSULTAS_AVANZADAS.md).
 
 Los resultados corresponden al dataset sintético suministrado. El inventario
 crítico es actual y cambia con las compras; los otros análisis del histórico

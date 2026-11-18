@@ -9,7 +9,7 @@ el modo académico principal dejará de usar SQLite para su operación.
 
 | Módulo | Responsabilidad | Depende de |
 | --- | --- | --- |
-| data-mysql | MySQL, las 15 tablas, carga íntegra, migración local | — |
+| data-mysql | MySQL, 17 tablas normalizadas desde 15 CSV, carga íntegra, migración local | — |
 | commerce-patterns | Builder, Strategy, Decorator, State, carrito y confirmación transaccional | data-mysql |
 | shipping-social | Pagos, envíos, reseñas, preguntas y favoritos | commerce-patterns |
 | analytics-pandas | Consultas SQL y análisis reproducibles sobre MySQL | data-mysql |
@@ -18,10 +18,11 @@ el modo académico principal dejará de usar SQLite para su operación.
 
 ## Criterios verificables
 
-1. Las 15 tablas del modelo existen en MySQL con sus PK/FK, datos originales,
+1. Las 17 tablas normalizadas del modelo existen en MySQL con sus PK/FK, datos originales,
    IDs y fechas; se importan también pagos y favoritos encontrados en
    `P4_marketplace/`. La jerarquía añade una autorrelación de categorías a las
-   18 relaciones entre tablas del diagrama de referencia.
+   18 relaciones entre tablas del diagrama de referencia. Las dos dimensiones
+   geográficas y la FK del destino amplían el esquema a 22 FK.
 2. Una cuenta puede vender productos con variantes y comprar varios artículos
    con un cupón. Un procedimiento almacenado confirma el pedido y descuenta
    stock dentro de una sola transacción, sin sobreventa ni doble confirmación.
@@ -59,3 +60,13 @@ el modo académico principal dejará de usar SQLite para su operación.
 - https://dev.mysql.com/doc/refman/8.4/en/with.html
 - https://pandas.pydata.org/docs/reference/api/pandas.read_sql_query.html
 - https://pandas.pydata.org/docs/user_guide/groupby.html
+
+
+## Ampliación de requisitos de base de datos
+
+Normalización explícita de geografía e importes, 17 tablas base y 22 FK.
+Se entregan tres vistas, un trigger de estado, 13 consultas SQL con CTE y
+ventanas, Repository con clases y generación NumPy verificable de 10.000 hechos
+en la base de pruebas. El panel expone 18 reportes. Se verifican instalación
+limpia, migración sin pérdidas, integración MySQL, regresión y navegador.
+La evidencia está en entregables/AUDITORIA_REQUISITOS.md y su auditoría JSON.

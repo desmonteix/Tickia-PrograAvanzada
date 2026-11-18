@@ -1,0 +1,8 @@
+{
+  "database": "tickia_universidad_test",
+  "pedidos": 10000,
+  "seed": 20261118,
+  "numpy_version": "2.5.0",
+  "batch_hash": "d818c5e2e3bda7cc49f723b7e23dca36e2131366f4f5f47e980a365c978aec57",
+  "loaded": false
+}

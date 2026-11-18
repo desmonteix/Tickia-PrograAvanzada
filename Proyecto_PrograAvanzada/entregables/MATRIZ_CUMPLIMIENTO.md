@@ -6,7 +6,7 @@ Las rutas `backend/` y `frontend/` son relativas a `Pagina Web/`.
 | Requisito | Implementación | Verificación |
 | --- | --- | --- |
 | Marketplace multivendedor con diseño Tickia | `App.tsx`, `ProductCatalog.tsx`, `MarketplaceSeller.tsx` | Compra de productos de dos vendedores en un carrito |
-| MySQL, 15 tablas y relaciones | `sql/01_esquema.sql`, `academic/bootstrap.py`, `compose.mysql.yml` | 801.519 filas originales, PK/FK reales |
+| MySQL, 17 tablas normalizadas y relaciones | `sql/01_esquema.sql`, `academic/bootstrap.py`, `compose.mysql.yml` | 801.519 filas originales, PK/FK reales |
 | Usuarios, distritos y vendedores | `academic/auth.py`, `social.py`, `catalog.py` | Registro, publicación y destino de entrega |
 | Variantes con talla, color y stock | `social.py`, `MarketplaceSeller.tsx`, `ProductDetail.tsx` | Stock independiente por combinación; hasta 20 variantes |
 | Builder | `academic/patterns.py:OrderBuilder`, `commerce.py:quote_cart` | Pedido multítem, agrupación de cantidades y cupón |
@@ -25,15 +25,15 @@ Las rutas `backend/` y `frontend/` son relativas a `Pagina Web/`.
 | Entrega por courier/departamento | `analysis_frames.py:delivery_summary` | Días medios, promesas conocidas y porcentaje tardío |
 | Estrellas, reseñas y ventas | `analysis_frames.py:vendor_summary` | Ventas, número de reseñas, estrellas y gráfico |
 | Diagnóstico de ventas altas/reputación/retrasos | `analysis_frames.py:diagnose` | 14 vendedores; umbrales y limitaciones explícitos |
-| Exportación reproducible | `academic/analytics.py`, `MarketplaceAnalytics.tsx` | Nueve CSV completos, CLI y panel |
+| Exportación reproducible | `academic/analytics.py`, `MarketplaceAnalytics.tsx` | 18 CSV completos, CLI y panel |
 | Conservación de la versión anterior | `academic/migration.py` | SQLite de solo lectura y reinicio sin restaurar stock |
 
 ## Evidencia
 
-- Siete pruebas con MySQL real: esquema, compra/cupón/idempotencia,
+- Catorce pruebas de integración/requisitos con MySQL real: esquema, compra/cupón/idempotencia,
   estados/permisos/comunidad, rollback, concurrencia, migración y consultas SQL.
-- Once pruebas puras: seis de patrones y cinco de Pandas.
-- Regresión backend: 199 pruebas, 28 omitidas por servicios externos no configurados.
+- Trece pruebas puras: seis de patrones, cinco de Pandas y dos de generación.
+- Regresión backend: 208 pruebas, 35 omitidas por servicios externos no configurados.
 - Frontend: 28 pruebas, lint y compilación correctos.
 - Chromium: publicación con foto y variantes; compra de dos vendedores y tres
   variantes; volumen y cupón; despacho, recepción, reseña, pregunta/respuesta,
@@ -46,8 +46,10 @@ Los logs y capturas de prueba se conservan en `.local/`, excluida de Git.
 ## Decisiones del modelo
 
 El diagrama indica 18 relaciones entre tablas. La autorrelación
-`categorias.id_padre → categorias.id_categoria` hace que MySQL registre **19 FK**.
-Se mantienen exactamente 15 tablas; las extensiones son columnas e índices.
+`categorias.id_padre → categorias.id_categoria` daba **19 FK** en el modelo inicial.
+La normalización añade provincias, departamentos y la FK del destino del pedido:
+el modelo actual tiene 17 tablas y 22 FK. Hay tres vistas y un trigger.
+Los requisitos adicionales se detallan en [la auditoría](AUDITORIA_REQUISITOS.md).
 Los cinco emails duplicados del histórico se conservan: la unicidad se exige
 solo para cuentas operativas con contraseña. No se asignan credenciales a
 identidades del dataset.

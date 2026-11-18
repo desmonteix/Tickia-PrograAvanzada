@@ -1,0 +1,701 @@
+{
+  "generated_at": "2026-11-18T17:30:51.456096+00:00",
+  "database": "tickia_universidad",
+  "cumple": true,
+  "checks": {
+    "minimo_12_tablas": true,
+    "todas_con_pk": true,
+    "integridad_fk": true,
+    "estructura_normalizada": true,
+    "dos_puentes_nm": true,
+    "minimo_10000_hechos": true,
+    "indices_consultas_frecuentes": true,
+    "cinco_consultas_join_3_tablas": true,
+    "dos_consultas_ventana": true,
+    "subconsulta_o_cte": true,
+    "dos_vistas": true,
+    "procedimiento": true,
+    "trigger": true,
+    "repository_usado": true,
+    "patrones_integrados": true,
+    "generacion_numpy_cargada_en_pruebas": true
+  },
+  "tablas": [
+    "categorias",
+    "couriers",
+    "cupones",
+    "departamentos",
+    "distritos",
+    "envios",
+    "favoritos",
+    "pagos",
+    "pedido_detalle",
+    "pedidos",
+    "preguntas",
+    "productos",
+    "provincias",
+    "resenas",
+    "usuarios",
+    "variantes",
+    "vendedores"
+  ],
+  "foreign_keys": [
+    {
+      "TABLE_NAME": "categorias",
+      "COLUMN_NAME": "id_padre",
+      "REFERENCED_TABLE_NAME": "categorias",
+      "REFERENCED_COLUMN_NAME": "id_categoria"
+    },
+    {
+      "TABLE_NAME": "distritos",
+      "COLUMN_NAME": "id_provincia",
+      "REFERENCED_TABLE_NAME": "provincias",
+      "REFERENCED_COLUMN_NAME": "id_provincia"
+    },
+    {
+      "TABLE_NAME": "envios",
+      "COLUMN_NAME": "id_courier",
+      "REFERENCED_TABLE_NAME": "couriers",
+      "REFERENCED_COLUMN_NAME": "id_courier"
+    },
+    {
+      "TABLE_NAME": "envios",
+      "COLUMN_NAME": "id_pedido",
+      "REFERENCED_TABLE_NAME": "pedidos",
+      "REFERENCED_COLUMN_NAME": "id_pedido"
+    },
+    {
+      "TABLE_NAME": "favoritos",
+      "COLUMN_NAME": "id_producto",
+      "REFERENCED_TABLE_NAME": "productos",
+      "REFERENCED_COLUMN_NAME": "id_producto"
+    },
+    {
+      "TABLE_NAME": "favoritos",
+      "COLUMN_NAME": "id_usuario",
+      "REFERENCED_TABLE_NAME": "usuarios",
+      "REFERENCED_COLUMN_NAME": "id_usuario"
+    },
+    {
+      "TABLE_NAME": "pagos",
+      "COLUMN_NAME": "id_pedido",
+      "REFERENCED_TABLE_NAME": "pedidos",
+      "REFERENCED_COLUMN_NAME": "id_pedido"
+    },
+    {
+      "TABLE_NAME": "pedido_detalle",
+      "COLUMN_NAME": "id_pedido",
+      "REFERENCED_TABLE_NAME": "pedidos",
+      "REFERENCED_COLUMN_NAME": "id_pedido"
+    },
+    {
+      "TABLE_NAME": "pedido_detalle",
+      "COLUMN_NAME": "id_variante",
+      "REFERENCED_TABLE_NAME": "variantes",
+      "REFERENCED_COLUMN_NAME": "id_variante"
+    },
+    {
+      "TABLE_NAME": "pedidos",
+      "COLUMN_NAME": "id_cupon",
+      "REFERENCED_TABLE_NAME": "cupones",
+      "REFERENCED_COLUMN_NAME": "id_cupon"
+    },
+    {
+      "TABLE_NAME": "pedidos",
+      "COLUMN_NAME": "id_distrito_entrega",
+      "REFERENCED_TABLE_NAME": "distritos",
+      "REFERENCED_COLUMN_NAME": "id_distrito"
+    },
+    {
+      "TABLE_NAME": "pedidos",
+      "COLUMN_NAME": "id_usuario",
+      "REFERENCED_TABLE_NAME": "usuarios",
+      "REFERENCED_COLUMN_NAME": "id_usuario"
+    },
+    {
+      "TABLE_NAME": "preguntas",
+      "COLUMN_NAME": "id_producto",
+      "REFERENCED_TABLE_NAME": "productos",
+      "REFERENCED_COLUMN_NAME": "id_producto"
+    },
+    {
+      "TABLE_NAME": "preguntas",
+      "COLUMN_NAME": "id_usuario",
+      "REFERENCED_TABLE_NAME": "usuarios",
+      "REFERENCED_COLUMN_NAME": "id_usuario"
+    },
+    {
+      "TABLE_NAME": "productos",
+      "COLUMN_NAME": "id_categoria",
+      "REFERENCED_TABLE_NAME": "categorias",
+      "REFERENCED_COLUMN_NAME": "id_categoria"
+    },
+    {
+      "TABLE_NAME": "productos",
+      "COLUMN_NAME": "id_vendedor",
+      "REFERENCED_TABLE_NAME": "vendedores",
+      "REFERENCED_COLUMN_NAME": "id_vendedor"
+    },
+    {
+      "TABLE_NAME": "provincias",
+      "COLUMN_NAME": "id_departamento",
+      "REFERENCED_TABLE_NAME": "departamentos",
+      "REFERENCED_COLUMN_NAME": "id_departamento"
+    },
+    {
+      "TABLE_NAME": "resenas",
+      "COLUMN_NAME": "id_producto",
+      "REFERENCED_TABLE_NAME": "productos",
+      "REFERENCED_COLUMN_NAME": "id_producto"
+    },
+    {
+      "TABLE_NAME": "resenas",
+      "COLUMN_NAME": "id_usuario",
+      "REFERENCED_TABLE_NAME": "usuarios",
+      "REFERENCED_COLUMN_NAME": "id_usuario"
+    },
+    {
+      "TABLE_NAME": "usuarios",
+      "COLUMN_NAME": "id_distrito",
+      "REFERENCED_TABLE_NAME": "distritos",
+      "REFERENCED_COLUMN_NAME": "id_distrito"
+    },
+    {
+      "TABLE_NAME": "variantes",
+      "COLUMN_NAME": "id_producto",
+      "REFERENCED_TABLE_NAME": "productos",
+      "REFERENCED_COLUMN_NAME": "id_producto"
+    },
+    {
+      "TABLE_NAME": "vendedores",
+      "COLUMN_NAME": "id_usuario",
+      "REFERENCED_TABLE_NAME": "usuarios",
+      "REFERENCED_COLUMN_NAME": "id_usuario"
+    }
+  ],
+  "puentes": {
+    "pedido_detalle": {
+      "primary_key": [
+        "id_pedido",
+        "id_variante"
+      ],
+      "foreign_keys": [
+        {
+          "TABLE_NAME": "pedido_detalle",
+          "COLUMN_NAME": "id_pedido",
+          "REFERENCED_TABLE_NAME": "pedidos",
+          "REFERENCED_COLUMN_NAME": "id_pedido"
+        },
+        {
+          "TABLE_NAME": "pedido_detalle",
+          "COLUMN_NAME": "id_variante",
+          "REFERENCED_TABLE_NAME": "variantes",
+          "REFERENCED_COLUMN_NAME": "id_variante"
+        }
+      ]
+    },
+    "favoritos": {
+      "primary_key": [
+        "id_usuario",
+        "id_producto"
+      ],
+      "foreign_keys": [
+        {
+          "TABLE_NAME": "favoritos",
+          "COLUMN_NAME": "id_producto",
+          "REFERENCED_TABLE_NAME": "productos",
+          "REFERENCED_COLUMN_NAME": "id_producto"
+        },
+        {
+          "TABLE_NAME": "favoritos",
+          "COLUMN_NAME": "id_usuario",
+          "REFERENCED_TABLE_NAME": "usuarios",
+          "REFERENCED_COLUMN_NAME": "id_usuario"
+        }
+      ]
+    }
+  },
+  "indices": [
+    {
+      "TABLE_NAME": "categorias",
+      "INDEX_NAME": "id_padre",
+      "columnas": "id_padre"
+    },
+    {
+      "TABLE_NAME": "categorias",
+      "INDEX_NAME": "PRIMARY",
+      "columnas": "id_categoria"
+    },
+    {
+      "TABLE_NAME": "couriers",
+      "INDEX_NAME": "PRIMARY",
+      "columnas": "id_courier"
+    },
+    {
+      "TABLE_NAME": "cupones",
+      "INDEX_NAME": "idx_cupon_codigo",
+      "columnas": "codigo"
+    },
+    {
+      "TABLE_NAME": "cupones",
+      "INDEX_NAME": "PRIMARY",
+      "columnas": "id_cupon"
+    },
+    {
+      "TABLE_NAME": "departamentos",
+      "INDEX_NAME": "nombre",
+      "columnas": "nombre"
+    },
+    {
+      "TABLE_NAME": "departamentos",
+      "INDEX_NAME": "PRIMARY",
+      "columnas": "id_departamento"
+    },
+    {
+      "TABLE_NAME": "distritos",
+      "INDEX_NAME": "fk_distrito_provincia",
+      "columnas": "id_provincia"
+    },
+    {
+      "TABLE_NAME": "distritos",
+      "INDEX_NAME": "PRIMARY",
+      "columnas": "id_distrito"
+    },
+    {
+      "TABLE_NAME": "envios",
+      "INDEX_NAME": "id_courier",
+      "columnas": "id_courier"
+    },
+    {
+      "TABLE_NAME": "envios",
+      "INDEX_NAME": "id_pedido",
+      "columnas": "id_pedido"
+    },
+    {
+      "TABLE_NAME": "envios",
+      "INDEX_NAME": "PRIMARY",
+      "columnas": "id_envio"
+    },
+    {
+      "TABLE_NAME": "favoritos",
+      "INDEX_NAME": "id_producto",
+      "columnas": "id_producto"
+    },
+    {
+      "TABLE_NAME": "favoritos",
+      "INDEX_NAME": "PRIMARY",
+      "columnas": "id_usuario,id_producto"
+    },
+    {
+      "TABLE_NAME": "pagos",
+      "INDEX_NAME": "id_pedido",
+      "columnas": "id_pedido"
+    },
+    {
+      "TABLE_NAME": "pagos",
+      "INDEX_NAME": "PRIMARY",
+      "columnas": "id_pago"
+    },
+    {
+      "TABLE_NAME": "pedido_detalle",
+      "INDEX_NAME": "id_variante",
+      "columnas": "id_variante"
+    },
+    {
+      "TABLE_NAME": "pedido_detalle",
+      "INDEX_NAME": "PRIMARY",
+      "columnas": "id_pedido,id_variante"
+    },
+    {
+      "TABLE_NAME": "pedidos",
+      "INDEX_NAME": "fk_pedido_distrito_entrega",
+      "columnas": "id_distrito_entrega"
+    },
+    {
+      "TABLE_NAME": "pedidos",
+      "INDEX_NAME": "id_cupon",
+      "columnas": "id_cupon"
+    },
+    {
+      "TABLE_NAME": "pedidos",
+      "INDEX_NAME": "idx_pedido_fecha",
+      "columnas": "fecha"
+    },
+    {
+      "TABLE_NAME": "pedidos",
+      "INDEX_NAME": "idx_pedido_origen_estado_fecha",
+      "columnas": "origen,estado,fecha"
+    },
+    {
+      "TABLE_NAME": "pedidos",
+      "INDEX_NAME": "idx_pedido_usuario_fecha",
+      "columnas": "id_usuario,fecha,id_pedido"
+    },
+    {
+      "TABLE_NAME": "pedidos",
+      "INDEX_NAME": "PRIMARY",
+      "columnas": "id_pedido"
+    },
+    {
+      "TABLE_NAME": "pedidos",
+      "INDEX_NAME": "uq_pedido_solicitud",
+      "columnas": "id_usuario,solicitud_uuid"
+    },
+    {
+      "TABLE_NAME": "preguntas",
+      "INDEX_NAME": "id_usuario",
+      "columnas": "id_usuario"
+    },
+    {
+      "TABLE_NAME": "preguntas",
+      "INDEX_NAME": "idx_pregunta_producto_fecha",
+      "columnas": "id_producto,fecha"
+    },
+    {
+      "TABLE_NAME": "preguntas",
+      "INDEX_NAME": "PRIMARY",
+      "columnas": "id_pregunta"
+    },
+    {
+      "TABLE_NAME": "productos",
+      "INDEX_NAME": "id_vendedor",
+      "columnas": "id_vendedor"
+    },
+    {
+      "TABLE_NAME": "productos",
+      "INDEX_NAME": "idx_producto_categoria_precio",
+      "columnas": "id_categoria,precio,id_producto"
+    },
+    {
+      "TABLE_NAME": "productos",
+      "INDEX_NAME": "idx_producto_precio",
+      "columnas": "precio,id_producto"
+    },
+    {
+      "TABLE_NAME": "productos",
+      "INDEX_NAME": "PRIMARY",
+      "columnas": "id_producto"
+    },
+    {
+      "TABLE_NAME": "provincias",
+      "INDEX_NAME": "PRIMARY",
+      "columnas": "id_provincia"
+    },
+    {
+      "TABLE_NAME": "provincias",
+      "INDEX_NAME": "uq_provincia_departamento",
+      "columnas": "id_departamento,nombre"
+    },
+    {
+      "TABLE_NAME": "resenas",
+      "INDEX_NAME": "idx_resena_producto_fecha",
+      "columnas": "id_producto,fecha"
+    },
+    {
+      "TABLE_NAME": "resenas",
+      "INDEX_NAME": "idx_resena_usuario_producto",
+      "columnas": "id_usuario,id_producto"
+    },
+    {
+      "TABLE_NAME": "resenas",
+      "INDEX_NAME": "PRIMARY",
+      "columnas": "id_resena"
+    },
+    {
+      "TABLE_NAME": "usuarios",
+      "INDEX_NAME": "auth_uuid",
+      "columnas": "auth_uuid"
+    },
+    {
+      "TABLE_NAME": "usuarios",
+      "INDEX_NAME": "id_distrito",
+      "columnas": "id_distrito"
+    },
+    {
+      "TABLE_NAME": "usuarios",
+      "INDEX_NAME": "idx_usuario_email",
+      "columnas": "email"
+    },
+    {
+      "TABLE_NAME": "usuarios",
+      "INDEX_NAME": "PRIMARY",
+      "columnas": "id_usuario"
+    },
+    {
+      "TABLE_NAME": "usuarios",
+      "INDEX_NAME": "uq_usuario_auth_email",
+      "columnas": "auth_email"
+    },
+    {
+      "TABLE_NAME": "variantes",
+      "INDEX_NAME": "id_producto",
+      "columnas": "id_producto"
+    },
+    {
+      "TABLE_NAME": "variantes",
+      "INDEX_NAME": "idx_variante_stock",
+      "columnas": "stock,id_producto"
+    },
+    {
+      "TABLE_NAME": "variantes",
+      "INDEX_NAME": "PRIMARY",
+      "columnas": "id_variante"
+    },
+    {
+      "TABLE_NAME": "vendedores",
+      "INDEX_NAME": "idx_vendedor_reputacion",
+      "columnas": "reputacion,id_vendedor"
+    },
+    {
+      "TABLE_NAME": "vendedores",
+      "INDEX_NAME": "idx_vendedor_usuario",
+      "columnas": "id_usuario"
+    },
+    {
+      "TABLE_NAME": "vendedores",
+      "INDEX_NAME": "PRIMARY",
+      "columnas": "id_vendedor"
+    }
+  ],
+  "vistas": [
+    "v_distritos",
+    "v_pedidos_importes",
+    "v_ventas_vendedor"
+  ],
+  "procedimientos": [
+    "confirmar_pedido"
+  ],
+  "triggers": [
+    {
+      "TRIGGER_NAME": "tr_pedido_validar_estado",
+      "EVENT_MANIPULATION": "UPDATE",
+      "ACTION_TIMING": "BEFORE",
+      "EVENT_OBJECT_TABLE": "pedidos"
+    }
+  ],
+  "hechos": {
+    "pedidos": 111016,
+    "detalle": 247482,
+    "por_origen": [
+      {
+        "origen": "dataset",
+        "pedidos": 111016
+      }
+    ]
+  },
+  "consultas": {
+    "categorias": {
+      "joins": 1,
+      "tablas_base": [
+        "categorias"
+      ],
+      "join_tres_tablas": false,
+      "ventana": false,
+      "cte": true
+    },
+    "ventas_distrito": {
+      "joins": 5,
+      "tablas_base": [
+        "departamentos",
+        "distritos",
+        "pedido_detalle",
+        "pedidos",
+        "productos",
+        "provincias",
+        "usuarios",
+        "variantes"
+      ],
+      "join_tres_tablas": true,
+      "ventana": false,
+      "cte": false
+    },
+    "stock": {
+      "joins": 2,
+      "tablas_base": [
+        "productos",
+        "variantes",
+        "vendedores"
+      ],
+      "join_tres_tablas": true,
+      "ventana": false,
+      "cte": false
+    },
+    "diagnostico_sql": {
+      "joins": 12,
+      "tablas_base": [
+        "envios",
+        "pedido_detalle",
+        "pedidos",
+        "productos",
+        "resenas",
+        "usuarios",
+        "variantes",
+        "vendedores"
+      ],
+      "join_tres_tablas": true,
+      "ventana": false,
+      "cte": true
+    },
+    "resenas_producto": {
+      "joins": 3,
+      "tablas_base": [
+        "categorias",
+        "productos",
+        "resenas",
+        "vendedores"
+      ],
+      "join_tres_tablas": true,
+      "ventana": false,
+      "cte": false
+    },
+    "favoritos_categoria": {
+      "joins": 3,
+      "tablas_base": [
+        "categorias",
+        "favoritos",
+        "productos",
+        "vendedores"
+      ],
+      "join_tres_tablas": true,
+      "ventana": false,
+      "cte": false
+    },
+    "entregas_departamento": {
+      "joins": 4,
+      "tablas_base": [
+        "couriers",
+        "departamentos",
+        "distritos",
+        "envios",
+        "pedidos",
+        "provincias",
+        "usuarios"
+      ],
+      "join_tres_tablas": true,
+      "ventana": false,
+      "cte": false
+    },
+    "ranking_vendedores": {
+      "joins": 0,
+      "tablas_base": [
+        "pedido_detalle",
+        "pedidos",
+        "productos",
+        "variantes",
+        "vendedores"
+      ],
+      "join_tres_tablas": false,
+      "ventana": true,
+      "cte": false
+    },
+    "ventas_mensuales": {
+      "joins": 3,
+      "tablas_base": [
+        "pedido_detalle",
+        "pedidos",
+        "productos",
+        "variantes"
+      ],
+      "join_tres_tablas": true,
+      "ventana": true,
+      "cte": true
+    },
+    "clientes_inactivos": {
+      "joins": 2,
+      "tablas_base": [
+        "pedidos",
+        "usuarios"
+      ],
+      "join_tres_tablas": false,
+      "ventana": true,
+      "cte": true
+    },
+    "participacion_categorias": {
+      "joins": 4,
+      "tablas_base": [
+        "categorias",
+        "pedido_detalle",
+        "pedidos",
+        "productos",
+        "variantes"
+      ],
+      "join_tres_tablas": true,
+      "ventana": true,
+      "cte": true
+    },
+    "riesgo_courier": {
+      "joins": 4,
+      "tablas_base": [
+        "couriers",
+        "departamentos",
+        "distritos",
+        "envios",
+        "pedidos",
+        "provincias",
+        "usuarios"
+      ],
+      "join_tres_tablas": true,
+      "ventana": true,
+      "cte": true
+    },
+    "afinidad_sql": {
+      "joins": 8,
+      "tablas_base": [
+        "pedido_detalle",
+        "pedidos",
+        "productos",
+        "variantes"
+      ],
+      "join_tres_tablas": true,
+      "ventana": false,
+      "cte": true
+    }
+  },
+  "generacion_numpy": {
+    "pedidos": 10000,
+    "solicitudes": 10000,
+    "database": "tickia_universidad_test"
+  },
+  "explain": {
+    "stock": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "variantes",
+        "partitions": null,
+        "type": "range",
+        "possible_keys": "idx_variante_stock",
+        "key": "idx_variante_stock",
+        "key_len": "4",
+        "ref": null,
+        "rows": 1928,
+        "filtered": 100.0,
+        "Extra": "Using where; Using index"
+      }
+    ],
+    "compras_usuario": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "pedidos",
+        "partitions": null,
+        "type": "ref",
+        "possible_keys": "uq_pedido_solicitud,idx_pedido_usuario_fecha",
+        "key": "idx_pedido_usuario_fecha",
+        "key_len": "4",
+        "ref": "const",
+        "rows": 2,
+        "filtered": 100.0,
+        "Extra": "Using index"
+      }
+    ]
+  },
+  "revision_3fn": "Ver entregables/NORMALIZACION_3FN.md: dependencias funcionales y excepciones técnicas.",
+  "patrones": [
+    "Builder",
+    "Strategy",
+    "Decorator",
+    "State",
+    "Repository"
+  ]
+}

@@ -55,3 +55,16 @@ los datos operativos y no vuelven a cargar el inventario.
 La carga y su manifiesto se implementan en
 `Pagina Web/backend/academic/bootstrap.py`. Los hashes impiden sobrescribir una
 base poblada con otro conjunto; los errores de importación revierten la carga.
+
+
+## Modelo normalizado y generación reproducible
+
+La aplicación usa 17 tablas base: las 15 entidades originales más provincias
+y departamentos, con 22 FK. Las tres vistas reconstruyen geografía, importes
+y ventas por vendedor sin repetir atributos transitivos en las tablas base.
+Ver [normalización a 3FN](entregables/NORMALIZACION_3FN.md).
+
+El histórico suministrado conserva 111.016 pedidos y 247.482 líneas. Se añadió
+un generador NumPy con semilla fija que carga otros 10.000 pedidos y sus
+relaciones únicamente en la base aislada de pruebas, sin reemplazar las fuentes.
+Ver [auditoría de requisitos](entregables/AUDITORIA_REQUISITOS.md).

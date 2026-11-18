@@ -1,11 +1,14 @@
 # Modelo entidad-relación
 
-15 tablas y 19 FK, contando la autorrelación de categorías.
+17 tablas y 22 FK, contando la autorrelación de categorías.
 Tipos, restricciones y columnas completas en [01_esquema.sql](../sql/01_esquema.sql).
 
 ```mermaid
 erDiagram
+    departamentos ||--o{ provincias : agrupa
+    provincias ||--o{ distritos : agrupa
     distritos ||--o{ usuarios : residencia
+    distritos o|--o{ pedidos : destino
     usuarios ||--o{ vendedores : vende
     usuarios ||--o{ pedidos : compra
     usuarios ||--o{ resenas : escribe
@@ -25,8 +28,18 @@ erDiagram
     pedidos ||--o{ envios : despacha
     couriers ||--o{ envios : transporta
 
+    departamentos {
+        int id_departamento PK
+        string nombre UK
+    }
+    provincias {
+        int id_provincia PK
+        int id_departamento FK
+        string nombre
+    }
     distritos {
         int id_distrito PK
+        int id_provincia FK
     }
     usuarios {
         int id_usuario PK
@@ -62,6 +75,7 @@ erDiagram
         int id_pedido PK
         int id_usuario FK
         int id_cupon FK
+        int id_distrito_entrega FK
         string estado
         decimal total
         string solicitud_uuid
@@ -106,5 +120,6 @@ pedido multivendedor; el esquema admite múltiples pagos/envíos para conservar
 el histórico original.
 
 Las extensiones permiten autenticación, descripción/foto/origen, estrategia de
-courier, desglose monetario y solicitudes idempotentes. El destino web es una
-instantánea JSON. El histórico solo permite inferir distrito desde el usuario.
+courier y solicitudes idempotentes. El destino web usa una FK a distritos.
+Las vistas reconstruyen geografía e importes; el histórico solo permite inferir
+distrito desde el usuario. Ver [justificación de 3FN](NORMALIZACION_3FN.md).

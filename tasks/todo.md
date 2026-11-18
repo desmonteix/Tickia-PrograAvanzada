@@ -13,3 +13,13 @@
 - [x] Activar la aplicación actualizada en 5174 y guardar los cambios en la rama universitaria.
 
 Destino de publicación: `universidad/proyecto_progra_avanzada`, sin merge.
+
+## Requisitos adicionales de base de datos (18-11-2026)
+
+- [x] Auditar 3FN y normalizar geografía y condiciones de pedido sin perder datos.
+- [x] Verificar dos tablas N:M y más de 10.000 hechos; añadir generación NumPy reproducible.
+- [x] Entregar cinco consultas de tres tablas o más, dos ventanas y CTE.
+- [x] Instalar al menos dos vistas y un trigger junto al procedimiento existente.
+- [x] Usar una capa Repository con clases en compras y justificar los patrones.
+- [x] Probar instalación limpia, migración, SQL, trigger, API y navegador.
+- [x] Documentar evidencias y preparar la entrega para el repositorio universitario.

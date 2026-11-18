@@ -1,0 +1,391 @@
+{
+  "ranking_vendedores": {
+    "rows": 676,
+    "columns": [
+      "id_vendedor",
+      "razon_social",
+      "pedidos",
+      "ventas_brutas",
+      "posicion",
+      "ventas_acumuladas"
+    ],
+    "sample": [
+      {
+        "id_vendedor": "41",
+        "razon_social": "Importaciones Norte S.A.C.",
+        "pedidos": "57329",
+        "ventas_brutas": "31435935.03",
+        "posicion": "1",
+        "ventas_acumuladas": "31435935.03"
+      },
+      {
+        "id_vendedor": "282",
+        "razon_social": "Inversiones Sol E.I.R.L. 281",
+        "pedidos": "6552",
+        "ventas_brutas": "14741775.67",
+        "posicion": "2",
+        "ventas_acumuladas": "46177710.7"
+      },
+      {
+        "id_vendedor": "58",
+        "razon_social": "Grupo Rímac S.A.C. 57",
+        "pedidos": "660",
+        "ventas_brutas": "2021369.35",
+        "posicion": "3",
+        "ventas_acumuladas": "48199080.05"
+      }
+    ]
+  },
+  "ventas_mensuales": {
+    "rows": 8130,
+    "columns": [
+      "id_vendedor",
+      "mes",
+      "ventas_brutas",
+      "ventas_mes_anterior",
+      "acumulado_vendedor"
+    ],
+    "sample": [
+      {
+        "id_vendedor": "1",
+        "mes": "2025-04",
+        "ventas_brutas": "72.0",
+        "ventas_mes_anterior": "",
+        "acumulado_vendedor": "72.0"
+      },
+      {
+        "id_vendedor": "1",
+        "mes": "2025-07",
+        "ventas_brutas": "1313.8",
+        "ventas_mes_anterior": "72.0",
+        "acumulado_vendedor": "1385.8"
+      },
+      {
+        "id_vendedor": "1",
+        "mes": "2025-09",
+        "ventas_brutas": "1839.31",
+        "ventas_mes_anterior": "1313.8",
+        "acumulado_vendedor": "3225.11"
+      }
+    ]
+  },
+  "resenas_producto": {
+    "rows": 8031,
+    "columns": [
+      "id_producto",
+      "titulo",
+      "categoria",
+      "vendedor",
+      "resenas",
+      "estrellas_promedio"
+    ],
+    "sample": [
+      {
+        "id_producto": "228",
+        "titulo": "Coches de bebé Huggies Edición Especial",
+        "categoria": "Coches de bebé",
+        "vendedor": "Importaciones Norte S.A.C.",
+        "resenas": "549",
+        "estrellas_promedio": "4.78"
+      },
+      {
+        "id_producto": "229",
+        "titulo": "Peluches Infanti X",
+        "categoria": "Peluches",
+        "vendedor": "Importaciones Norte S.A.C.",
+        "resenas": "206",
+        "estrellas_promedio": "4.75"
+      },
+      {
+        "id_producto": "230",
+        "titulo": "Bloques de construcción Mattel Lite",
+        "categoria": "Bloques de construcción",
+        "vendedor": "Importaciones Norte S.A.C.",
+        "resenas": "160",
+        "estrellas_promedio": "4.03"
+      }
+    ]
+  },
+  "favoritos_categoria": {
+    "rows": 2506,
+    "columns": [
+      "id_categoria",
+      "categoria",
+      "id_vendedor",
+      "razon_social",
+      "favoritos",
+      "usuarios_interesados"
+    ],
+    "sample": [
+      {
+        "id_categoria": "69",
+        "categoria": "Bloques de construcción",
+        "id_vendedor": "41",
+        "razon_social": "Importaciones Norte S.A.C.",
+        "favoritos": "5863",
+        "usuarios_interesados": "4877"
+      },
+      {
+        "id_categoria": "68",
+        "categoria": "Peluches",
+        "id_vendedor": "41",
+        "razon_social": "Importaciones Norte S.A.C.",
+        "favoritos": "5839",
+        "usuarios_interesados": "4829"
+      },
+      {
+        "id_categoria": "70",
+        "categoria": "Juegos de mesa",
+        "id_vendedor": "41",
+        "razon_social": "Importaciones Norte S.A.C.",
+        "favoritos": "5810",
+        "usuarios_interesados": "4840"
+      }
+    ]
+  },
+  "entregas_departamento": {
+    "rows": 142,
+    "columns": [
+      "id_courier",
+      "courier",
+      "departamento",
+      "envios",
+      "entrega_dias",
+      "promesas_conocidas",
+      "retraso_pct"
+    ],
+    "sample": [
+      {
+        "id_courier": "4",
+        "courier": "Chazki",
+        "departamento": "Lima",
+        "envios": "18061",
+        "entrega_dias": "1.27",
+        "promesas_conocidas": "18061",
+        "retraso_pct": "12.01"
+      },
+      {
+        "id_courier": "1",
+        "courier": "Olva Courier",
+        "departamento": "Lima",
+        "envios": "13069",
+        "entrega_dias": "2.34",
+        "promesas_conocidas": "13069",
+        "retraso_pct": "36.88"
+      },
+      {
+        "id_courier": "3",
+        "courier": "Urbano Express",
+        "departamento": "Lima",
+        "envios": "12579",
+        "entrega_dias": "2.33",
+        "promesas_conocidas": "12579",
+        "retraso_pct": "36.66"
+      }
+    ]
+  },
+  "clientes_inactivos": {
+    "rows": 4023,
+    "columns": [
+      "id_usuario",
+      "nombre",
+      "pedidos",
+      "ultima_compra",
+      "recencia_dias",
+      "intervalo_dias",
+      "umbral_inactividad_dias",
+      "monetario",
+      "prioridad_por_valor"
+    ],
+    "sample": [
+      {
+        "id_usuario": "15291",
+        "nombre": "Rafael Salazar Vásquez",
+        "pedidos": "33",
+        "ultima_compra": "2026-08-09 17:13:52",
+        "recencia_dias": "53",
+        "intervalo_dias": "21.45",
+        "umbral_inactividad_dias": "42.89",
+        "monetario": "32312.74",
+        "prioridad_por_valor": "1"
+      },
+      {
+        "id_usuario": "29921",
+        "nombre": "Andrea Palomino Díaz",
+        "pedidos": "16",
+        "ultima_compra": "2026-07-27 19:50:42",
+        "recencia_dias": "66",
+        "intervalo_dias": "19.29",
+        "umbral_inactividad_dias": "38.58",
+        "monetario": "29228.62",
+        "prioridad_por_valor": "2"
+      },
+      {
+        "id_usuario": "30094",
+        "nombre": "Fernando Calderón Flores",
+        "pedidos": "27",
+        "ultima_compra": "2026-08-08 13:46:05",
+        "recencia_dias": "54",
+        "intervalo_dias": "11.22",
+        "umbral_inactividad_dias": "30.0",
+        "monetario": "26951.63",
+        "prioridad_por_valor": "3"
+      }
+    ]
+  },
+  "participacion_categorias": {
+    "rows": 75,
+    "columns": [
+      "id_categoria",
+      "categoria",
+      "pedidos",
+      "vendedores",
+      "ventas_brutas",
+      "posicion",
+      "participacion_pct",
+      "participacion_acumulada_pct"
+    ],
+    "sample": [
+      {
+        "id_categoria": "73",
+        "categoria": "Coches de bebé",
+        "pedidos": "16368",
+        "vendedores": "43",
+        "ventas_brutas": "13420866.86",
+        "posicion": "1",
+        "participacion_pct": "19.0139",
+        "participacion_acumulada_pct": "19.0139"
+      },
+      {
+        "id_categoria": "86",
+        "categoria": "Refrigeradoras",
+        "pedidos": "3074",
+        "vendedores": "53",
+        "ventas_brutas": "8940798.9",
+        "posicion": "2",
+        "participacion_pct": "12.6668",
+        "participacion_acumulada_pct": "31.6807"
+      },
+      {
+        "id_categoria": "46",
+        "categoria": "Bicicletas",
+        "pedidos": "4777",
+        "vendedores": "39",
+        "ventas_brutas": "7432595.66",
+        "posicion": "3",
+        "participacion_pct": "10.5301",
+        "participacion_acumulada_pct": "42.2108"
+      }
+    ]
+  },
+  "riesgo_courier": {
+    "rows": 128,
+    "columns": [
+      "id_courier",
+      "courier",
+      "departamento",
+      "envios",
+      "entrega_dias",
+      "dispersion_dias",
+      "retraso_pct",
+      "limite_inferior_95_pct",
+      "limite_superior_95_pct",
+      "posicion_en_departamento"
+    ],
+    "sample": [
+      {
+        "id_courier": "2",
+        "courier": "Shalom",
+        "departamento": "Amazonas",
+        "envios": "86",
+        "entrega_dias": "7.3",
+        "dispersion_dias": "2.71",
+        "retraso_pct": "27.91",
+        "limite_inferior_95_pct": "19.53",
+        "limite_superior_95_pct": "38.18",
+        "posicion_en_departamento": "1"
+      },
+      {
+        "id_courier": "1",
+        "courier": "Olva Courier",
+        "departamento": "Amazonas",
+        "envios": "74",
+        "entrega_dias": "7.75",
+        "dispersion_dias": "2.43",
+        "retraso_pct": "33.78",
+        "limite_inferior_95_pct": "24.04",
+        "limite_superior_95_pct": "45.12",
+        "posicion_en_departamento": "2"
+      },
+      {
+        "id_courier": "3",
+        "courier": "Urbano Express",
+        "departamento": "Amazonas",
+        "envios": "38",
+        "entrega_dias": "8.41",
+        "dispersion_dias": "3.54",
+        "retraso_pct": "36.84",
+        "limite_inferior_95_pct": "23.38",
+        "limite_superior_95_pct": "52.71",
+        "posicion_en_departamento": "3"
+      }
+    ]
+  },
+  "afinidad_sql": {
+    "rows": 100,
+    "columns": [
+      "producto_a",
+      "titulo_a",
+      "producto_b",
+      "titulo_b",
+      "pedidos_juntos",
+      "pedidos_a",
+      "pedidos_b",
+      "soporte_pct",
+      "confianza_a_b_pct",
+      "confianza_b_a_pct",
+      "lift"
+    ],
+    "sample": [
+      {
+        "producto_a": "228",
+        "titulo_a": "Coches de bebé Huggies Edición Especial",
+        "producto_b": "231",
+        "titulo_b": "Biberones Babysec Max",
+        "pedidos_juntos": "563",
+        "pedidos_a": "2298",
+        "pedidos_b": "1096",
+        "soporte_pct": "0.5694",
+        "confianza_a_b_pct": "24.5",
+        "confianza_b_a_pct": "51.37",
+        "lift": "22.1012"
+      },
+      {
+        "producto_a": "229",
+        "titulo_a": "Peluches Infanti X",
+        "producto_b": "230",
+        "titulo_b": "Bloques de construcción Mattel Lite",
+        "pedidos_juntos": "215",
+        "pedidos_a": "832",
+        "pedidos_b": "842",
+        "soporte_pct": "0.2175",
+        "confianza_a_b_pct": "25.84",
+        "confianza_b_a_pct": "25.53",
+        "lift": "30.3439"
+      },
+      {
+        "producto_a": "5813",
+        "titulo_a": "Calefactores Miray Classic",
+        "producto_b": "5815",
+        "titulo_b": "Lavadoras Bosch Ultra",
+        "pedidos_juntos": "175",
+        "pedidos_a": "718",
+        "pedidos_b": "341",
+        "soporte_pct": "0.177",
+        "confianza_a_b_pct": "24.37",
+        "confianza_b_a_pct": "51.32",
+        "lift": "70.6689"
+      }
+    ]
+  }
+}

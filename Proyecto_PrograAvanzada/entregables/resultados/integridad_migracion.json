@@ -1,0 +1,23 @@
+{
+  "cumple": true,
+  "checks": {
+    "distritos": true,
+    "usuarios": true,
+    "vendedores": true,
+    "categorias": true,
+    "productos": true,
+    "variantes": true,
+    "cupones": true,
+    "pedidos": true,
+    "pedido_detalle": true,
+    "pagos": true,
+    "couriers": true,
+    "envios": true,
+    "resenas": true,
+    "preguntas": true,
+    "favoritos": true,
+    "cuentas": true,
+    "sqlite": true,
+    "sesiones": true
+  }
+}
