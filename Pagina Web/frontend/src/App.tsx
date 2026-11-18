@@ -156,7 +156,10 @@ export default function App() {
         Saltar al contenido
       </a>
       <header className="site-header">
-        <nav className="navbar container" aria-label="Navegación principal">
+        <nav
+          className={`navbar container${mysqlMode ? ' navbar--marketplace' : ''}`}
+          aria-label="Navegación principal"
+        >
           <button
             className="brand-link"
             aria-label="Tickia, inicio"
@@ -191,9 +194,6 @@ export default function App() {
             )}
             {mysqlMode && (
               <>
-                <button className="btn btn-ghost" onClick={() => navigate('cart')}>
-                  Carrito ({cart.count})
-                </button>
                 <button
                   className="btn btn-ghost"
                   onClick={() => (user ? navigate('favorites') : requireLogin('favorites'))}
@@ -227,6 +227,37 @@ export default function App() {
               </button>
             )}
           </div>
+          {mysqlMode && (
+            <button
+              className="btn btn-ghost header-cart"
+              aria-label={`Carrito (${cart.count})`}
+              aria-current={view === 'cart' ? 'page' : undefined}
+              onClick={() => navigate('cart')}
+            >
+              <span className="header-cart-icon">
+                <svg
+                  width="28"
+                  height="28"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path d="M2 3h3l2.4 11.4a2 2 0 0 0 2 1.6H18a2 2 0 0 0 2-1.6L22 7H6" />
+                  <circle cx="10" cy="21" r="1" />
+                  <circle cx="19" cy="21" r="1" />
+                </svg>
+                <span className="header-cart-count" aria-hidden="true">
+                  {cart.count > 99 ? '99+' : cart.count}
+                </span>
+              </span>
+              <span className="header-cart-label">Carrito</span>
+            </button>
+          )}
         </nav>
       </header>
       <main id="main-content" ref={heading} tabIndex={-1} className="main-content container">
