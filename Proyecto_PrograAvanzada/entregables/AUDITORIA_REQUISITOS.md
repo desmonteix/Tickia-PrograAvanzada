@@ -20,7 +20,7 @@ incluye además análisis SQL avanzados.
 | Dos vistas | v_distritos, v_pedidos_importes, v_ventas_vendedor | `sql/04_vistas.sql` |
 | Un procedimiento | confirmar_pedido: stock, pedido, detalle, pago y envío atómicos | `sql/02_procedimientos.sql` |
 | Un trigger | tr_pedido_validar_estado, BEFORE UPDATE | `sql/06_trigger.sql`; prueba de SQL directo |
-| Capa de datos con clases | CatalogRepository y OrderRepository usados en compras | `academic/repositories.py`, `commerce.py` |
+| Capa de datos con clases | CatalogRepository, OrderRepository, ProductRepository y AnalyticsRepository | `academic/repositories.py`, usados por `commerce.py`, `catalog.py` y `analytics.py` |
 | Tres patrones justificados | Builder, Strategy, Decorator, State y Repository | [Justificación e integración](PATRONES.md) |
 
 [Auditoría completa de los objetos reales](resultados/auditoria_requisitos.json).
@@ -46,8 +46,8 @@ auditoría consulta su conteo real y no lo interpreta como una carga fallida.
 
 ## Evidencia de ejecución
 
-- 27 pruebas académicas correctas: 13 puras y 14 contra MySQL real.
-- Regresión backend: 208 pruebas registradas; 35 omitidas en ese comando por
+- 32 pruebas académicas correctas: 18 puras y 14 contra MySQL real.
+- Regresión backend: 213 pruebas registradas; 35 omitidas en ese comando por
   no configurar PostgreSQL y MySQL de pruebas. Las 14 de MySQL se ejecutaron
   por separado con resultado correcto dentro del verificador académico.
 - Frontend: compilación y lint correctos; las 28 pruebas existentes también se

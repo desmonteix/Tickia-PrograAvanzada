@@ -11,12 +11,12 @@ Las rutas `backend/` y `frontend/` son relativas a `Pagina Web/`.
 | Variantes con talla, color y stock | `social.py`, `MarketplaceSeller.tsx`, `ProductDetail.tsx` | Stock independiente por combinación; hasta 20 variantes |
 | Builder | `academic/patterns.py:OrderBuilder`, `commerce.py:quote_cart` | Pedido multítem, agrupación de cantidades y cupón |
 | Strategy | `StandardShipping`, `ExpressShipping`, `EconomyShipping` | Courier y departamento cambian el costo |
-| Decorator | `BasePrice`, `PercentageDiscount` | 3% por volumen seguido del porcentaje del cupón |
+| Decorator | `BasePrice`, `VolumeDiscount`, `CouponDiscount` (heredan de `PercentageDiscount`) | 3% por volumen seguido del porcentaje del cupón |
 | State | `OrderContext` y estados concretos, `commerce.py` | Pendiente → pagado → enviado → entregado; saltos rechazados |
 | Pagos y envíos | `commerce.py`, `MySQLOrders.tsx` | Registro de pago simulado, despacho y recepción con fechas |
 | Reseñas, preguntas y favoritos | `social.py`, `ProductCommunity.tsx` | Reseña tras recibir; respuesta solo del propietario |
 | Categorías con CTE recursiva | `sql/03_consultas.sql:categorias` | Árbol con nivel y ruta, también visible en Análisis |
-| Ventas por vendedor y distrito, seis tablas | `sql/03_consultas.sql:ventas_distrito` | productos, variantes, pedido_detalle, pedidos, usuarios, distritos |
+| Ventas por vendedor y distrito, seis o más tablas | `sql/03_consultas.sql:ventas_distrito` | nueve tablas base: pedido_detalle, variantes, productos, vendedores, pedidos, usuarios, distritos, provincias y departamentos |
 | Stock crítico | `sql/03_consultas.sql:stock` | Variantes actuales con 0–3 unidades |
 | Procedimiento transaccional | `sql/02_procedimientos.sql:confirmar_pedido` | Rollback total, idempotencia y última unidad concurrente |
 | RFM | `analysis_frames.py:rfm` | 45.000 clientes, recencia/frecuencia/monetario y segmentos |
@@ -32,8 +32,8 @@ Las rutas `backend/` y `frontend/` son relativas a `Pagina Web/`.
 
 - Catorce pruebas de integración/requisitos con MySQL real: esquema, compra/cupón/idempotencia,
   estados/permisos/comunidad, rollback, concurrencia, migración y consultas SQL.
-- Trece pruebas puras: seis de patrones, cinco de Pandas y dos de generación.
-- Regresión backend: 208 pruebas, 35 omitidas por servicios externos no configurados.
+- Dieciocho pruebas puras: nueve de patrones, siete de Pandas y dos de generación.
+- Regresión backend: 213 pruebas, 35 omitidas por servicios externos no configurados.
 - Frontend: 28 pruebas, lint y compilación correctos.
 - Chromium: publicación con foto y variantes; compra de dos vendedores y tres
   variantes; volumen y cupón; despacho, recepción, reseña, pregunta/respuesta,

@@ -97,7 +97,7 @@ mysqldump y no debe ejecutarse sobre una base de trabajo que quieras conservar.
 
 ## Ejecutar el análisis Python
 
-`notebooks/Analisis_Tickia.ipynb` tiene 19 celdas de código ejecutadas y cero
+`notebooks/Analisis_Tickia.ipynb` tiene 21 celdas de código ejecutadas y cero
 errores. El HTML permite revisar todas las salidas sin Jupyter.
 Para repetir, primero preparar MySQL con `python iniciar_entrega.py --solo-bd`.
 Después, desde esta misma carpeta:

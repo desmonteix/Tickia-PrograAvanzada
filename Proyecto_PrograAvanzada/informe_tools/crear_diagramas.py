@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 import shutil
 import subprocess
-from playwright.sync_api import sync_playwright
 
 ROOT=Path(__file__).resolve().parents[2]
 OUT=ROOT/'Proyecto_PrograAvanzada/entregables/informe/diagramas'
@@ -21,8 +20,8 @@ def box(name,fields,methods=(),stereotype='',color='#183B56'):
     return name+' [shape=plain label=<'+table+'</TABLE>>];\n'
 
 
-def run():
-    OUT.mkdir(parents=True,exist_ok=True)
+def build_graphs():
+    """Texto DOT de cada diagrama; run() los renderiza."""
     graphs={}
     head='digraph G { graph [bgcolor="white", pad="0.25", nodesep="0.35", ranksep="0.50", splines=polyline]; node [fontname="Arial"]; edge [fontname="Arial", fontsize=10, color="#577188", arrowsize=.7];\n'
     entities={
@@ -61,11 +60,15 @@ def run():
     uml+=box('OrderItem',['+variant_id: int','+quantity: int','+unit_price: Decimal'],stereotype='«dataclass inmutable»')
     uml+=box('PriceComponent',[],['+total(): Decimal','+discounts(): tuple'],stereotype='«abstracta»')
     uml+=box('BasePrice',['+amount: Decimal'],['+total(): Decimal'])
-    uml+=box('PercentageDiscount',['+wrapped: PriceComponent','+percentage: Decimal','+label: str'],['+total(): Decimal','+discounts(): tuple'])
+    uml+=box('PercentageDiscount',['+wrapped: PriceComponent','+percentage: Decimal','+label: str'],['+total(): Decimal','+discounts(): tuple'],stereotype='«decorador»')
+    uml+=box('VolumeDiscount',['+units: int','+minimum_units: int = 3'],['+applies(): bool','+total(): Decimal','+discounts(): tuple'])
+    uml+=box('CouponDiscount',['+code: str'],['hereda total() y discounts()'])
     uml+=box('ShippingStrategy',[],['+calculate(base, department, units)'],stereotype='«abstracta»')
     for name in ('StandardShipping','ExpressShipping','EconomyShipping'):uml+=box(name,[],['+calculate(...): Decimal'])
     uml+='OrderBuilder -> OrderDraft [style=dashed,label="«crea»"]; OrderDraft -> OrderItem [dir=both,arrowtail=odiamond,arrowhead=none,label="items 1..*"];\n'
     uml+='OrderBuilder -> ShippingStrategy [label="configura"]; OrderBuilder -> PriceComponent [style=dashed,label="cotiza"];\n'
+    uml+='OrderBuilder -> VolumeDiscount [style=dashed,label="envuelve"]; OrderBuilder -> CouponDiscount [style=dashed,label="envuelve"];\n'
+    uml+='VolumeDiscount -> PercentageDiscount [arrowhead=empty]; CouponDiscount -> PercentageDiscount [arrowhead=empty];\n'
     uml+='BasePrice -> PriceComponent [arrowhead=empty]; PercentageDiscount -> PriceComponent [arrowhead=empty];\n'
     uml+='PercentageDiscount -> PriceComponent [dir=both,arrowtail=odiamond,arrowhead=none,label="wrapped 1",constraint=false];\n'
     for name in ('StandardShipping','ExpressShipping','EconomyShipping'):uml+=name+' -> ShippingStrategy [arrowhead=empty];\n'
@@ -73,8 +76,8 @@ def run():
 
     state=head+'graph [rankdir=TB,ranksep=.55];\n'
     state+=box('OrderContext',['+state: OrderState'],['+transition(target): OrderState'])
-    state+=box('OrderState',['+name: str'],['+transition(next_name)','+pay(), ship(), deliver()','+from_name(name): OrderState'],stereotype='«clase base»')
-    methods={'PendingState':['+pay(): PaidState'],'PaidState':['+ship(): ShippedState'],'ShippedState':['+deliver(): DeliveredState'],'DeliveredState':['Sin transiciones permitidas'],'CancelledState':['Estado historico terminal']}
+    state+=box('OrderState',['+name: str'],['+transition(next_name)','+pay(), ship(), deliver(), cancel()','+from_name(name): OrderState'],stereotype='«clase base»')
+    methods={'PendingState':['+pay(): PaidState','+cancel(): CancelledState'],'PaidState':['+ship(): ShippedState'],'ShippedState':['+deliver(): DeliveredState'],'DeliveredState':['Sin transiciones permitidas'],'CancelledState':['Estado terminal']}
     for name,items in methods.items():state+=box(name,[],items)
     state+='OrderContext -> OrderState [dir=both,arrowtail=diamond,arrowhead=none,label="estado actual 1"];\n'
     for name in methods:state+=name+' -> OrderState [arrowhead=empty];\n'
@@ -82,22 +85,34 @@ def run():
 
     repo=head+'graph [rankdir=TB];\n'
     repo+=box('commerce',['quote_cart(), checkout()','history(), advance()'],stereotype='«modulo Python»')
+    repo+=box('catalog',['list_products(), product_detail()','summary(), table_rows()'],stereotype='«modulo Python»')
+    repo+=box('analytics',['load_frames(), build_bundle()'],stereotype='«modulo Python»')
+    repo+=box('ProductRepository',['+db: Connection'],['+search(viewer, filtros, pagina)','+detail(id, viewer), variants(id)','+latest_reviews(id), latest_questions(id)','+has_review(), received()','+categories(), districts(), couriers()'])
+    repo+=box('AnalyticsRepository',['+db: Connection'],['+orders(), clients(), items()','+shipments(), reviews(), vendors()','+frame(sql): DataFrame'])
     repo+=box('CatalogRepository',['+db: Connection'],['+variants(identifiers)','+valid_coupon(code)','+courier(id), district(id)'])
     repo+=box('OrderRepository',['+db: Connection'],['+find_by_request(user, request)','+receipt_records(ids)','+accessible(user, order)','+history(user, seller, page)','+locked_state(id), advance(id, state)','+confirm(engine, args) {static}'])
     repo+=box('Connection',[],['+execute(statement, params)'],stereotype='«SQLAlchemy»')
     repo+=box('Engine',[],['+begin(), connect()','+raw_connection()'],stereotype='«SQLAlchemy»')
     repo+='commerce -> CatalogRepository [style=dashed,label="usa"]; commerce -> OrderRepository [style=dashed,label="usa"];\n'
+    repo+='catalog -> ProductRepository [style=dashed,label="usa"]; analytics -> AnalyticsRepository [style=dashed,label="usa"];\n'
+    repo+='ProductRepository -> Connection [label="db inyectada"]; AnalyticsRepository -> Connection [label="read_sql"];\n'
     repo+='CatalogRepository -> Connection [label="db inyectada"]; OrderRepository -> Connection [label="db inyectada"]; OrderRepository -> Engine [label="confirmacion atomica"];\n'
     graphs['04_uml_repository']=repo+'}'
 
     architecture=head+'graph [rankdir=LR]; node [shape=box,style="rounded,filled",fillcolor="#EDF3F7",fontsize=13,margin=.2];\n'
-    architecture+='ui [label="React + TypeScript\nCatalogo, carrito y reportes"]; api [label="FastAPI\nAuth y rutas de la aplicacion"]; domain [label="Dominio Python\nBuilder, Strategy, Decorator, State"]; repositories [label="Repository de compras\nSQLAlchemy en los demas modulos"]; database [label="MySQL 8.4\n17 tablas, 3 vistas\nProcedimiento y trigger"]; pandas [label="Pandas\nRFM, cohortes, afinidad y entregas"]; loader [label="CSV originales / NumPy\nCarga y validacion de datos"];\n'
-    architecture+='ui -> api [label="HTTP / JSON y cookies"]; api -> domain; api -> repositories; repositories -> database [label="SQL parametrizado"]; pandas -> database [label="SELECT"]; api -> pandas [label="reportes / CSV"]; loader -> database [label="carga transaccional"];\n'
+    architecture+='ui [label="React + TypeScript\nCatalogo, carrito y reportes"]; api [label="FastAPI\nAuth y rutas de la aplicacion"]; domain [label="Dominio Python\nBuilder, Strategy, Decorator, State"]; repositories [label="Repository\nCatalogo, compras y analisis"]; database [label="MySQL 8.4\n17 tablas, 3 vistas\nProcedimiento y trigger"]; pandas [label="Pandas\nRFM, cohortes, afinidad y entregas"]; loader [label="CSV originales / NumPy\nCarga y validacion de datos"];\n'
+    architecture+='ui -> api [label="HTTP / JSON y cookies"]; api -> domain; api -> repositories; repositories -> database [label="SQL parametrizado"]; pandas -> repositories [label="DataFrames (read_sql)"]; api -> pandas [label="reportes / CSV"]; loader -> database [label="carga transaccional"];\n'
     graphs['05_arquitectura']=architecture+'}'
     flow=head+'graph [rankdir=LR]; node [shape=box,style="rounded,filled",fillcolor="#EDF3F7",fontsize=14,margin=.2];\n'
-    flow+='pendiente -> pagado [label="pago simulado\ny stock atomico"]; pagado -> enviado [label="simular despacho"]; enviado -> entregado [label="comprador confirma\nrecepcion"];\n'
+    flow+='pendiente -> pagado [label="pago simulado\ny stock atomico"]; pagado -> enviado [label="simular despacho"]; enviado -> entregado [label="comprador confirma\nrecepcion"]; pendiente -> cancelado [label="cancelar\n(solo pendiente)"];\n'
     graphs['06_ciclo_pedido']=flow+'}'
+    return graphs
 
+
+def run():
+    from playwright.sync_api import sync_playwright
+    OUT.mkdir(parents=True,exist_ok=True)
+    graphs=build_graphs()
     for name,dot in graphs.items():(OUT/(name+'.dot')).write_text(dot,encoding='utf-8')
     js='''import fs from "node:fs"; import * as Viz from "@viz-js/viz";
     const items=JSON.parse(fs.readFileSync(0,"utf8"));const viz=await Viz.instance();

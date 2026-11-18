@@ -2,5 +2,6 @@ digraph G { graph [bgcolor="white", pad="0.25", nodesep="0.35", ranksep="0.50", 
 graph [rankdir=LR]; node [shape=box,style="rounded,filled",fillcolor="#EDF3F7",fontsize=14,margin=.2];
 pendiente -> pagado [label="pago simulado
 y stock atomico"]; pagado -> enviado [label="simular despacho"]; enviado -> entregado [label="comprador confirma
-recepcion"];
+recepcion"]; pendiente -> cancelado [label="cancelar
+(solo pendiente)"];
 }

@@ -1,11 +1,13 @@
 # Informe y entrega académica
 
-* [Informe Word editable](Informe_Tickia.docx): primera hoja completamente vacía
-  para la carátula; índice nativo actualizado desde la segunda hoja.
-* [Copia PDF](Informe_Tickia.pdf): 96 páginas y 38 figuras de evidencia.
-* [Redacción editable](Informe_Tickia.md): desarrollo, scripts y código incluidos.
+* [Informe Word editable](Informe_Tickia.docx): versión definitiva. Primera hoja
+  para la carátula; índice nativo desde la segunda hoja.
+* [Copia PDF](Informe_Tickia.pdf): exportada desde el Word, con 40 figuras de evidencia.
+* [Redacción inicial](Informe_Tickia.md): borrador generado por `informe_tools`.
+  Las secciones 7.8 a 7.10, 6.5 y los cambios de patrones se editaron
+  directamente en el Word; no regenerar el Word desde este borrador.
 * [Cuaderno ejecutado](Analisis_Tickia.ipynb) y [HTML](Analisis_Tickia.html):
-  diecinueve celdas de código ejecutadas sin errores.
+  veintiuna celdas de código ejecutadas sin errores.
 * [Estructura SQL consolidada](SQL_estructura_objetos.sql): tablas, índices,
   vistas, procedimiento y trigger. Las trece consultas están en
   [03_consultas.sql](../../sql/03_consultas.sql).

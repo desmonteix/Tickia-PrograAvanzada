@@ -59,7 +59,9 @@ def co_purchases(items):
     for (a,b),count in pairs.items():
         records.append([titles.get(a,str(a)),titles.get(b,str(b)),count,round(100*count/total,4),
                         round(100*count/frequencies[a],2),round(count*total/(frequencies[a]*frequencies[b]),4)])
-    return pd.DataFrame(records,columns=columns).sort_values(['pedidos_juntos','lift'],ascending=False)
+    # Desempate por nombre: el orden no depende del orden en que MySQL devuelve las filas.
+    return pd.DataFrame(records,columns=columns).sort_values(['pedidos_juntos','lift','producto_a','producto_b'],
+        ascending=[False,False,True,True],kind='mergesort')
 
 
 def clean_shipments(shipments):

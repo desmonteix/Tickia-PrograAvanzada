@@ -40,30 +40,43 @@ reglas para verificar el total antes de confirmar.
 
 ## Decorator
 
-`BasePrice` implementa `PriceComponent`; `PercentageDiscount` envuelve otro
-componente y conserva su desglose. La cotización aplica 3% por tres unidades o
-más y luego el cupón vigente, sobre el importe restante. El envío se suma después.
+`BasePrice` implementa `PriceComponent`; `PercentageDiscount` es el decorador
+base: envuelve otro componente, aplica un porcentaje y conserva su desglose.
+Dos decoradores concretos heredan de él:
+
+- `VolumeDiscount` aplica 3% desde tres unidades. Por debajo del mínimo es
+  transparente: devuelve el total del componente envuelto y no agrega una línea
+  al desglose.
+- `CouponDiscount` aplica el porcentaje del cupón vigente sobre el importe ya
+  reducido y conserva su código.
+
+El envío se suma después. Una prueba compara 500 carritos aleatorios con la
+fórmula de `confirmar_pedido`, para que Python y MySQL calculen el mismo total.
 
 ```python
-price = PercentageDiscount(
-    PercentageDiscount(BasePrice(Decimal('100')), Decimal('3'), 'Volumen'),
-    Decimal('10'), 'Cupón')
+price = CouponDiscount(
+    VolumeDiscount(BasePrice(Decimal('100')), Decimal('3'), 'Volumen', units=3),
+    Decimal('10'), 'Cupón X', code='X')
 assert price.total() == Decimal('87.30')
 ```
 
 ## State
 
 `OrderContext` conserva un `OrderState` y delega transiciones en los estados
-concretos: `PendingState.pay`, `PaidState.ship` y `ShippedState.deliver`.
-Las operaciones no permitidas lanzan un error. Entregado y cancelado son terminales.
+concretos: `PendingState.pay`, `PendingState.cancel`, `PaidState.ship` y
+`ShippedState.deliver`. Las operaciones no permitidas lanzan un error. Entregado
+y cancelado son terminales. Las transiciones son las mismas que acepta el trigger
+`tr_pedido_validar_estado`, incluida la cancelación de un pedido pendiente.
 
 ```mermaid
 stateDiagram-v2
     [*] --> pendiente
     pendiente --> pagado: pago simulado aprobado
+    pendiente --> cancelado: cancelar (solo pendiente)
     pagado --> enviado: simular despacho
     enviado --> entregado: comprador confirma recepción
     entregado --> [*]
+    cancelado --> [*]
 ```
 
 `checkout` valida pendiente→pagado con State. MySQL confirma el cambio junto con
@@ -83,11 +96,18 @@ evitan duplicar una solicitud. Las pruebas reales cubren concurrencia para la
 
 ## Repository: acceso a datos con clases
 
-`academic/repositories.py` define CatalogRepository y OrderRepository.
-La cotización obtiene variantes, cupón, courier y distrito mediante el primero;
-el segundo consulta recibos en lote, comprueba acceso, lista compras/ventas,
-bloquea y actualiza estados y llama al procedimiento transaccional.
-`commerce.py` usa ambas clases; no son ejemplos desconectados de la aplicación.
+`academic/repositories.py` define cuatro repositorios:
+
+- `CatalogRepository`: variantes, cupón, courier y distrito para la cotización.
+- `OrderRepository`: recibos en lote, acceso, compras/ventas, bloqueo y cambio
+  de estado, y la llamada al procedimiento transaccional.
+- `ProductRepository`: búsqueda con filtros, detalle, variantes, reseñas,
+  preguntas y tablas de referencia del catálogo.
+- `AnalyticsRepository`: DataFrames del histórico válido para Pandas y ejecución
+  de las consultas de `03_consultas.sql`.
+
+`commerce.py`, `catalog.py` y `analytics.py` los usan; no son ejemplos
+desconectados de la aplicación. La auditoría de requisitos verifica su uso.
 
 Las conexiones se inyectan por constructor. El Repository de pedidos encapsula
 la llamada al procedimiento en una conexión con transacción propia; los errores

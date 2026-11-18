@@ -1,17 +1,15 @@
 """Análisis reproducibles de MySQL con Pandas, con exportación completa a CSV."""
 import argparse
 from datetime import datetime, timezone
-import io
 import json
 from pathlib import Path
 import re
 from threading import Lock
 import time
-import pandas as pd
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import Response
-from sqlalchemy import text
 from .database import engine
+from .repositories import AnalyticsRepository
 from .settings import SQL_DIR
 from ..dataset import LOCAL_DIR
 from .analysis_frames import rfm,cohorts,co_purchases,delivery_summary,vendor_summary,diagnose,clean_shipments,stars_vs_sales,monthly_series
@@ -47,21 +45,10 @@ def sql_queries():
 
 
 def load_frames(connection):
-    valid="pe.origen='dataset' AND pe.estado IN ('pagado','enviado','entregado')"
-    orders=pd.read_sql_query(text('SELECT pe.id_pedido,pe.id_usuario,pe.fecha,CAST(ROUND(pe.total*100) AS SIGNED) total_centimos FROM pedidos pe WHERE '+valid),connection,parse_dates=['fecha'])
-    clients=pd.read_sql_query(text('SELECT id_usuario FROM usuarios WHERE auth_uuid IS NULL'),connection)
-    items=pd.read_sql_query(text('''SELECT de.id_pedido,va.id_producto,p.id_vendedor,p.titulo,de.cantidad,
-        CAST(ROUND(de.precio_unit*100) AS SIGNED) precio_unit_centimos FROM pedido_detalle de
-        JOIN variantes va USING(id_variante) JOIN productos p USING(id_producto) JOIN pedidos pe USING(id_pedido) WHERE '''+valid),connection)
-    shipments=pd.read_sql_query(text('''SELECT e.*,c.nombre courier,COALESCE(dest.departamento,d.departamento) departamento
-        FROM envios e JOIN pedidos pe USING(id_pedido) JOIN couriers c USING(id_courier)
-        JOIN usuarios u ON pe.id_usuario=u.id_usuario JOIN v_distritos d ON u.id_distrito=d.id_distrito
-        LEFT JOIN v_distritos dest ON pe.id_distrito_entrega=dest.id_distrito WHERE '''+valid),connection)
-    reviews=pd.read_sql_query(text('''SELECT r.id_resena,r.id_producto,p.id_vendedor,r.estrellas,r.comentario FROM resenas r
-        JOIN productos p USING(id_producto) JOIN usuarios u ON r.id_usuario=u.id_usuario WHERE u.auth_uuid IS NULL'''),connection)
-    vendors=pd.read_sql_query(text('''SELECT s.id_vendedor,s.razon_social,s.reputacion reputacion_registrada
-        FROM vendedores s JOIN usuarios u USING(id_usuario) WHERE u.auth_uuid IS NULL'''),connection)
-    return orders,clients,items,shipments,reviews,vendors
+    """Repository: el SQL de análisis vive en AnalyticsRepository; aquí solo se piden DataFrames."""
+    repository=AnalyticsRepository(connection)
+    return (repository.orders(),repository.clients(),repository.items(),
+            repository.shipments(),repository.reviews(),repository.vendors())
 
 
 def build_bundle():
@@ -77,7 +64,7 @@ def build_bundle():
         reports['serie_mensual'],reports['ventas_calendario']=monthly_series(orders)
         queries=sql_queries()
         for name in (name for name in NOTES if name in queries):
-            reports[name]=pd.read_sql_query(text(queries[name]),connection)
+            reports[name]=AnalyticsRepository(connection).frame(queries[name])
     valid_shipments=clean_shipments(shipments)
     segments=rfm_frame.segmento.value_counts().rename_axis('label').reset_index(name='value')
     retention=reports['cohortes'].groupby('mes').agg(clientes=('clientes','sum'),base=('base_cohorte','sum')).reset_index()

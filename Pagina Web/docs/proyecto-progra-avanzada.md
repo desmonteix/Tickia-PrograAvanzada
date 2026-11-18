@@ -12,7 +12,8 @@ usan las mismas 17 tablas MySQL. Columnas adicionales permiten autenticación,
 idempotencia y distinguir histórico de actividad web; las vistas reconstruyen
 los importes y la geografía sin duplicarlos en tablas base.
 
-CatalogRepository y OrderRepository encapsulan la persistencia de las compras.
+Cuatro repositorios (CatalogRepository, OrderRepository, ProductRepository y
+AnalyticsRepository) encapsulan el SQL de catálogo, compras y análisis.
 Se entregan 13 consultas SQL, con ventanas, CTE y análisis de afinidad,
 inactividad, concentración de ventas y riesgo de retraso. La generación NumPy
 reproducible carga 10.000 pedidos en la base aislada de pruebas.

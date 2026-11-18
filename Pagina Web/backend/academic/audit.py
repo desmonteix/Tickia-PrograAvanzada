@@ -51,8 +51,10 @@ def build_audit(target=engine,generated_target=None):
         joins=len(re.findall(r'\bJOIN\b',clean,re.IGNORECASE))
         queries[name]=dict(joins=joins,tablas_base=base_tables,join_tres_tablas=joins>=2 and len(base_tables)>=3,
             ventana=bool(re.search(r'\bOVER\s*\(',clean,re.IGNORECASE)),cte=bool(re.search(r'\bWITH\s+(?:RECURSIVE\s+)?\w+\s+AS',clean,re.IGNORECASE)))
-    code=ast.parse((Path(__file__).parent/'commerce.py').read_text(encoding='utf-8'))
-    calls={node.func.id for node in ast.walk(code) if isinstance(node,ast.Call) and isinstance(node.func,ast.Name)}
+    calls=set()
+    for module in ('commerce.py','catalog.py','analytics.py'):
+        code=ast.parse((Path(__file__).parent/module).read_text(encoding='utf-8'))
+        calls|={node.func.id for node in ast.walk(code) if isinstance(node,ast.Call) and isinstance(node.func,ast.Name)}
     expected_indexes=set(re.findall(r'CREATE INDEX (\w+)',(SQL_DIR/'05_indices.sql').read_text(encoding='utf-8')))
     generation=None
     if generated_target is not None:
@@ -76,7 +78,7 @@ def build_audit(target=engine,generated_target=None):
         dos_vistas=len(views)>=2,
         procedimiento='confirmar_pedido' in procedures,
         trigger=any(t['TRIGGER_NAME']=='tr_pedido_validar_estado' for t in triggers),
-        repository_usado={'CatalogRepository','OrderRepository'}<=calls,
+        repository_usado={'CatalogRepository','OrderRepository','ProductRepository','AnalyticsRepository'}<=calls,
         patrones_integrados={'OrderBuilder','OrderContext'}<=calls,
     )
     if generation is not None:

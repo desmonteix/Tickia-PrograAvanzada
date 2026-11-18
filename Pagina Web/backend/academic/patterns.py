@@ -71,6 +71,31 @@ class PercentageDiscount(PriceComponent):
 
 
 @dataclass(frozen=True)
+class VolumeDiscount(PercentageDiscount):
+    """Decorator concreto: aplica su porcentaje solo desde cierto número de unidades.
+
+    Por debajo del mínimo es transparente: devuelve el total y el desglose del
+    componente envuelto, sin agregar una línea de descuento."""
+    units: int = 0
+    minimum_units: int = 3
+
+    def applies(self):
+        return self.units >= self.minimum_units
+
+    def total(self):
+        return super().total() if self.applies() else self.wrapped.total()
+
+    def discounts(self):
+        return super().discounts() if self.applies() else self.wrapped.discounts()
+
+
+@dataclass(frozen=True)
+class CouponDiscount(PercentageDiscount):
+    """Decorator concreto: porcentaje de un cupón vigente, identificado por su código."""
+    code: str = ''
+
+
+@dataclass(frozen=True)
 class OrderItem:
     variant_id: int
     quantity: int
@@ -124,11 +149,11 @@ class OrderBuilder:
         items = tuple(self._items[key] for key in sorted(self._items))
         units = sum(item.quantity for item in items)
         subtotal = money(sum((item.unit_price * item.quantity for item in items), Decimal('0')))
-        price = BasePrice(subtotal)
-        if units >= 3:
-            price = PercentageDiscount(price, Decimal('3'), 'Volumen (3 unidades o más)')
+        # Decorator: cada descuento envuelve al cálculo anterior y conserva su desglose.
+        price = VolumeDiscount(BasePrice(subtotal), Decimal('3'), 'Volumen (3 unidades o más)',
+                               units=units, minimum_units=3)
         if self._coupon:
-            price = PercentageDiscount(price, self._coupon_percentage, 'Cupón ' + self._coupon)
+            price = CouponDiscount(price, self._coupon_percentage, 'Cupón ' + self._coupon, code=self._coupon)
         shipping_cost = self._shipping[0].calculate(self._shipping[1], self._shipping[2], units) if self._shipping else Decimal('0.00')
         return OrderDraft(items, units, subtotal, subtotal - price.total(), shipping_cost,
                           price.total() + shipping_cost, price.discounts(), self._coupon)
@@ -138,7 +163,8 @@ class OrderState(ABC):
     name: str
 
     def transition(self, next_name):
-        action = {'pagado': self.pay, 'enviado': self.ship, 'entregado': self.deliver}.get(next_name)
+        action = {'pagado': self.pay, 'enviado': self.ship, 'entregado': self.deliver,
+                  'cancelado': self.cancel}.get(next_name)
         if action is None:
             self.invalid(next_name)
         return action()
@@ -155,6 +181,9 @@ class OrderState(ABC):
     def deliver(self):
         self.invalid('entregado')
 
+    def cancel(self):
+        self.invalid('cancelado')
+
     @staticmethod
     def from_name(name):
         states = {'pendiente': PendingState, 'pagado': PaidState, 'enviado': ShippedState,
@@ -169,6 +198,10 @@ class PendingState(OrderState):
 
     def pay(self):
         return PaidState()
+
+    def cancel(self):
+        # Igual que tr_pedido_validar_estado: solo un pedido pendiente puede cancelarse.
+        return CancelledState()
 
 
 class PaidState(OrderState):

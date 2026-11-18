@@ -6,7 +6,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).parents[2]))
 from backend.academic.patterns import (OrderBuilder, StandardShipping, ExpressShipping,
-    EconomyShipping, BasePrice, PercentageDiscount, OrderState)
+    EconomyShipping, BasePrice, PercentageDiscount, VolumeDiscount, CouponDiscount, OrderState, money)
 
 
 class AcademicPatternsTests(unittest.TestCase):
@@ -28,6 +28,46 @@ class AcademicPatternsTests(unittest.TestCase):
         for value in (-1, 101):
             with self.assertRaises(ValueError):
                 PercentageDiscount(BasePrice(Decimal('10')), Decimal(value), 'inválido')
+
+    def test_volume_decorator_is_transparent_below_the_minimum_and_coupon_stacks_on_top(self):
+        base = BasePrice(Decimal('100.00'))
+        self.assertEqual(VolumeDiscount(base, Decimal('3'), 'volumen', units=2).total(), Decimal('100.00'))
+        self.assertEqual(VolumeDiscount(base, Decimal('3'), 'volumen', units=2).discounts(), ())
+        volume = VolumeDiscount(base, Decimal('3'), 'volumen', units=3)
+        price = CouponDiscount(volume, Decimal('10'), 'Cupón X', code='X')
+        self.assertEqual(price.total(), Decimal('87.30'))      # 100 -> 97,00 -> 87,30
+        self.assertEqual([label for label, _ in price.discounts()], ['volumen', 'Cupón X'])
+        order = OrderBuilder().add_item(1, 2, '50.00').with_coupon('X', 10).build()
+        self.assertEqual([label for label, _ in order.discounts], ['Cupón X'])
+
+    def test_builder_total_matches_the_stored_procedure_formula(self):
+        # confirmar_pedido: neto = subtotal - ROUND(subtotal*0,03) si hay 3+ unidades; luego - ROUND(neto*cupón).
+        import random
+        rng = random.Random(20261118)
+        for _ in range(500):
+            items = [(i, rng.randint(1, 4), money(rng.uniform(1, 900))) for i in range(rng.randint(1, 4))]
+            pct = Decimal(rng.choice([0, 5, 10, 15, 20, 25, 30]))
+            builder = OrderBuilder()
+            for variant, quantity, price in items:
+                builder.add_item(variant, quantity, price)
+            if pct:
+                builder.with_coupon('C', pct)
+            order = builder.build()
+            units = sum(quantity for _, quantity, _ in items)
+            neto = money(sum(price * quantity for _, quantity, price in items))
+            if units >= 3:
+                neto -= money(neto * Decimal('0.03'))
+            if pct:
+                neto -= money(neto * pct / 100)
+            self.assertEqual(order.total, neto)
+
+    def test_state_cancels_only_pending_orders_like_the_trigger(self):
+        self.assertEqual(OrderState.from_name('pendiente').transition('cancelado').name, 'cancelado')
+        for name in ('pagado', 'enviado', 'entregado', 'cancelado'):
+            with self.subTest(estado=name), self.assertRaises(ValueError):
+                OrderState.from_name(name).transition('cancelado')
+        with self.assertRaises(ValueError):
+            OrderState.from_name('cancelado').transition('pagado')
 
     def test_courier_strategies_have_distinct_and_deterministic_costs(self):
         costs = [strategy.calculate(Decimal('10'), 'Arequipa', 2) for strategy in (StandardShipping(), ExpressShipping(), EconomyShipping())]
