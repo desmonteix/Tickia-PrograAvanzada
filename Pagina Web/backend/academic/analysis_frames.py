@@ -96,6 +96,7 @@ def vendor_summary(items,reviews,shipments,vendors):
     result['retraso_pct']=result.retraso_pct*100
     return result.drop(columns='ventas_brutas_centimos').round(2).sort_values('ventas_brutas',ascending=False)
 
+
 STAR_BANDS=[0,3,3.5,4,4.5,5.0001]
 STAR_LABELS=['≤ 3,0','3,0–3,5','3,5–4,0','4,0–4,5','4,5–5,0']
 
@@ -123,7 +124,7 @@ def stars_vs_sales(items,reviews,vendors,min_reviews=5):
         frame=frame[[left,right]].dropna()
         if len(frame)<3:
             return None
-                # Spearman = Pearson sobre rangos (empates promediados); no requiere scipy.
+        # Spearman = Pearson sobre rangos (empates promediados); no requiere scipy.
         value=float(frame[left].rank().corr(frame[right].rank()))
         return round(value,3) if np.isfinite(value) else None
 
@@ -133,6 +134,7 @@ def stars_vs_sales(items,reviews,vendors,min_reviews=5):
         vendedores=len(eligible),spearman_vendedor_estrellas_ventas=spearman(eligible,'estrellas_promedio','ventas_brutas'))
     products=products.reset_index().sort_values('ventas_brutas',ascending=False)
     return products.round(2),bands.round(2),summary
+
 
 def diagnose(vendors):
     eligible=vendors[(vendors.pedidos>=10)&vendors.estrellas_promedio.notna()]
@@ -144,3 +146,35 @@ def diagnose(vendors):
         correlation=None
     return flagged,dict(ventas_altas_desde=round(threshold,2),minimo_pedidos=10,maximo_estrellas=3.5,
                        minimo_retraso_pct=25,correlacion_estrellas_retrasos=correlation,vendedores_correlacion=len(complete))
+
+
+MONTH_NAMES=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic']
+
+
+def monthly_series(orders):
+    """Serie de tiempo mensual de ventas y tabla de calendario año × mes.
+
+    resample('MS') agrupa por mes calendario; rolling(3) suaviza con una media móvil
+    de tres meses; las variaciones se calculan contra el mes anterior y contra el mismo
+    mes del año previo. pivot_table arma el calendario para comparar estacionalidad."""
+    columns=['mes','pedidos','ventas','ticket_promedio','media_movil_3m','variacion_mensual_pct','variacion_anual_pct']
+    if orders.empty:
+        return pd.DataFrame(columns=columns),pd.DataFrame()
+    frame=orders[['id_pedido','fecha','total_centimos']].copy()
+    frame['fecha']=pd.to_datetime(frame.fecha)
+    frame['ventas']=frame.total_centimos/100
+    series=frame.set_index('fecha').sort_index().resample('MS').agg({'id_pedido':'nunique','ventas':'sum'})
+    series=series.rename(columns={'id_pedido':'pedidos'})
+    series['ticket_promedio']=series.ventas/series.pedidos.where(series.pedidos>0)
+    series['media_movil_3m']=series.ventas.rolling(3).mean()
+    # Variaciones calculadas con shift: el resultado no depende de la versión de pandas.
+    series['variacion_mensual_pct']=100*(series.ventas/series.ventas.shift(1)-1)
+    series['variacion_anual_pct']=100*(series.ventas/series.ventas.shift(12)-1)
+    series=series.replace([np.inf,-np.inf],np.nan).round(2).rename_axis('mes').reset_index()
+    series['mes']=series.mes.dt.strftime('%Y-%m')
+    calendar=frame.assign(anio=frame.fecha.dt.year,numero_mes=frame.fecha.dt.month).pivot_table(
+        index='numero_mes',columns='anio',values='ventas',aggfunc='sum').round(2)
+    calendar.index=[MONTH_NAMES[number-1] for number in calendar.index]
+    calendar.index.name='mes'
+    calendar.columns=[str(year) for year in calendar.columns]
+    return series[columns],calendar.reset_index()

@@ -11,18 +11,24 @@ WITH RECURSIVE arbol AS (
 SELECT * FROM arbol ORDER BY ruta;
 
 -- name: ventas_distrito
--- Exactamente seis tablas: productos, variantes, pedido_detalle, pedidos,
--- usuarios y distritos. El vendedor se identifica por productos.id_vendedor.
+-- JOIN de nueve tablas base (sin vistas): pedido_detalle, variantes, productos,
+-- vendedores, pedidos, usuarios, distritos, provincias y departamentos.
 -- El distrito histórico procede de usuarios: el dataset no contiene una dirección de entrega.
-SELECT p.id_vendedor,di.id_distrito,di.nombre distrito,di.departamento,
-  COUNT(DISTINCT pe.id_pedido) pedidos,SUM(de.cantidad) unidades,
+SELECT s.id_vendedor,s.razon_social,di.id_distrito,di.nombre distrito,pr.nombre provincia,
+  de2.nombre departamento,COUNT(DISTINCT pe.id_pedido) pedidos,SUM(de.cantidad) unidades,
   ROUND(SUM(de.cantidad*de.precio_unit),2) ventas_brutas
-FROM productos p JOIN variantes va USING(id_producto)
-JOIN pedido_detalle de USING(id_variante) JOIN pedidos pe USING(id_pedido)
-JOIN usuarios u ON pe.id_usuario=u.id_usuario JOIN v_distritos di ON u.id_distrito=di.id_distrito
+FROM pedido_detalle de
+JOIN variantes va USING(id_variante)
+JOIN productos p USING(id_producto)
+JOIN vendedores s ON s.id_vendedor=p.id_vendedor
+JOIN pedidos pe ON pe.id_pedido=de.id_pedido
+JOIN usuarios u ON u.id_usuario=pe.id_usuario
+JOIN distritos di ON di.id_distrito=u.id_distrito
+JOIN provincias pr ON pr.id_provincia=di.id_provincia
+JOIN departamentos de2 ON de2.id_departamento=pr.id_departamento
 WHERE pe.origen='dataset' AND pe.estado IN ('pagado','enviado','entregado')
-GROUP BY p.id_vendedor,di.id_distrito,di.nombre,di.departamento
-ORDER BY ventas_brutas DESC,p.id_vendedor,di.id_distrito;
+GROUP BY s.id_vendedor,s.razon_social,di.id_distrito,di.nombre,pr.nombre,de2.nombre
+ORDER BY ventas_brutas DESC,s.id_vendedor,di.id_distrito;
 
 -- name: stock
 SELECT p.id_producto,p.titulo,va.id_variante,va.talla,va.color,va.stock,

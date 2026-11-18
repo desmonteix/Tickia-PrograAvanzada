@@ -5,7 +5,7 @@ import unittest
 import pandas as pd
 
 sys.path.insert(0,str(Path(__file__).parents[2]))
-from backend.academic.analysis_frames import rfm,cohorts,co_purchases,delivery_summary,vendor_summary,stars_vs_sales
+from backend.academic.analysis_frames import rfm,cohorts,co_purchases,delivery_summary,vendor_summary,stars_vs_sales,monthly_series
 
 
 class AcademicAnalysisTests(unittest.TestCase):
@@ -17,6 +17,23 @@ class AcademicAnalysisTests(unittest.TestCase):
         self.assertEqual(buyer.monetario,35)
         self.assertEqual(reference,pd.Timestamp('2026-02-02'))
         self.assertEqual(result.set_index('id_usuario').loc[3,'segmento'],'Sin compras')
+
+    def test_monthly_series_resamples_calendar_months_and_pivots_by_year(self):
+        orders=pd.DataFrame(dict(id_pedido=[1,2,3,4],
+            fecha=pd.to_datetime(['2025-01-05','2025-01-20','2025-03-01','2026-01-10']),
+            total_centimos=[1000,3000,5000,8000]))
+        series,calendar=monthly_series(orders)
+        self.assertEqual(len(series),13)                     # ene-2025 a ene-2026, incluye meses sin ventas
+        enero=series.set_index('mes').loc['2025-01']
+        self.assertEqual(enero.pedidos,2)
+        self.assertEqual(enero.ventas,40)
+        self.assertEqual(enero.ticket_promedio,20)
+        self.assertEqual(series.set_index('mes').loc['2025-03','media_movil_3m'],30)   # (40+0+50)/3
+        self.assertEqual(series.set_index('mes').loc['2026-01','variacion_anual_pct'],100)
+        tabla=calendar.set_index('mes')
+        self.assertEqual(tabla.loc['Ene','2025'],40)
+        self.assertEqual(tabla.loc['Ene','2026'],80)
+        self.assertTrue(pd.isna(tabla.loc['Mar','2026']))    # mes no observado: vacío, no cero
 
     def test_cohorts_use_unique_customers_and_include_observed_zero_retention(self):
         orders=pd.DataFrame(dict(id_pedido=[1,2,3,4,5],id_usuario=[1,1,2,3,3],fecha=pd.to_datetime(['2026-01-01','2026-02-01','2026-01-02','2026-02-05','2026-03-01'])))

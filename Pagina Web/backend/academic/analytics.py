@@ -14,7 +14,7 @@ from sqlalchemy import text
 from .database import engine
 from .settings import SQL_DIR
 from ..dataset import LOCAL_DIR
-from .analysis_frames import rfm,cohorts,co_purchases,delivery_summary,vendor_summary,diagnose,clean_shipments,stars_vs_sales
+from .analysis_frames import rfm,cohorts,co_purchases,delivery_summary,vendor_summary,diagnose,clean_shipments,stars_vs_sales,monthly_series
 
 router=APIRouter(prefix='/api/analytics',tags=['Pandas y consultas SQL'])
 _cache={}
@@ -26,7 +26,7 @@ NOTES={
  'entregas':'Solo envíos con fechas válidas. Entregar el mismo día prometido es puntual. La tasa de retrasos excluye promesas desconocidas; se muestra su denominador.',
  'vendedores':'Ventas brutas de artículos antes de cupones y sin envío. Reseñas y puntualidad se agregan separadamente para evitar multiplicar importes. La demora pertenece al pedido consolidado.',
  'diagnostico':'Ventas altas = cuartil superior entre vendedores con al menos 10 pedidos; estrellas < 3.5 y retrasos >= 25%. Asociación a nivel vendedor: las reseñas no identifican un pedido y no prueban causalidad.',
- 'ventas_distrito':'JOIN de seis tablas. Ventas brutas por vendedor y distrito del cliente; el dataset no identifica otra dirección histórica de entrega.',
+ 'ventas_distrito':'JOIN de nueve tablas base. Ventas brutas por vendedor y distrito del cliente; el dataset no identifica otra dirección histórica de entrega.',
  'stock':'Inventario actual con 0 a 3 unidades por variante, incluyendo productos publicados en la plataforma.',
  'categorias':'Árbol completo obtenido con WITH RECURSIVE, mostrando nivel y ruta de cada categoría.',
  'ranking_vendedores':'RANK ordena por ventas preservando empates. SUM OVER calcula ventas acumuladas con un orden determinista por importe e ID.',
@@ -74,6 +74,7 @@ def build_bundle():
         reports=dict(rfm=rfm_frame,cohortes=cohorts(orders),cocompras=co_purchases(items),
             entregas=delivery_summary(shipments),vendedores=vendor_frame,diagnostico=flagged,
             estrellas_ventas=star_bands,estrellas_ventas_productos=star_products)
+        reports['serie_mensual'],reports['ventas_calendario']=monthly_series(orders)
         queries=sql_queries()
         for name in (name for name in NOTES if name in queries):
             reports[name]=pd.read_sql_query(text(queries[name]),connection)

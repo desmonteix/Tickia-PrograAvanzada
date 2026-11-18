@@ -150,6 +150,20 @@ ax.set(xlabel='Mes desde primera compra', ylabel='Cohorte', title='Retención: 1
 fig.colorbar(image, ax=ax, label='Retención (%)')
 fig.tight_layout(); fig.savefig(OUTPUT/'grafico_cohortes.png', bbox_inches='tight'); plt.show()
 print('Meses sin exposición: celdas grises; no se convierten en cero.')''','23_pandas_cohortes')
+    md('### Serie de tiempo de ventas\nresample agrupa los pedidos válidos por mes calendario, rolling calcula la media móvil de tres meses y pivot_table arma el calendario año × mes para comparar estacionalidad.')
+    code('''series = reports['serie_mensual']
+calendar = reports['ventas_calendario']
+display(series.tail(8))
+display(calendar)
+fig, ax = plt.subplots(figsize=(10,4.3))
+x = pd.to_datetime(series.mes)
+ax.plot(x, series.ventas/1e6, marker='o', ms=3, color='#1E597C', label='Ventas del mes')
+ax.plot(x, series.media_movil_3m/1e6, ls='--', color='#B45C29', label='Media móvil 3 meses')
+ax.set(ylabel='Ventas (millones de S/)', title='Serie mensual de ventas del histórico')
+ax.legend(frameon=False)
+fig.tight_layout(); fig.savefig(OUTPUT/'grafico_serie_mensual.png', bbox_inches='tight'); plt.show()
+last = series.iloc[-1]
+print(f"Último mes {last.mes}: S/ {last.ventas:,.2f}, variación anual {last.variacion_anual_pct:.1f} %.")''','23b_pandas_serie_mensual')
     code('''pairs = reports['cocompras']
 display(pairs.head(6))
 print('Los productos se deduplican dentro de cada pedido antes de formar parejas.')
