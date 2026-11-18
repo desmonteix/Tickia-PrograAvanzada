@@ -23,6 +23,12 @@ El prefijo numérico indica el **orden de carga** que respeta las llaves foráne
 
 **Total de registros:** 801,519
 
+Los 13 archivos inicialmente entregados en esta carpeta se completaron con
+`10_pagos.csv` y `15_favoritos.csv`, copiados íntegramente de `P4_marketplace/`.
+La entrega actual incluye los 15 archivos. Sus conteos y hashes se encuentran
+en [entregables/resultados/fuentes.json](entregables/resultados/fuentes.json).
+Para ejecutar la plataforma, consultar [COMO_EJECUTAR.md](COMO_EJECUTAR.md).
+
 ## Columnas añadidas al modelo de referencia
 - `envios.fecha_estimada` (fecha prometida) y `envios.costo_envio` — para medir entregas tardías y la Strategy de costo de envío.
 - `resenas.fecha`, `preguntas.fecha` — para series de tiempo.
@@ -38,12 +44,14 @@ El prefijo numérico indica el **orden de carga** que respeta las llaves foráne
 - `pedidos.total` = Σ(cantidad × precio_unit) × (1 − descuento del cupón).
 
 
-## Carga en MySQL (ejemplo)
-```sql
-SET GLOBAL local_infile = 1;
-LOAD DATA LOCAL INFILE '01_tabla.csv' INTO TABLE tabla
-FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"'
-LINES TERMINATED BY '\n'
-IGNORE 1 ROWS;
-```
-Con pandas + SQLAlchemy: `pd.read_csv(f).to_sql(tabla, engine, if_exists='append', index=False, chunksize=5000)`
+## Carga en MySQL
+
+El lanzador `python Proyecto_PrograAvanzada/iniciar.py` crea el esquema de
+`sql/01_esquema.sql`, importa los archivos en orden con parámetros y lotes de
+5.000 filas, verifica las FK e instala `confirmar_pedido`. No utiliza
+`LOAD DATA LOCAL` ni cambia opciones globales de MySQL. Los reinicios conservan
+los datos operativos y no vuelven a cargar el inventario.
+
+La carga y su manifiesto se implementan en
+`Pagina Web/backend/academic/bootstrap.py`. Los hashes impiden sobrescribir una
+base poblada con otro conjunto; los errores de importación revierten la carga.

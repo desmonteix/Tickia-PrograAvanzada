@@ -1,44 +1,29 @@
-# Tickia — Proyecto de Programación Avanzada
+# Proyecto de Programación Avanzada
 
-## Alcance acordado
+Entrega actual: MySQL 8.4, 15 tablas, 18 relaciones entre tablas y una
+autorrelación de categorías. Conserva la interfaz Tickia y funciona sin Supabase.
 
-Rama `proyecto_progra_avanzada`, basada en `origin/master` (`1dc6f86`) después
-del pull solicitado el 17-11-2026. Conservar el código y la identidad visual de
-Tickia y mostrar los productos del dataset como catálogo, sin Supabase.
+Los 13 CSV iniciales se completaron con `10_pagos.csv` y `15_favoritos.csv`,
+encontrados en `P4_marketplace/`. Los 15 suman 801.519 registros; se conservan
+IDs, nulos, fechas y relaciones.
 
-## Criterios de aceptación
+La entrada principal es `backend.academic.main:app`, iniciada por
+`Proyecto_PrograAvanzada/iniciar.py`. Cuentas, productos, pedidos y comunidad
+usan las mismas 15 tablas MySQL. Columnas adicionales permiten autenticación,
+idempotencia, desglose monetario y distinguir histórico de actividad web.
 
-- Importar íntegramente los 13 CSV de `Proyecto_PrograAvanzada/`, con sus
-  columnas, IDs, relaciones y valores nulos. No modificar los originales.
-- Crear una BD SQLite reproducible y fija para el dataset. Validar integridad
-  referencial y mantener la BD anterior si falla una nueva importación.
-- Consultar productos, categorías, vendedores, variantes, stock, reseñas y
-  preguntas reales desde la interfaz de Tickia, con búsqueda y paginación.
-- Mantener cuentas y archivos de la aplicación en almacenamiento local,
-  independiente del dataset. No cargar credenciales de Supabase del `.env`.
-- No inventar fechas de evento, entradas QR ni pagos que no contiene el dataset.
-- Documentar arranque y reconstrucción local; probar importador, API y navegador.
+Builder, Strategy, Decorator y State participan en cotización y compra.
+`confirmar_pedido` confirma la compra y descuenta stock atómicamente. Pandas
+consulta MySQL y ofrece nueve reportes con exportación completa.
 
-## Compra y venta dentro de la plataforma
+La versión SQLite queda como respaldo explícito `--legacy-sqlite`.
+La migración inicial lee sus cuentas y compras sin modificar el archivo.
+Pagos y envíos siguen siendo simulados.
 
-Ampliación solicitada: comprar artículos y publicar productos desde Tickia.
+- [Manual](../../Proyecto_PrograAvanzada/COMO_EJECUTAR.md).
+- [Matriz de cumplimiento](../../Proyecto_PrograAvanzada/entregables/MATRIZ_CUMPLIMIENTO.md).
+- [Informe de análisis](../../Proyecto_PrograAvanzada/entregables/INFORME_ANALISIS.md).
+- [Plan](../../tasks/plan.md).
 
-- El catálogo y el inventario se copian una sola vez a tablas `local_*` en
-  `tickia.sqlite3`. Las 13 tablas originales continúan fijas en `marketplace.sqlite3`.
-- Una cuenta local puede publicar un producto con categoría, precio, descripción,
-  stock, talla, color y foto PNG/JPEG opcional. La publicación aparece en el catálogo.
-- Comprar requiere iniciar sesión, seleccionar una variante y una cantidad y
-  confirmar el total. El servidor calcula el importe en céntimos y descuenta stock
-  mediante una actualización condicional dentro de la misma transacción del pedido.
-- Repetir una solicitud de compra devuelve el pedido anterior. No se permite
-  comprar un artículo propio ni vender más unidades de las disponibles.
-- Cada comprador consulta sus pedidos en **Mis compras** y cada vendedor sus
-  publicaciones y ventas en **Vender**. Las listas tienen paginación.
-- Las compras son de demostración: no se llama a pasarelas, no se cobra dinero y
-  no se promete un envío real. Reiniciar la aplicación conserva pedidos y stock.
-- Las pruebas de navegador usan una carpeta temporal con `TICKIA_LOCAL_DIR` para
-  no crear publicaciones o compras de prueba en la BD del usuario.
-
-Los archivos `10_pagos.csv` y `15_favoritos.csv` aparecen en el README original
-del dataset, pero no están entre los 13 archivos entregados en esa carpeta.
-No se importan los archivos de otras carpetas ni se fabrican sus registros.
+Publicar solo en `desmonteix/Tickia-PrograAvanzada`, rama
+`proyecto_progra_avanzada`, sin fusionar con las ramas principales originales.

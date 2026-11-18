@@ -1,133 +1,128 @@
-# Tickia con el dataset local
+# Ejecutar el marketplace universitario
 
-Esta versión vive en la rama `proyecto_progra_avanzada`. Usa el código y el diseño
-de Tickia, con un catálogo de productos en lugar de entradas para eventos.
-No necesitas una cuenta de Supabase, PostgreSQL ni credenciales de pagos.
+## Preparación
 
-## Iniciar
-
-Desde la raíz del repositorio:
+Python 3.13, Node.js 22.16 o posterior y Docker Desktop iniciado con contenedores Linux.
+El repositorio es privado: cada integrante necesita acceso para clonarlo.
 
 ```powershell
+git clone --branch proyecto_progra_avanzada https://github.com/desmonteix/Tickia-PrograAvanzada.git
+cd Tickia-PrograAvanzada
+python -m venv "Pagina Web/backend/venv"
+& ".\Pagina Web\backend\venv\Scripts\python.exe" -m pip install -r "Pagina Web/backend/requirements.txt"
+npm.cmd ci --prefix "Pagina Web/frontend"
 python Proyecto_PrograAvanzada/iniciar.py
 ```
 
-Abre **http://127.0.0.1:5174**. El script inicia la API en el puerto 8001 y el
-frontend en el 5174. Pulsa **Ctrl+C** para cerrar ambos. Si un puerto está ocupado:
+| Servicio | Dirección |
+| --- | --- |
+| Aplicación | http://127.0.0.1:5174 |
+| API y Swagger | http://127.0.0.1:8001/docs |
+| Disponibilidad | http://127.0.0.1:8001/ready |
+| MySQL | 127.0.0.1:3307, base `tickia_universidad` |
+
+La primera ejecución descarga MySQL, crea 15 tablas e importa 801.519 filas.
+El lanzador espera a ambos servicios antes de mostrar la URL. Ctrl+C cierra
+API y frontend; MySQL conserva el volumen `tickia-universidad_mysql-data`.
+No elimines ese volumen para reiniciar la aplicación.
+
+Puertos alternativos:
 
 ```powershell
 python Proyecto_PrograAvanzada/iniciar.py --api-port 8002 --web-port 5175
 ```
 
-Si faltan dependencias, instálalas una vez (Python 3.13 y Node.js 22.16 o posterior):
+Ante `ERR_CONNECTION_REFUSED`, abre Docker Desktop, ejecuta el lanzador y usa
+la dirección que muestra. Revisa `.local/backend.log`, `.local/frontend.log`
+y la salida del lanzador si un servicio no inicia.
 
-```powershell
-python -m venv "Pagina Web/backend/venv"
-& ".\Pagina Web\backend\venv\Scripts\python.exe" -m pip install -r "Pagina Web/backend/requirements.txt"
-cd "Pagina Web/frontend"
-npm.cmd ci
-cd ../..
-```
+## Comprar y vender
 
-## Qué incluye
+1. Crea una cuenta en **Ingresar**. Los usuarios históricos del CSV no tienen
+   contraseñas y no son credenciales de acceso.
+2. En **Vender**, publica un título, descripción, precio, categoría, foto opcional
+   y variantes con stock propio por talla/color.
+3. Con otra cuenta, busca el producto y agrega variantes al carrito. Puedes
+   mezclar productos de varios vendedores en un mismo pedido.
+4. En **Carrito**, elige distrito, courier, pago simulado y cupón vigente.
+   Tres unidades o más reciben además 3% por volumen.
+5. Confirma: MySQL registra pedido, detalle, pago y envío y descuenta todas las
+   unidades en una transacción. El servidor vuelve a calcular el precio.
+6. En **Mis compras**, usa **Simular despacho** y **Confirmar recepción**.
+   Después puedes reseñar el producto una vez. El vendedor ve **Mis ventas**.
+7. En cada ficha puedes guardar favoritos, preguntar y responder como propietario.
+8. **Análisis** ofrece nueve reportes y sus CSV completos.
 
-- Los **13 CSV originales**, con **610.021 registros** en total.
-- **9.337 productos**, 700 vendedores, categorías jerárquicas y stock por variante.
-- Búsqueda sin distinguir tildes ni mayúsculas; filtros, orden y paginación.
-- Fichas con variantes, reputación, reseñas y preguntas reales del dataset.
-- Resumen del número de registros por tabla, al pie del catálogo.
-- Registro e inicio de sesión originales de Tickia, sobre una BD local de cuentas.
-- Compra directa con selección de variante y cantidad, confirmación e historial.
-- Publicación de productos con precio, descripción, stock y foto opcional.
-- **Vender** muestra tus publicaciones y tus ventas; **Mis compras**, tus pedidos.
+Pagos y envíos son educativos: no se cobra dinero ni se contrata un courier.
+El comprador también puede simular despacho para demostrar compras a vendedores
+históricos que no tienen cuentas de acceso.
 
-Las compras son de demostración: generan un pedido local y descuentan stock,
-sin cobros de dinero ni envíos reales. No se inventan QRs o fechas de eventos para
-los productos. Los pedidos y envíos históricos se conservan íntegros en el dataset.
-Los flujos originales de entradas se conservan en el código para referencia.
+## Persistencia
 
-Para vender, inicia sesión y entra en **Vender**. Completa el formulario y pulsa
-**Publicar producto**. Para comprar, pulsa **Comprar** en el catálogo, elige la
-variante y cantidad y pulsa **Confirmar compra**. No puedes comprar tus propios
-artículos. Revisa el resultado en **Mis compras**.
-
-Las cuentas de `02_usuarios.csv` son datos del histórico y **no** credenciales de
-Tickia: el CSV no contiene contraseñas. Puedes crear tu propia cuenta local.
-
-## Archivos locales
-
-La primera ejecución crea `Proyecto_PrograAvanzada/.local/`:
-
-| Archivo | Uso |
+| Ubicación | Contenido |
 | --- | --- |
-| `marketplace.sqlite3` | Copia fija de las 13 tablas, abierta en modo de solo lectura por la API |
-| `tickia.sqlite3` | Cuentas, catálogo de trabajo, publicaciones, inventario, compras y ventas |
-| `secrets.json` | Claves locales generadas, persistentes entre reinicios |
-| `storage/` | Archivos cifrados de los flujos originales de Tickia |
-| `product-images/` | Fotos públicas de los productos publicados localmente |
-| `backend.log`, `frontend.log` | Salida de los servicios |
+| Volumen Docker | Las 15 tablas operativas MySQL |
+| `.local/mysql.env` | Contraseñas aleatorias y nombre de la base |
+| `.local/mysql-manifest.json` | SHA-256 de los CSV y conteos verificados al iniciar |
+| `.local/secrets.json` | Claves persistentes de sesión |
+| `.local/product-images/` | Fotos publicadas |
+| `.local/legacy-migrated-tickia_universidad.json` | Resultado de migrar la versión anterior |
+| `.local/analisis/` | Reportes completos generados por CLI |
 
-Esta carpeta está excluida de Git. Los CSV originales no se modifican. La rama
-usa por defecto `TICKIA_DATA_MODE=dataset` e ignora el `.env` del backend para no
-conectarse accidentalmente a la BD original. Conserva el modo `remote` para las
-pruebas y como referencia del comportamiento original.
+`.local/` está excluida de Git. No compartir sus claves ni archivos de cuentas.
+Los CSV no se modifican. El manifiesto refleja conteos actuales; después de
+publicar/comprar pueden superar los iniciales. Reiniciar no recarga stock.
+Una base poblada con otros hashes se rechaza sin sobrescribirla.
 
-## Reconstruir la BD del dataset
+Para otro MySQL 8.4, configura `TICKIA_ACADEMIC_MYSQL_URL` (URL SQLAlchemy
+`mysql+pymysql`) en el entorno; se omite Docker. El usuario SQL debe poder crear
+las tablas, índices y procedimiento y ejecutar este último.
+`TICKIA_LOCAL_DIR` permite aislar claves, fotos y logs.
 
-Detén la aplicación y ejecuta desde `Pagina Web/`:
+La primera activación migra cuentas, hashes, publicaciones, compras y stock de
+`.local/tickia.sqlite3` en modo de solo lectura. La migración es idempotente y
+preserva SQLite. El respaldo puede ejecutarse con `--legacy-sqlite`, en puertos
+distintos. Después de migrar, no alternar ambos modos para registrar compras:
+sus inventarios divergen.
 
-```powershell
-& "backend/venv/Scripts/python.exe" -m backend.dataset
-```
+## Análisis reproducible
 
-La importación valida columnas y relaciones, registra SHA-256 y número de filas
-por archivo, y reemplaza la BD solo cuando toda la carga termina correctamente.
-No reimporta ni duplica registros al reiniciar normalmente.
-Reconstruir la copia fija no restablece las compras ni el stock del catálogo de
-trabajo. Las tablas `local_*` se inicializan una sola vez para conservar las ventas.
-
-El README original enumera también `10_pagos.csv` y `15_favoritos.csv`; estos
-archivos **no se entregaron en esta carpeta** y no se fabrican ni se importan de
-otras carpetas.
-
-## API local
-
-Documentación interactiva: **http://127.0.0.1:8001/docs**.
-
-- `GET /api/runtime`: modo de datos activo.
-- `GET /api/dataset/summary`: las 13 tablas, conteos y hashes originales.
-- `GET /api/dataset/categories`: categorías y cantidad directa de productos.
-- `GET /api/dataset/products?q=lampara&category=1&sort=price_asc&page=1&page_size=24`.
-- `GET /api/dataset/products/1`: producto con variantes, últimas reseñas y preguntas.
-- `GET /api/dataset/tables/pedidos?page=1&page_size=25`: consulta paginada de cualquiera
-  de las 13 tablas. El explorador omite los correos de la tabla de usuarios.
-- `GET /api/marketplace/products`: catálogo con stock actual y publicaciones nuevas.
-- `GET /api/marketplace/products/1`: ficha con variantes e inventario actual.
-- `POST /api/marketplace/products`: publicación autenticada, con formulario multipart.
-- `POST /api/marketplace/orders`: compra autenticada con `variant_id`, `quantity` y
-  `request_id` UUID para evitar duplicados.
-- `GET /api/marketplace/orders`, `/sales`, `/my-products`: compras, ventas y
-  publicaciones de la cuenta autenticada, con paginación.
-
-## Verificar
-
-Desde `Pagina Web/`:
+Con MySQL iniciado, desde la raíz:
 
 ```powershell
-& "backend/venv/Scripts/python.exe" -m unittest discover -s backend/tests -v
-cd frontend
-npm.cmd test
-npm.cmd run lint
-npm.cmd run build
+Push-Location "Pagina Web"
+& "backend/venv/Scripts/python.exe" -m backend.academic.analytics
+Pop-Location
 ```
 
-Las pruebas de integración que requieren PostgreSQL se omiten si no está
-configurado `TEST_POSTGRES_URL`, igual que en el proyecto original.
+Genera nueve CSV y `resultados.json` en `.local/analisis/`. El histórico usa
+`origen='dataset'`; las compras web no alteran RFM/cohortes/diagnóstico. Stock
+crítico sí refleja inventario actual.
 
-Con la aplicación encendida, puedes probar el catálogo en Chromium (requiere
-Playwright instalado) desde `Pagina Web/`:
+Los SQL están en `sql/01_esquema.sql`, `02_procedimientos.sql` y `03_consultas.sql`.
+El importador envía el CREATE PROCEDURE como sentencia completa. En el cliente
+`mysql`, usar `DELIMITER $$`, pegar la sentencia seguida de `$$` y restaurar
+`DELIMITER ;` para ejecutarla manualmente.
+
+## Pruebas
 
 ```powershell
-$env:TICKIA_DATASET_URL = "http://127.0.0.1:5174"
-python -m unittest discover -s tests/e2e -p test_dataset_catalog.py -v
+& ".\Pagina Web\backend\venv\Scripts\python.exe" -m unittest discover -s "Pagina Web/backend/tests" -v
+npm.cmd run lint --prefix "Pagina Web/frontend"
+npm.cmd test --prefix "Pagina Web/frontend"
+npm.cmd run build --prefix "Pagina Web/frontend"
 ```
+
+Las pruebas que requieren una BD externa se omiten en el comando anterior.
+Para MySQL y Chromium en una base aislada:
+
+```powershell
+& ".\Pagina Web\backend\venv\Scripts\python.exe" -m pip install -r "Pagina Web/tests/requirements.txt"
+& ".\Pagina Web\backend\venv\Scripts\python.exe" -m playwright install chromium
+& ".\Pagina Web\backend\venv\Scripts\python.exe" Proyecto_PrograAvanzada/verificar.py
+```
+
+El verificador crea únicamente `tickia_universidad_test`, ejecuta la integración
+real y abre una instancia temporal en 8031/5201 para Chromium. Cierra sus procesos
+al terminar y conserva capturas/logs en `.local/`. `--sin-navegador` ejecuta solo
+MySQL. No elimina ni reinicia la base del usuario.

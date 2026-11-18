@@ -1,0 +1,81 @@
+{
+  "tablas": 15,
+  "filas": 801519,
+  "archivos": [
+    {
+      "archivo": "01_distritos.csv",
+      "filas": 65,
+      "sha256": "8ba1dcc63c5be2e1b661fe17bfbaaf33a3f37eff9791a5fb7477c912f1615cc7"
+    },
+    {
+      "archivo": "02_usuarios.csv",
+      "filas": 45000,
+      "sha256": "f0287ae543aa452be3f6d89eaa1e2d87eca61f33f7a78fcdb65137b9d47718a3"
+    },
+    {
+      "archivo": "03_vendedores.csv",
+      "filas": 700,
+      "sha256": "fbb4bdc5e9448309e9dbdef32eced23a3d691a3f37d035605414d3057fdd5fec"
+    },
+    {
+      "archivo": "04_categorias.csv",
+      "filas": 110,
+      "sha256": "34f8096a9780da590f0b032f726ce71970087e43c089562ebdc36ccf6b81df7d"
+    },
+    {
+      "archivo": "05_productos.csv",
+      "filas": 9337,
+      "sha256": "15f1f931bd072ba47e4537757852c5ee457d7722b88108c05f518b3952d4550d"
+    },
+    {
+      "archivo": "06_variantes.csv",
+      "filas": 19806,
+      "sha256": "aa0ff37f749019683f5b307be04d4134a4848543bdf913f790957c6c578788f8"
+    },
+    {
+      "archivo": "07_cupones.csv",
+      "filas": 350,
+      "sha256": "dc0803b41b3a7cc5d4a68210832a3b92456df4ce67d667019285d62236dd2ad4"
+    },
+    {
+      "archivo": "08_pedidos.csv",
+      "filas": 111016,
+      "sha256": "ff8d478932dad442ee6b2c7ec115865d07fbac0fb8019ef6cab7fc5388965162"
+    },
+    {
+      "archivo": "09_pedido_detalle.csv",
+      "filas": 247482,
+      "sha256": "8b1d1d9a603a848b88a83fcc0722821612d95f09380da9aa050ee125b01c45fb"
+    },
+    {
+      "archivo": "10_pagos.csv",
+      "filas": 111528,
+      "sha256": "e66586496f67c8963dc698e3e77408a85615e33699bfdc2919abe1aaea20eb1e"
+    },
+    {
+      "archivo": "11_couriers.csv",
+      "filas": 8,
+      "sha256": "71e14954eae3eeb8daf9292518f36247bda29e124dfd3100a4ff5349d8ace18e"
+    },
+    {
+      "archivo": "12_envios.csv",
+      "filas": 98076,
+      "sha256": "d164d99e8e2eabc821c4f2388240a13f524c42e4855a08b9e2ad911e5fe27a04"
+    },
+    {
+      "archivo": "13_resenas.csv",
+      "filas": 40071,
+      "sha256": "1d79b766d6a33c055e89b273c057be25be53e370092a7646152d24e7a5600608"
+    },
+    {
+      "archivo": "14_preguntas.csv",
+      "filas": 38000,
+      "sha256": "4b360016aaededbc21c283da7881a14428453fb675cbfcc3fe2605e560594a40"
+    },
+    {
+      "archivo": "15_favoritos.csv",
+      "filas": 79970,
+      "sha256": "e3408d98952536dd8cd92884d685d0a038903fc5308dc963d65cb747f16dc089"
+    }
+  ]
+}
