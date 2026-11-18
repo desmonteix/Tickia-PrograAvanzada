@@ -9,7 +9,7 @@ from .bootstrap import TABLES
 router = APIRouter(prefix='/api', tags=['catálogo MySQL'])
 CATALOG = '''FROM productos p JOIN categorias c USING(id_categoria)
     JOIN vendedores s USING(id_vendedor) JOIN usuarios u ON s.id_usuario=u.id_usuario
-    JOIN distritos d USING(id_distrito)
+    JOIN v_distritos d USING(id_distrito)
     LEFT JOIN (SELECT id_producto,SUM(stock) stock FROM variantes GROUP BY id_producto) inv USING(id_producto)
     LEFT JOIN (SELECT id_producto,AVG(estrellas) estrellas,COUNT(*) total_resenas FROM resenas GROUP BY id_producto) r USING(id_producto)'''
 FIELDS = '''p.*,c.nombre categoria,s.razon_social vendedor,s.reputacion,u.auth_uuid owner_id,
@@ -91,6 +91,7 @@ def categories(db=Depends(get_db, scope="function")):
 @router.get('/dataset/summary')
 def summary(db=Depends(get_db, scope="function")):
     tables = [dict(table=name,file=spec['file'],rows=row(db,'SELECT COUNT(*) n FROM `'+name+'`')['n']) for name,spec in TABLES.items()]
+    tables.extend(dict(table=name,file='Normalizada desde 01_distritos.csv',rows=row(db,'SELECT COUNT(*) n FROM '+name)['n']) for name in ('departamentos','provincias'))
     return dict(tables=tables,total_records=sum(item['rows'] for item in tables),missing_files=[],database='MySQL')
 
 
@@ -101,7 +102,8 @@ def table_rows(table: str,page: Annotated[int,Query(ge=1,le=1000000)]=1,page_siz
     columns = [column for column in TABLES[table]['columns'] if column!='email']
     fields = ','.join('`'+column+'`' for column in columns)
     order = ','.join('`'+column+'`' for column in columns if column.startswith('id_'))
-    items = rows(db,'SELECT '+fields+' FROM `'+table+'` ORDER BY '+order+' LIMIT :limit OFFSET :offset',
+    source = 'v_distritos' if table=='distritos' else table
+    items = rows(db,'SELECT '+fields+' FROM `'+source+'` ORDER BY '+order+' LIMIT :limit OFFSET :offset',
                  dict(limit=page_size,offset=(page-1)*page_size))
     total = row(db,'SELECT COUNT(*) n FROM `'+table+'`')['n']
     return dict(columns=columns,items=items,total=total,page=page,pages=math.ceil(total/page_size))
@@ -109,7 +111,7 @@ def table_rows(table: str,page: Annotated[int,Query(ge=1,le=1000000)]=1,page_siz
 
 @router.get('/marketplace/districts')
 def districts(db=Depends(get_db, scope="function")):
-    return rows(db,'SELECT * FROM distritos ORDER BY departamento,provincia,nombre')
+    return rows(db,'SELECT * FROM v_distritos ORDER BY departamento,provincia,nombre')
 
 
 @router.get('/marketplace/couriers')

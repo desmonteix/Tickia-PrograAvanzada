@@ -5,7 +5,7 @@ CREATE PROCEDURE confirmar_pedido(
   IN p_cupon INT, IN p_courier INT, IN p_distrito INT, IN p_metodo VARCHAR(80),
   IN p_total_esperado DECIMAL(12,2)
 )
-COMMENT 'tickia-universidad-v2'
+COMMENT 'tickia-universidad-v3'
 SQL SECURITY INVOKER
 procedure_body: BEGIN
   DECLARE v_pedido INT DEFAULT NULL;
@@ -19,7 +19,6 @@ procedure_body: BEGIN
   DECLARE v_pct DECIMAL(5,2) DEFAULT 0;
   DECLARE v_departamento VARCHAR(160);
   DECLARE v_estrategia VARCHAR(20);
-  DECLARE v_destino JSON;
   DECLARE EXIT HANDLER FOR 1062
   BEGIN
     ROLLBACK;
@@ -100,9 +99,7 @@ procedure_body: BEGIN
      OR NOT EXISTS (SELECT 1 FROM distritos WHERE id_distrito=p_distrito) THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Selecciona un courier y un distrito válidos.';
   END IF;
-  SELECT departamento,JSON_OBJECT('id_distrito',id_distrito,'distrito',nombre,
-      'provincia',provincia,'departamento',departamento) INTO v_departamento,v_destino
-    FROM distritos WHERE id_distrito=p_distrito;
+  SELECT departamento INTO v_departamento FROM v_distritos WHERE id_distrito=p_distrito;
   SELECT costo_base,estrategia INTO v_base,v_estrategia FROM couriers WHERE id_courier=p_courier;
   SET v_envio=ROUND(CASE v_estrategia
     WHEN 'rapido' THEN v_base*IF(LOWER(v_departamento)='lima',1.40,1.75)+0.50*v_units
@@ -122,10 +119,10 @@ procedure_body: BEGIN
   IF ROW_COUNT()<>v_count THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Stock insuficiente; no se modificó ningún artículo.';
   END IF;
-  INSERT INTO pedidos(id_usuario,id_cupon,fecha,estado,total,subtotal,descuento,costo_envio,
-      destino,solicitud_uuid,solicitud_hash,origen)
-    VALUES(p_usuario,p_cupon,UTC_TIMESTAMP(),'pendiente',v_neto+v_envio,v_subtotal,v_subtotal-v_neto,v_envio,
-      v_destino,p_solicitud,p_hash,'web');
+  INSERT INTO pedidos(id_usuario,id_cupon,fecha,estado,total,id_distrito_entrega,
+      solicitud_uuid,solicitud_hash,origen)
+    VALUES(p_usuario,p_cupon,UTC_TIMESTAMP(),'pendiente',v_neto+v_envio,p_distrito,
+      p_solicitud,p_hash,'web');
   SET v_pedido=LAST_INSERT_ID();
   INSERT INTO pedido_detalle(id_pedido,id_variante,cantidad,precio_unit)
     SELECT v_pedido,i.id_variante,i.cantidad,p.precio FROM tmp_tickia_items i

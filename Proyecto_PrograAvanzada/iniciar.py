@@ -64,7 +64,7 @@ def main():
             docker=shutil.which('docker')
             if not docker:
                 parser.error('MySQL requiere Docker Desktop en ejecución o TICKIA_ACADEMIC_MYSQL_URL configurada.')
-            print('Preparando MySQL local (15 tablas). La primera carga puede tardar unos minutos.',flush=True)
+            print('Preparando MySQL local (17 tablas normalizadas). La primera carga puede tardar unos minutos.',flush=True)
             prepared=subprocess.run([str(python),'-m','backend.academic.settings'],cwd=WEB,env=env,capture_output=True)
             if prepared.returncode:
                 parser.error('No se pudo preparar la configuración local de MySQL.')
@@ -87,7 +87,7 @@ def main():
             wait_ready(processes[-1],f'http://127.0.0.1:{args.api_port}/ready' if name=='backend'
                        else f'http://127.0.0.1:{args.web_port}/',300 if name=='backend' else 60)
         print(f"Tickia local: http://127.0.0.1:{args.web_port}", flush=True)
-        print('Motor: '+('SQLite de respaldo' if args.legacy_sqlite else 'MySQL · 15 tablas · 801.519 registros originales')+'.',flush=True)
+        print('Motor: '+('SQLite de respaldo' if args.legacy_sqlite else 'MySQL · 17 tablas normalizadas · 15 CSV originales')+'.',flush=True)
         print('Logs: '+str(LOCAL),flush=True)
         print("Pulsa Ctrl+C para cerrar ambos servicios.", flush=True)
         while all(process.poll() is None for process in processes):

@@ -70,7 +70,7 @@ def ready():
 
 @app.get('/api/runtime')
 def runtime():
-    return dict(data_mode='dataset',database='mysql',table_count=15,
+    return dict(data_mode='dataset',database='mysql',table_count=17,
                 capabilities=dict(cart=True,favorites=True,reviews=True,shipping=True,analytics=True))
 
 

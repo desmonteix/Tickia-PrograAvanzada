@@ -44,9 +44,10 @@ def load_frames(connection):
     items=pd.read_sql_query(text('''SELECT de.id_pedido,va.id_producto,p.id_vendedor,p.titulo,de.cantidad,
         CAST(ROUND(de.precio_unit*100) AS SIGNED) precio_unit_centimos FROM pedido_detalle de
         JOIN variantes va USING(id_variante) JOIN productos p USING(id_producto) JOIN pedidos pe USING(id_pedido) WHERE '''+valid),connection)
-    shipments=pd.read_sql_query(text('''SELECT e.*,c.nombre courier,COALESCE(JSON_UNQUOTE(JSON_EXTRACT(pe.destino,'$.departamento')),d.departamento) departamento
+    shipments=pd.read_sql_query(text('''SELECT e.*,c.nombre courier,COALESCE(dest.departamento,d.departamento) departamento
         FROM envios e JOIN pedidos pe USING(id_pedido) JOIN couriers c USING(id_courier)
-        JOIN usuarios u ON pe.id_usuario=u.id_usuario JOIN distritos d ON u.id_distrito=d.id_distrito WHERE '''+valid),connection)
+        JOIN usuarios u ON pe.id_usuario=u.id_usuario JOIN v_distritos d ON u.id_distrito=d.id_distrito
+        LEFT JOIN v_distritos dest ON pe.id_distrito_entrega=dest.id_distrito WHERE '''+valid),connection)
     reviews=pd.read_sql_query(text('''SELECT r.id_resena,p.id_vendedor,r.estrellas,r.comentario FROM resenas r
         JOIN productos p USING(id_producto) JOIN usuarios u ON r.id_usuario=u.id_usuario WHERE u.auth_uuid IS NULL'''),connection)
     vendors=pd.read_sql_query(text('''SELECT s.id_vendedor,s.razon_social,s.reputacion reputacion_registrada

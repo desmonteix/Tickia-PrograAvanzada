@@ -1,8 +1,19 @@
--- MySQL 8.4 / InnoDB. 15 tablas del modelo: 18 relaciones entre tablas
--- más la autorrelación de categorías necesaria para la jerarquía.
+-- MySQL 8.4 / InnoDB. Modelo lógico en 3FN: 17 tablas, 22 FK.
+-- Los 15 CSV se conservan. Provincia y departamento se separan como catálogos.
+CREATE TABLE IF NOT EXISTS departamentos (
+  id_departamento INT PRIMARY KEY AUTO_INCREMENT, nombre VARCHAR(160) NOT NULL UNIQUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE IF NOT EXISTS provincias (
+  id_provincia INT PRIMARY KEY AUTO_INCREMENT, id_departamento INT NOT NULL, nombre VARCHAR(160) NOT NULL,
+  UNIQUE KEY uq_provincia_departamento(id_departamento,nombre),
+  FOREIGN KEY (id_departamento) REFERENCES departamentos(id_departamento)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 CREATE TABLE IF NOT EXISTS distritos (
   id_distrito INT PRIMARY KEY AUTO_INCREMENT,
-  nombre VARCHAR(160) NOT NULL, provincia VARCHAR(160) NOT NULL, departamento VARCHAR(160) NOT NULL
+  nombre VARCHAR(160) NOT NULL, id_provincia INT NOT NULL,
+  CONSTRAINT fk_distrito_provincia FOREIGN KEY (id_provincia) REFERENCES provincias(id_provincia)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE IF NOT EXISTS usuarios (
@@ -52,12 +63,12 @@ CREATE TABLE IF NOT EXISTS cupones (
 CREATE TABLE IF NOT EXISTS pedidos (
   id_pedido INT PRIMARY KEY AUTO_INCREMENT, id_usuario INT NOT NULL, id_cupon INT NULL,
   fecha DATETIME NOT NULL, estado VARCHAR(20) NOT NULL, total DECIMAL(12,2) NOT NULL,
-  subtotal DECIMAL(12,2) NULL, descuento DECIMAL(12,2) NOT NULL DEFAULT 0,
-  costo_envio DECIMAL(12,2) NOT NULL DEFAULT 0, destino JSON NULL,
+  id_distrito_entrega INT NULL,
   solicitud_uuid CHAR(36) NULL, solicitud_hash CHAR(64) NULL, origen VARCHAR(10) NOT NULL DEFAULT 'dataset',
   UNIQUE KEY uq_pedido_solicitud(id_usuario,solicitud_uuid), KEY idx_pedido_fecha(fecha),
   FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario), FOREIGN KEY (id_cupon) REFERENCES cupones(id_cupon),
-  CHECK (total >= 0 AND descuento >= 0 AND costo_envio >= 0),
+  CONSTRAINT fk_pedido_distrito_entrega FOREIGN KEY (id_distrito_entrega) REFERENCES distritos(id_distrito),
+  CHECK (total >= 0),
   CHECK (estado IN ('pendiente','pagado','enviado','entregado','cancelado'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 

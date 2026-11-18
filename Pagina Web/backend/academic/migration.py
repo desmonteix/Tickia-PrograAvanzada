@@ -76,8 +76,8 @@ def migrate_legacy(target=engine,source=None,marker=None):
                     request=str(uuid.UUID(old['request_id']))
                     if row(db,'SELECT id_pedido FROM pedidos WHERE id_usuario=:user AND solicitud_uuid=:request',dict(user=owner,request=request)):
                         continue
-                    result=db.execute(text('''INSERT INTO pedidos(id_usuario,fecha,estado,total,subtotal,costo_envio,solicitud_uuid,solicitud_hash,origen)
-                        VALUES(:user,:date,'pagado',:total,:total,0,:request,:hash,'web')'''),dict(user=owner,date=old['created_at'],
+                    result=db.execute(text('''INSERT INTO pedidos(id_usuario,fecha,estado,total,solicitud_uuid,solicitud_hash,origen)
+                        VALUES(:user,:date,'pagado',:total,:request,:hash,'web')'''),dict(user=owner,date=old['created_at'],
                         total=Decimal(old['total_centimos'])/100,request=request,hash=hashlib.sha256(('legacy:'+old['id']).encode()).hexdigest()))
                     identifier=result.lastrowid
                     db.execute(text('INSERT INTO pedido_detalle(id_pedido,id_variante,cantidad,precio_unit) VALUES(:order,:variant,:quantity,:price)'),

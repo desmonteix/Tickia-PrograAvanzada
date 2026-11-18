@@ -77,8 +77,8 @@ class AcademicMySQLTests(unittest.TestCase):
 
     def test_schema_and_all_fifteen_source_tables(self):
         with self.engine.connect() as db:
-            self.assertEqual(row(db,'SELECT COUNT(*) n FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE()')['n'],15)
-            self.assertEqual(row(db,'SELECT COUNT(*) n FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE()')['n'],19)
+            self.assertEqual(row(db,"SELECT COUNT(*) n FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_TYPE='BASE TABLE'")['n'],17)
+            self.assertEqual(row(db,'SELECT COUNT(*) n FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE()')['n'],22)
             self.assertGreaterEqual(row(db,'SELECT COUNT(*) n FROM pagos')['n'],111528)
             self.assertGreaterEqual(row(db,'SELECT COUNT(*) n FROM favoritos')['n'],79970)
             self.assertTrue(row(db,"SELECT ROUTINE_NAME FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA=DATABASE() AND ROUTINE_NAME='confirmar_pedido'"))
