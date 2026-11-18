@@ -5,6 +5,7 @@ import { useResource } from '../useResource';
 import { money } from '../types';
 import type { Product } from './ProductCatalog';
 import MarketplaceOrders from './MarketplaceOrders';
+import MySQLOrders from './MySQLOrders';
 
 interface Listings {
   items: Product[];
@@ -76,19 +77,40 @@ function MyProducts({
   );
 }
 
-export default function MarketplaceSeller({ onSelect }: { onSelect: (id: number) => void }) {
+export default function MarketplaceSeller({
+  onSelect,
+  variantsEnabled = false,
+}: {
+  onSelect: (id: number) => void;
+  variantsEnabled?: boolean;
+}) {
   const categories = useResource<{ id_categoria: number; nombre: string }[]>('/dataset/categories');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [published, setPublished] = useState<Product | null>(null);
   const [revision, setRevision] = useState(0);
   const [page, setPage] = useState(1);
+  const [extraVariants, setExtraVariants] = useState<
+    { key: string; talla: string; color: string; stock: number }[]
+  >([]);
   const submitting = useRef(false);
   async function publish(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submitting.current) return;
     const form = event.currentTarget;
     const payload = new FormData(form);
+    if (variantsEnabled)
+      payload.set(
+        'variantes_json',
+        JSON.stringify([
+          {
+            talla: String(payload.get('talla') || 'Única'),
+            color: String(payload.get('color') || 'No especificado'),
+            stock: Number(payload.get('stock')),
+          },
+          ...extraVariants.map(({ talla, color, stock }) => ({ talla, color, stock })),
+        ]),
+      );
     const photo = payload.get('foto');
     if (photo instanceof File && photo.size > 5 * 1024 * 1024) {
       setError('La foto no debe superar 5 MB.');
@@ -103,6 +125,7 @@ export default function MarketplaceSeller({ onSelect }: { onSelect: (id: number)
       const response = await api.post<Product>('/marketplace/products', payload);
       setPublished(response.data);
       form.reset();
+      setExtraVariants([]);
       setPage(1);
       setRevision((value) => value + 1);
     } catch (failure) {
@@ -236,6 +259,100 @@ export default function MarketplaceSeller({ onSelect }: { onSelect: (id: number)
                 />
               </div>
             </div>
+            {variantsEnabled && (
+              <div className="variant-editors">
+                <h3>Más variantes</h3>
+                <p className="muted">Cada combinación de talla y color tiene su propio stock.</p>
+                {extraVariants.map((variant, index) => (
+                  <div className="variant-editor" key={variant.key}>
+                    <div className="input-group">
+                      <label htmlFor={`size-${variant.key}`}>Talla de variante {index + 2}</label>
+                      <input
+                        id={`size-${variant.key}`}
+                        className="input-field"
+                        required
+                        maxLength={60}
+                        value={variant.talla}
+                        onChange={(event) =>
+                          setExtraVariants((current) =>
+                            current.map((item) =>
+                              item.key === variant.key
+                                ? { ...item, talla: event.target.value }
+                                : item,
+                            ),
+                          )
+                        }
+                      />
+                    </div>
+                    <div className="input-group">
+                      <label htmlFor={`color-${variant.key}`}>Color de variante {index + 2}</label>
+                      <input
+                        id={`color-${variant.key}`}
+                        className="input-field"
+                        required
+                        maxLength={60}
+                        value={variant.color}
+                        onChange={(event) =>
+                          setExtraVariants((current) =>
+                            current.map((item) =>
+                              item.key === variant.key
+                                ? { ...item, color: event.target.value }
+                                : item,
+                            ),
+                          )
+                        }
+                      />
+                    </div>
+                    <div className="input-group">
+                      <label htmlFor={`stock-${variant.key}`}>Stock de variante {index + 2}</label>
+                      <input
+                        id={`stock-${variant.key}`}
+                        className="input-field"
+                        type="number"
+                        min="0"
+                        max="1000000"
+                        step="1"
+                        required
+                        value={variant.stock}
+                        onChange={(event) =>
+                          setExtraVariants((current) =>
+                            current.map((item) =>
+                              item.key === variant.key
+                                ? { ...item, stock: Number(event.target.value) }
+                                : item,
+                            ),
+                          )
+                        }
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
+                      onClick={() =>
+                        setExtraVariants((current) =>
+                          current.filter((item) => item.key !== variant.key),
+                        )
+                      }
+                    >
+                      Quitar variante {index + 2}
+                    </button>
+                  </div>
+                ))}
+                <button
+                  className="btn btn-secondary"
+                  type="button"
+                  disabled={extraVariants.length >= 19}
+                  onClick={() =>
+                    setExtraVariants((current) => [
+                      ...current,
+                      { key: crypto.randomUUID(), talla: '', color: '', stock: 1 },
+                    ])
+                  }
+                >
+                  Agregar variante
+                </button>
+              </div>
+            )}
             <div className="input-group">
               <label htmlFor="sell-photo">Foto del producto (opcional)</label>
               <input
@@ -262,7 +379,11 @@ export default function MarketplaceSeller({ onSelect }: { onSelect: (id: number)
         <h2>Mis publicaciones</h2>
         <MyProducts key={`${revision}-${page}`} page={page} onPage={setPage} onSelect={onSelect} />
       </section>
-      <MarketplaceOrders kind="sales" />
+      {variantsEnabled ? (
+        <MySQLOrders kind="sales" onProduct={onSelect} />
+      ) : (
+        <MarketplaceOrders kind="sales" />
+      )}
     </div>
   );
 }

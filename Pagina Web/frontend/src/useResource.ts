@@ -2,7 +2,7 @@
 import api, { errorMessage } from './api';
 import { useCallback } from 'react';
 
-export function useResource<T>(path: string) {
+export function useResource<T>(path: string, timeout = 20000) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -10,7 +10,7 @@ export function useResource<T>(path: string) {
   useEffect(() => {
     const controller = new AbortController();
     api
-      .get<T>(path, { signal: controller.signal })
+      .get<T>(path, { signal: controller.signal, timeout })
       .then((response) => {
         if (!controller.signal.aborted) {
           setData(response.data);
@@ -24,7 +24,7 @@ export function useResource<T>(path: string) {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [path, revision]);
+  }, [path, revision, timeout]);
   const refresh = useCallback(() => {
     setLoading(true);
     setError('');

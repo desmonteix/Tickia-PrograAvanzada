@@ -6,6 +6,10 @@ import BuyerFlow from './components/BuyerFlow';
 import ProductCatalog from './components/ProductCatalog';
 import MarketplaceSeller from './components/MarketplaceSeller';
 import MarketplaceOrders from './components/MarketplaceOrders';
+import MarketplaceCart from './components/MarketplaceCart';
+import MarketplaceAnalytics from './components/MarketplaceAnalytics';
+import MySQLOrders from './components/MySQLOrders';
+import { useCart } from './useCart';
 import AuthFlow from './components/AuthFlow';
 import WalletFlow from './components/WalletFlow';
 import AdminDashboard from './components/AdminDashboard';
@@ -16,11 +20,14 @@ import type { Campaign, Referrals } from './promotions';
 import { useResource } from './useResource';
 import ReferralPanel from './components/ReferralPanel';
 
-type View = 'catalog' | 'seller' | 'login' | 'wallet' | 'admin';
+type View =
+  'catalog' | 'seller' | 'login' | 'wallet' | 'admin' | 'cart' | 'analytics' | 'favorites';
 const getView = (): View => {
   const view = window.location.hash.slice(1);
   if (!view && paymentTransaction(window.location.search)) return 'wallet';
-  return ['seller', 'login', 'wallet', 'admin'].includes(view) ? (view as View) : 'catalog';
+  return ['seller', 'login', 'wallet', 'admin', 'cart', 'analytics', 'favorites'].includes(view)
+    ? (view as View)
+    : 'catalog';
 };
 
 export default function App() {
@@ -32,8 +39,10 @@ export default function App() {
   const [pendingProduct, setPendingProduct] = useState<number | null>(null);
   const [isDark, setIsDark] = useState(true);
   const campaign = useResource<Campaign>('/promotions');
-  const runtime = useResource<{ data_mode: 'dataset' | 'remote' }>('/runtime');
+  const runtime = useResource<{ data_mode: 'dataset' | 'remote'; database?: string }>('/runtime');
   const datasetMode = runtime.data?.data_mode === 'dataset';
+  const mysqlMode = runtime.data?.database === 'mysql';
+  const cart = useCart(mysqlMode);
   const [referrals, setReferrals] = useState<Referrals | null>(null);
   const [referralError, setReferralError] = useState('');
   const [referralRevision, setReferralRevision] = useState(0);
@@ -41,7 +50,7 @@ export default function App() {
   const nextView = useRef<View>(getView() === 'login' ? 'catalog' : getView());
   const heading = useRef<HTMLElement>(null);
   useEffect(() => {
-    if (!user) return;
+    if (!user || mysqlMode) return;
     const controller = new AbortController();
     api
       .get<Referrals>('/referrals', { signal: controller.signal })
@@ -58,7 +67,7 @@ export default function App() {
         }
       });
     return () => controller.abort();
-  }, [user, referralRevision]);
+  }, [user, referralRevision, mysqlMode]);
   function navigate(destination: View) {
     window.location.hash = destination;
   }
@@ -81,7 +90,16 @@ export default function App() {
       });
     const onHash = () => {
       if (
-        ['catalog', 'seller', 'login', 'wallet', 'admin'].includes(window.location.hash.slice(1))
+        [
+          'catalog',
+          'seller',
+          'login',
+          'wallet',
+          'admin',
+          'cart',
+          'analytics',
+          'favorites',
+        ].includes(window.location.hash.slice(1))
       ) {
         setView(getView());
         heading.current?.focus();
@@ -120,6 +138,7 @@ export default function App() {
       setUser(null);
       setReferrals(null);
       setNotice('Cerraste tu sesión.');
+      cart.clear();
       navigate('catalog');
     } catch (error) {
       setNotice(errorMessage(error, 'No se pudo cerrar la sesión. Inténtalo otra vez.'));
@@ -129,7 +148,7 @@ export default function App() {
     nextView.current = destination;
     navigate('login');
   }
-  const protectedView = ['seller', 'wallet', 'admin'].includes(view);
+  const protectedView = ['seller', 'wallet', 'admin', 'favorites'].includes(view);
   const visibleView = protectedView && !user ? 'login' : view;
   return (
     <div className="app-container">
@@ -170,7 +189,23 @@ export default function App() {
                 Mis compras
               </button>
             )}
-            {user?.is_admin && (
+            {mysqlMode && (
+              <>
+                <button className="btn btn-ghost" onClick={() => navigate('cart')}>
+                  Carrito ({cart.count})
+                </button>
+                <button
+                  className="btn btn-ghost"
+                  onClick={() => (user ? navigate('favorites') : requireLogin('favorites'))}
+                >
+                  Favoritos
+                </button>
+                <button className="btn btn-ghost" onClick={() => navigate('analytics')}>
+                  Análisis
+                </button>
+              </>
+            )}
+            {user?.is_admin && !mysqlMode && (
               <button className="btn btn-ghost" onClick={() => navigate('admin')}>
                 Administración
               </button>
@@ -269,7 +304,7 @@ export default function App() {
                     después.
                   </p>
                 )}
-                {user && (
+                {user && !datasetMode && (
                   <ReferralPanel
                     data={referrals}
                     error={referralError}
@@ -320,6 +355,7 @@ export default function App() {
                       </p>
                     ) : datasetMode ? (
                       <ProductCatalog
+                        onAddToCart={mysqlMode ? cart.add : undefined}
                         searchQuery={search}
                         user={user}
                         initialProduct={pendingProduct}
@@ -342,10 +378,43 @@ export default function App() {
                 </section>
               </>
             )}
+            {visibleView === 'cart' && mysqlMode && (
+              <MarketplaceCart
+                items={cart.items}
+                user={user}
+                onQuantity={cart.quantity}
+                onRemove={cart.remove}
+                onLogin={() => requireLogin('cart')}
+                onComplete={(id) => {
+                  cart.clear();
+                  setNotice(`Pedido ${id} confirmado. Pago de demostración, sin cobro real.`);
+                  navigate('wallet');
+                }}
+              />
+            )}
+            {visibleView === 'analytics' && mysqlMode && <MarketplaceAnalytics />}
+            {visibleView === 'favorites' && mysqlMode && (
+              <section>
+                <h1>Mis favoritos</h1>
+                <ProductCatalog
+                  searchQuery=""
+                  user={user}
+                  onAddToCart={cart.add}
+                  favoritesOnly
+                  initialProduct={pendingProduct}
+                  onSelectionClosed={() => setPendingProduct(null)}
+                  onRequireLogin={(id) => {
+                    setPendingProduct(id);
+                    requireLogin('favorites');
+                  }}
+                />
+              </section>
+            )}
             {visibleView === 'seller' && (
               <>
                 {datasetMode ? (
                   <MarketplaceSeller
+                    variantsEnabled={mysqlMode}
                     onSelect={(id) => {
                       setPendingProduct(id);
                       setSearch('');
@@ -367,7 +436,17 @@ export default function App() {
             {visibleView === 'wallet' && (
               <>
                 {datasetMode ? (
-                  <MarketplaceOrders />
+                  mysqlMode ? (
+                    <MySQLOrders
+                      onProduct={(id) => {
+                        setPendingProduct(id);
+                        setSearch('');
+                        navigate('catalog');
+                      }}
+                    />
+                  ) : (
+                    <MarketplaceOrders />
+                  )
                 ) : (
                   <WalletFlow onPaymentUpdated={refreshReferrals} />
                 )}

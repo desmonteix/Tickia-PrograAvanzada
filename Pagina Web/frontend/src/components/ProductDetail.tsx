@@ -4,8 +4,13 @@ import { useResource } from '../useResource';
 import { money } from '../types';
 import type { User } from '../types';
 import type { Product } from './ProductCatalog';
+import type { CartLine } from '../cart';
+import ProductCommunity from './ProductCommunity';
 
 interface Detail extends Product {
+  favorito?: boolean;
+  puede_resenar?: boolean;
+  ya_resenado?: boolean;
   variantes: { id_variante: number; talla: string | null; color: string | null; stock: number }[];
   resenas: {
     id_resena: number;
@@ -23,12 +28,14 @@ export default function ProductDetail({
   user,
   onRequireLogin,
   onPurchased,
+  onAddToCart,
 }: {
   id: number;
   onClose: () => void;
   user: User | null;
   onRequireLogin: () => void;
   onPurchased: () => void;
+  onAddToCart?: (item: CartLine) => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const { data, loading, error, refresh } = useResource<Detail>(`/marketplace/products/${id}`);
@@ -38,6 +45,7 @@ export default function ProductDetail({
   const [purchaseError, setPurchaseError] = useState('');
   const [confirmed, setConfirmed] = useState<string | null>(null);
   const [uncertain, setUncertain] = useState(false);
+  const [added, setAdded] = useState(false);
   const attempt = useRef<{ variant_id: number; quantity: number; request_id: string } | null>(null);
   const sending = useRef(false);
   const variant =
@@ -46,6 +54,25 @@ export default function ProductDetail({
     data?.variantes[0];
   async function buy() {
     if (sending.current || confirmed || !variant || !data) return;
+    if (onAddToCart) {
+      try {
+        onAddToCart({
+          variant_id: variant.id_variante,
+          product_id: id,
+          title: data.titulo,
+          quantity,
+          unit_cents: Math.round(data.precio * 100),
+          variant: [variant.talla, variant.color].filter(Boolean).join(' · '),
+          stock: variant.stock,
+          image: data.imagen,
+        });
+        setAdded(true);
+        setPurchaseError('');
+      } catch (failure) {
+        setPurchaseError(errorMessage(failure));
+      }
+      return;
+    }
     if (!user) {
       onRequireLogin();
       return;
@@ -211,17 +238,27 @@ export default function ProductDetail({
               >
                 {busy
                   ? 'Confirmando…'
-                  : !user
-                    ? 'Ingresar para comprar'
-                    : uncertain
-                      ? 'Reintentar confirmación'
-                      : variant?.stock
-                        ? 'Confirmar compra'
-                        : 'Sin stock'}
+                  : onAddToCart
+                    ? 'Agregar al carrito'
+                    : !user
+                      ? 'Ingresar para comprar'
+                      : uncertain
+                        ? 'Reintentar confirmación'
+                        : variant?.stock
+                          ? 'Confirmar compra'
+                          : 'Sin stock'}
               </button>
             </div>
           )}
           <h3>Variantes y disponibilidad</h3>
+          {added && (
+            <p className="notice" role="status">
+              Producto agregado al carrito.{' '}
+              <a href="#cart" onClick={onClose}>
+                Ir al carrito
+              </a>
+            </p>
+          )}
           <div className="product-table-scroll">
             <table>
               <thead>
@@ -272,6 +309,22 @@ export default function ProductDetail({
               </li>
             ))}
           </ul>
+          {onAddToCart && (
+            <ProductCommunity
+              id={id}
+              user={user}
+              owner={data.owner_id}
+              favorite={!!data.favorito}
+              canReview={!!data.puede_resenar}
+              reviewed={!!data.ya_resenado}
+              questions={data.preguntas}
+              onLogin={onRequireLogin}
+              onUpdated={() => {
+                refresh();
+                onPurchased();
+              }}
+            />
+          )}
         </>
       )}
     </dialog>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useResource } from '../useResource';
 import { money } from '../types';
 import type { User } from '../types';
+import type { CartLine } from '../cart';
 import ProductDetail from './ProductDetail';
 import './ProductCatalog.css';
 
@@ -142,12 +143,16 @@ export default function ProductCatalog({
   onRequireLogin,
   initialProduct = null,
   onSelectionClosed,
+  onAddToCart,
+  favoritesOnly = false,
 }: {
   searchQuery: string;
   user: User | null;
   onRequireLogin: (id: number) => void;
   initialProduct?: number | null;
   onSelectionClosed: () => void;
+  onAddToCart?: (item: CartLine) => void;
+  favoritesOnly?: boolean;
 }) {
   const categories = useResource<Category[]>('/dataset/categories');
   const summary = useResource<Summary>('/dataset/summary');
@@ -174,6 +179,7 @@ export default function ProductCatalog({
     page: String(filters.page),
   });
   if (filters.category) params.set('category', filters.category);
+  if (favoritesOnly) params.set('favorites', 'true');
   const path = `/marketplace/products?${params}`;
   return (
     <div className="product-catalog">
@@ -258,6 +264,7 @@ export default function ProductCatalog({
           user={user}
           onRequireLogin={() => onRequireLogin(selected)}
           onPurchased={() => setRevision((value) => value + 1)}
+          onAddToCart={onAddToCart}
           onClose={() => {
             setSelected(null);
             onSelectionClosed();
