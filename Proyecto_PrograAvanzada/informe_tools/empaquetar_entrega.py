@@ -16,9 +16,9 @@ DEST = PROJECT / '.local/entrega_final/Tickia_PrograAvanzada'
 
 README = '''# Entrega de Tickia — Programación Avanzada
 
-El informe Word deja la primera hoja completamente en blanco para la carátula.
-El PDF facilita revisar la paginación. El índice ya está calculado en Word;
-después de editar el documento, usar Ctrl+A y F9 para actualizar los campos.
+El informe se entrega en Word (editable) y en PDF exportado desde Word, con la
+carátula en la primera hoja y el índice desde la segunda. Si se edita el Word,
+usar Ctrl+A y F9 para actualizar el índice.
 
 ## Abrir la aplicación con la base de datos entregada
 
@@ -141,14 +141,43 @@ def copy_files(source, target, predicate=lambda path: True):
             dest = target / file.relative_to(source); dest.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(file, dest)
 
 
+def report_evidence():
+    """Describe el informe actual a partir del PDF exportado por Word."""
+    import re
+    import pymupdf as fitz
+    pdf = fitz.open(REPORT / 'Informe_Tickia.pdf')
+    texts = [page.get_text() for page in pdf]
+    pdf.close()
+    figures = sorted({int(n) for text in texts for n in re.findall(r'^Figura (\d+)\.', text, re.M)})
+    header = 'TICKIA · PROYECTO DE PROGRAMACIÓN AVANZADA'
+    def content(text):
+        lines = [l.strip() for l in text.splitlines() if l.strip() and l.strip() != header]
+        return ''.join(l for l in lines if not re.fullmatch(r'[0-9ivxlc]+', l))
+    blanks = [i + 1 for i, text in enumerate(texts) if i > 0 and not content(text)]
+    evidence = dict(pages=len(texts), figures=len(figures),
+                    figures_consecutive=figures == list(range(1, len(figures) + 1)),
+                    cover_filled=bool(content(texts[0])), index_starts_page=2 if 'ÍNDICE' in texts[1] else None,
+                    empty_pages=blanks, native_word_toc=True,
+                    docx_sha256=digest(REPORT / 'Informe_Tickia.docx'), pdf_sha256=digest(REPORT / 'Informe_Tickia.pdf'))
+    assert evidence['figures_consecutive'] and evidence['cover_filled'] and not blanks, evidence
+    (BUILD / 'validacion_informe.json').write_text(json.dumps(evidence, indent=2, ensure_ascii=False), encoding='utf-8')
+    return evidence
+
+
 def main():
     DEST.mkdir(parents=True, exist_ok=True)
     assert (DEST / 'respaldo/tickia_universidad_completa.sql').is_file(), 'Prepara y restaura primero el respaldo.'
+    # Se parte de una carpeta limpia; solo se conserva el respaldo ya validado.
+    for child in DEST.iterdir():
+        if child.name != 'respaldo':
+            shutil.rmtree(child) if child.is_dir() else child.unlink()
     commit = subprocess.check_output(['git','rev-parse','HEAD'], cwd=ROOT, text=True).strip()
     archive = BUILD / 'fuentes_git.tar'
     with archive.open('wb') as stream:
-        subprocess.run(['git','archive','--format=tar','HEAD','--','Pagina Web/backend','Pagina Web/frontend',
-                        'Pagina Web/tests','Proyecto_PrograAvanzada','README.md','.gitignore'], cwd=ROOT, stdout=stream, check=True)
+        tracked = [path for path in ('Pagina Web/backend','Pagina Web/frontend','Pagina Web/tests',
+                                     'Proyecto_PrograAvanzada','README.md','.gitignore')
+                   if subprocess.run(['git','cat-file','-e',f'HEAD:{path}'], cwd=ROOT, capture_output=True).returncode == 0]
+        subprocess.run(['git','archive','--format=tar','HEAD','--',*tracked], cwd=ROOT, stdout=stream, check=True)
     sources = DEST / 'codigo_fuente'; sources.mkdir(exist_ok=True)
     with tarfile.open(archive) as tar:
         members = tar.getmembers()
@@ -174,7 +203,7 @@ def main():
     shutil.copy2(PROJECT/'informe_tools/iniciar_entrega.py', DEST/'iniciar_entrega.py')
     (DEST/'README_ENTREGA.md').write_text(README, encoding='utf-8')
     backup = json.loads((BUILD/'respaldo_manifest.json').read_text(encoding='utf-8'))
-    report = json.loads((BUILD/'validacion_informe.json').read_text(encoding='utf-8'))
+    report = report_evidence()
     notebook = json.loads((BUILD/'cuaderno_ejecucion.json').read_text(encoding='utf-8'))
     versions = {name:importlib.metadata.version(name) for name in ('python-docx','matplotlib','PyMuPDF','nbformat','nbclient','nbconvert','ipykernel','pandas','numpy','PyMySQL','SQLAlchemy','playwright')}
     manifest = dict(project='Tickia — Programación Avanzada', date='18-11-2026', branch='proyecto_progra_avanzada',
